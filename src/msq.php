@@ -184,7 +184,7 @@ EOT;
 					}
 					
 					if (array_key_exists($key, $helpTexts))
-					$help = $helpTexts[$key];
+						$help = $helpTexts[$key];
 					
 					$html["tabList"] .= $this->msqConstant($key, $value, $help);
 				}
