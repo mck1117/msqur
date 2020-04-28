@@ -17,17 +17,62 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
 /** DEPRECATED **/
 
-function getEngineSchema()
+// [andreika]: we use more flexible method instead of getEngineSchema()
+
+function getEngineKeyDbArrays($firmware)
 {
-	return array(
-		'nCylinders' => null,
-		'engineType' => null,
-		'reqFuel' => null,
-		'twoStroke' => null,
-		'injType' => null,
-		'nInjectors' => null,
-		'egoType' => null
-	);
+	if (stripos($firmware, "rusEfi") !== FALSE)
+	{
+		return array(
+			"keys" => array(
+				// warning! these are not direct mappings!
+				// todo: refactor to use generic fields
+				'cylindersCount' => 'numCylinders',
+				'engineType' => 'engineType',
+				'trigger_type' => 'twoStroke',
+				'fuelAlgorithm' => 'injType',
+				// 'firingOrder'?
+				// 'ambiguousOperationMode'?
+				),
+			"req" => array('numCylinders', 'engineType'),
+			"def" => array(),
+		);
+	}
+	else	// Megasquirt
+	{
+		return array(
+			"keys" => array(
+				'nCylinders' => 'numCylinders',
+				'engineType' => 'engineType',
+				'twoStroke' => 'twoStroke',
+				'injType' => 'injType',
+				'nInjectors' => 'nInjectors',
+				// todo: these fields are not currently used in the DB structure
+				//'reqFuel' => 'reqFuel',
+				//'egoType' => 'egoType,
+				),
+			"req" => array('nCylinders', 'engineType', 'twoStroke', 'nInjectors'),
+			"def" => array('injType' => 'Port Injection'),
+		);
+	}
+}
+
+function getEngineDbKey($key, $metadata)
+{
+	$arr = getEngineKeyDbArrays($metadata['firmware']);
+	return array_key_exists($key, $arr["keys"]) ? $arr["keys"][$key] : FALSE;
+}
+
+function getEngineDbRequiredKeys($metadata)
+{
+	$arr = getEngineKeyDbArrays($metadata['firmware']);
+	return $arr["req"];
+}
+
+function getEngineDbDefaultKeys($metadata)
+{
+	$arr = getEngineKeyDbArrays($metadata['firmware']);
+	return $arr["def"];
 }
 
 ?>

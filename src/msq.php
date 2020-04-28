@@ -98,8 +98,6 @@ class MSQ
 			if (array_key_exists('CurveEditor', $msqMap)) $curves = $msqMap['CurveEditor'];
 			if (array_key_exists('TableEditor', $msqMap)) $tables = $msqMap['TableEditor'];
 			
-			$engineSchema = getEngineSchema();
-			
 			$html["tabList"] = <<<EOT
 			<div id="tabList">
 				<ul>
@@ -178,10 +176,11 @@ EOT;
 				if ($value !== NULL)
 				{
 					$value = trim($value, '"');
-					if (array_key_exists($key, $engineSchema))
+					$engineDbKey = getEngineDbKey($key, $metadata);
+					if ($engineDbKey !== FALSE)
 					{
-						if (DEBUG) debug(" $value");
-						$engine[$key] = $value;
+						if (DEBUG) debug("* $engineDbKey = $value");
+						$engine[$engineDbKey] = $value;
 					}
 					
 					if (array_key_exists($key, $helpTexts))

@@ -548,11 +548,12 @@ class DB
 	 * @param $engine array The associative array of new engine data.
 	 * @returns TRUE or FALSE depending on success.
 	 */
-	public function updateEngine($id, $engine)
+	public function updateEngine($id, $engine, $metadata)
 	{
 		if (!$this->connect()) return false;
 		
-		if (!array_keys_exist($engine, 'nCylinders', 'engineType', 'twoStroke', 'nInjectors'))
+		$reqFields = getEngineDbRequiredKeys($metadata);
+		if (!array_keys_exist($engine, ...$reqFields))
 		{//Some MSQs seem to be missing the injType
 			echo '<div class="warn">Incomplete engine information. Unable to update engine metadata.</div>';
 			//var_export($engine);
@@ -562,18 +563,29 @@ class DB
 		try
 		{
 			if (DEBUG) debug('Updating engine information...');
-			$st = $this->db->prepare("UPDATE engines e, metadata m SET e.numCylinders = :nCylinders, twoStroke = :twoStroke, injType = :injType, nInjectors = :nInjectors, engineType = :engineType WHERE e.id = m.engine AND m.id = :id");
+
+			$setFields = array();
+			// nCylinders, twoStroke, injType, nInjectors, engineType
+			foreach ($engine as $k=>$e)
+			{
+				$setFields[] = "e." . $k . " = :" . $k;
+			}
+
+			$st = $this->db->prepare("UPDATE engines e, metadata m SET " . implode(", ", $setFields) . " WHERE e.id = m.engine AND m.id = :id");
 			DB::tryBind($st, ":id", $id);
-			DB::tryBind($st, ":nCylinders", $engine['nCylinders']);
-			DB::tryBind($st, ":twoStroke", $engine['twoStroke']);
+
+			foreach ($engine as $k=>$e)
+			{
+				DB::tryBind($st, ":" . $k, $e);
+			}
 			
-			if (array_key_exists('injType', $engine))
-				DB::tryBind($st, ":injType", $engine['injType']);
-			else
-				DB::tryBind($st, ":injType", "Port Injection");
+			$defFields = getEngineDbDefaultKeys($metadata);
+			foreach ($defFields as $dfField=>$dfValue)
+			{
+				if (!array_key_exists($dfField, $engine))
+					DB::tryBind($st, ":".$dfField, $dfValue);
+			}
 			
-			DB::tryBind($st, ":nInjectors", $engine['nInjectors']);
-			DB::tryBind($st, ":engineType", $engine['engineType']);
 			if ($st->execute())
 			{
 				if (DEBUG) debug('Engine updated.');

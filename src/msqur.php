@@ -157,7 +157,7 @@ class Msqur
 					try {
 						$groupedHtml = $msq->parseMSQ($xml, $engine, $metadata);
 						$this->db->updateMetadata($id, $metadata);
-						$this->db->updateEngine($id, $engine);
+						$this->db->updateEngine($id, $engine, $metadata);
 						
 						$html = "";
 						foreach($groupedHtml as $group => $v)
