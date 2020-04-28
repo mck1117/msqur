@@ -42,13 +42,14 @@ class INI
 		//"MSII Rev 3.83000   "
 		//"MSnS-extra format 024s *********"
 		//"MSnS-extra format 024y3 ********"
+		//"rusEFI v1.2020.4"
 		
 		//Get the signature from the MSQ
 		$sig = explode(' ', $signature); //, 3); limit 3 buckets
 		$msVersion = $sig[0];
 
 		//Handle MS2 strings that don't have 'format' in them
-		if ($msVersion == "MS2Extra") $fwVersion = $sig[1];
+		if ($msVersion == "MS2Extra" || $msVersion == "rusEFI") $fwVersion = $sig[1];
 		else $fwVersion = $sig[2];
 		
 		debug("Firmware version: $msVersion/$fwVersion");
@@ -75,6 +76,10 @@ class INI
 
 			case "MS3":
 				$msDir = "ms3/";
+				break;
+				
+			case "rusEFI":
+				$msDir = "rusefi/";
 				break;
 
 			default:
