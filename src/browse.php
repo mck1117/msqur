@@ -92,18 +92,19 @@ echo '<table ng-controller="BrowseController">';
 echo '<tr><th>Uploaded</th><th>Owner</th><th>Engine Make</th><th>Engine Code</th><th>Cylinders</th><th>Liters</th><th>Compression</th><th>Aspiration</th><th>Firmware/Version</th><th>Views</th><th>Options</th></tr>';
 for ($c = 0; $c < $numResults; $c++)
 {
-	$aspiration = $results[$c]['induction'] == 1 ? "Turbo" : "Atmo";
-	echo '<tr><td><a href="view.php?msq=' . $results[$c]['mid'] . '">' . $results[$c]['uploadDate'] . '</a></td>';
-	echo '<td>' . $rusefi->getUserNameFromId($results[$c]['user_id']) . '</td>';
-	echo '<td>' . $results[$c]['make'] . '</td>';
-	echo '<td>' . $results[$c]['code'] . '</td>';
-	echo '<td>' . $results[$c]['numCylinders'] . '</td>';
-	echo '<td>' . $results[$c]['displacement'] . '</td>';
-	echo '<td>' . $results[$c]['compression'] . ':1</td>';
+    $engine = $results[$c];
+	$aspiration = $engine['induction'] == 1 ? "Turbo" : "Atmo";
+	echo '<tr><td><a href="view.php?msq=' . $engine['mid'] . '">' . $engine['uploadDate'] . '</a></td>';
+	echo '<td><a href=/forum/memberlist.php?mode=viewprofile&u=' . $engine['user_id'] . '>' . $rusefi->getUserNameFromId($engine['user_id']) . '</a></td>';
+	echo '<td>' . $engine['make'] . '</td>';
+	echo '<td>' . $engine['code'] . '</td>';
+	echo '<td>' . $engine['numCylinders'] . '</td>';
+	echo '<td>' . $engine['displacement'] . '</td>';
+	echo '<td>' . $engine['compression'] . ':1</td>';
 	echo '<td>' . $aspiration . '</td>';
-	echo '<td>' . $results[$c]['firmware'] . '/' . $results[$c]['signature'] . '</td>';
-	echo '<td>' . $results[$c]['views'] . '</td>';
-	echo '<td><a title="Download MSQ" download href="download.php?msq=' . $results[$c]['mid'] . '">💾</a></td></tr>';
+	echo '<td>' . $engine['firmware'] . '/' . $engine['signature'] . '</td>';
+	echo '<td>' . $engine['views'] . '</td>';
+	echo '<td><a title="Download MSQ" download href="download.php?msq=' . $engine['mid'] . '">💾</a></td></tr>';
 }
 echo '</table></div>';
 
