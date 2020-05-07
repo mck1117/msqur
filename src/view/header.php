@@ -8,21 +8,13 @@
 	<link rel="icon" type="image/x-icon" href="view/img/favicon.ico">
 	<link rel="stylesheet" href="view/msqur.css" />
 	<!-- Open Graph data -->
-	<meta property="fb:admins" content="127238424281477"/>
-	<meta property="og:title" content="msqur" />
+	<meta property="fb:admins" content="xxxtodo"/>
+	<meta property="og:title" content="rusEFI online" />
 	<meta property="og:type" content="website" />
 	<meta property="og:url" content="https://rusefi.com/online/" />
-	<meta property="og:image" content="https://msqur.com/view/img/tutorial5.png" />
-	<meta property="og:description" content="Megasquirt tune (msq) sharing site" />
-	<meta property="og:site_name" content="msqur" />
-	<!-- Twitter Card data -->
-	<meta name="twitter:card" content="summary">
-	<meta name="twitter:site" content="@nearwood">
-	<meta name="twitter:title" content="msqur">
-	<meta name="twitter:description" content="Megasquirt tune sharing">
-	<meta name="twitter:creator" content="@nearwood">
-	<!-- Twitter Summary card images must be at least 120x120px -->
-	<meta name="twitter:image" content="https://msqur.com/view/img/tutorial5.png">
+	<meta property="og:image" content="https://rusefi.com/style/logo_100.gif" />
+	<meta property="og:description" content="rusEFI tune file sharing site" />
+	<meta property="og:site_name" content="rusEFI online" />
 	<!-- External scripts -->
 	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js" integrity="sha384-UM1JrZIpBwVf5jj9dTKVvGiiZPZTLVoq4sfdvIe9SBumsvCuv6AHDNtEiIb5h1kU" crossorigin="anonymous"></script>
 	<link rel="stylesheet" href="//ajax.googleapis.com/ajax/libs/jqueryui/1.11.1/themes/smoothness/jquery-ui.css" integrity="sha384-5L1Zwk1YapN1l4l4rYc+1fr3Z0g23LbCBztpq0LQcbDCelzqgFb96BMCFtDwjq/b" crossorigin="anonymous">
