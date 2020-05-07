@@ -22,6 +22,11 @@ if (!DEBUG)
 <br/>
 <center>
 <a href="/"><img src='/style/logo_100.gif'></a>
+<br/>
+<small>
+	<span><a href="about.php">About</a></span>
+</small>
+
 </center>
 
 </html>

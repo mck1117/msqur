@@ -49,11 +49,9 @@ var hideUpload = <?= ($rusefi->username == "") ? "true" : "false"; ?>;
 <body>
 <div id="navigation">
 <span>
-	<button id="btnUpload"><img src="view/img/upload.svg" alt="Upload" width="16" height="16"><span>Upload</span></button>
-	<span><a href="index.php" rel="preload">Browse</a></span>
+	<span><a href="/online" rel="preload">Browse</a></span>
 	<span style="display:none;"><a href="search.php">Search</a></span>
 	<span style="display:none;"><a>Stats</a></span>
-	<span><a href="about.php">About</a></span>
 </span>
  <span class="logged">
 <?php if($rusefi->username == "") {?>
@@ -61,6 +59,7 @@ You are not logged into rusEFI forum! Please login <a href="<?=$rusefi->forum_lo
 <?php } else { ?>
 You are logged in as <a href="<?=$rusefi->forum_user_profile_url;?>"><?=$rusefi->username;?></a>
 <?php }?>
+	<button id="btnUpload"><img src="view/img/upload.svg" alt="Upload" width="16" height="16"><span>Upload</span></button>
  </span>
 </div>
 
