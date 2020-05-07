@@ -17,4 +17,11 @@ if (!DEBUG)
 }
 ?>
 </body>
+
+<br/>
+<br/>
+<center>
+<a href="/"><img src='/style/logo_100.gif'></a>
+</center>
+
 </html>
