@@ -24,6 +24,9 @@ if (!DEBUG)
 <a href="/"><img src='/style/logo_100.gif'></a>
 <br/>
 <small>
+All the tunes here are distributed in the hope that those will be useful educational material, but WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
 	<span><a href="about.php">About</a></span>
 </small>
 
