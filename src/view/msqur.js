@@ -337,6 +337,7 @@ $(function() {
 	{
 		var eInfo = {
 			// "msqur_field_name": ["TS_tune_file_constant_name"]
+			"name": ["vehicleName"],
 			"make": ["engineMake"],
 			"code": ["engineCode"],
 			"displacement": ["displacement"],

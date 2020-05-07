@@ -89,13 +89,14 @@ $numResults = count($results);
 
 echo '<div id="content"><div class="info">' . $numResults . ' results.</div>';
 echo '<table ng-controller="BrowseController">';
-echo '<tr><th>Uploaded</th><th>Owner</th><th>Engine Make</th><th>Engine Code</th><th>Cylinders</th><th>Liters</th><th>Compression</th><th>Aspiration</th><th>Firmware/Version</th><th>Views</th><th>Options</th></tr>';
+echo '<tr><th>Uploaded</th><th>Owner</th><th>Vehicle Name</th><th>Engine Make</th><th>Engine Code</th><th>Cylinders</th><th>Liters</th><th>Compression</th><th>Aspiration</th><th>Firmware/Version</th><th>Views</th><th>Options</th></tr>';
 for ($c = 0; $c < $numResults; $c++)
 {
     $engine = $results[$c];
 	$aspiration = $engine['induction'] == 1 ? "Turbo" : "Atmo";
 	echo '<tr><td><a href="view.php?msq=' . $engine['mid'] . '">' . $engine['uploadDate'] . '</a></td>';
 	echo '<td><a href=/forum/memberlist.php?mode=viewprofile&u=' . $engine['user_id'] . '>' . $rusefi->getUserNameFromId($engine['user_id']) . '</a></td>';
+	echo '<td>' . $engine['name'] . '</td>';
 	echo '<td>' . $engine['make'] . '</td>';
 	echo '<td>' . $engine['code'] . '</td>';
 	echo '<td>' . $engine['numCylinders'] . '</td>';

@@ -39,8 +39,8 @@ class Rusefi
 		$this->username = ($this->userid != -1) ? $this->getUserNameFromId($this->userid) : "";
 		
 		//!!!!!!!!!!!
-		//$this->userid = 2;
-		//$this->username = "AndreyB";
+		$this->userid = 2;
+		$this->username = "AndreyB";
 	
 		$this->forum_login_url = $this->forum_url . "/ucp.php?mode=login";
 		$this->forum_user_profile_url = $this->forum_url . "/memberlist.php?mode=viewprofile&u=" . $this->userid;
@@ -138,16 +138,16 @@ class Rusefi
 			return array("text"=>"Cannot check your tune. Please authorize!", "status"=>"deny");
 			
 		$einfo = parseQueryString("einfo");
-		if (!isset($einfo["make"]) || !isset($einfo["code"]))
+		if (!isset($einfo["name"]) || !isset($einfo["make"]) || !isset($einfo["code"]))
 			return array("text"=>"Wrong data!", "status"=>"deny");
-		if ($einfo["make"][1] == "" || $einfo["code"][1] == "")
-			return array("text"=>"Engine 'make' and 'code' fields may not be empty! Please check your Tune settings!" . $more, "status"=>"deny");
+		if ($einfo["name"][1] == "" || $einfo["make"][1] == "" || $einfo["code"][1] == "")
+			return array("text"=>"Vehicle Name, Engine Make and Code may not be empty! Please check your Tune settings!" . $more, "status"=>"deny");
 
 		$optparams = array("displacement", "compression", "induction");
 
 		// ok, the user data seems valid, let's check his existing engines...
 
-		$engines = $this->msqur->db->getUserEngines($this->userid);
+		$engines = $this->msqur->db->getUserVehicles($this->userid);
 		$engines = ($engines === FALSE) ? array() : $engines;
 		
 		$ret = array("text"=>"", "status"=>"warn");
@@ -156,18 +156,18 @@ class Rusefi
 			$ret["text"] = "You are going to upload your first rusEFI Tune! Please check carefully all the info above!". $more;
 		else
 		{
-			$isNewMake = true;
-			$isNewCode = true;
+			$isNewName = true;
+			$isNewMakeCode = true;
 			$isNewEngineParams = true;
 			// check if the user already has that make or code
 			foreach ($engines as $e)
 			{
-				if ($this->areValuesEqual($e["make"], $einfo["make"][1]))
+				if ($this->areValuesEqual($e["name"], $einfo["name"][1]))
 				{
-					$isNewMake = false;
-					if ($this->areValuesEqual($e["code"], $einfo["code"][1]))
+					$isNewName = false;
+					if ($this->areValuesEqual($e["make"], $einfo["make"][1]) && $this->areValuesEqual($e["code"], $einfo["code"][1]))
 					{
-						$isNewCode = false;
+						$isNewMakeCode = false;
 						$isNewEngineParams = false;
 						foreach ($optparams as $p)
 						{
@@ -181,13 +181,17 @@ class Rusefi
 				}
 			}
 
-			if ($isNewMake || $isNewCode)
+			if ($isNewName)
 			{
-				$ret["text"] = "This tune has a new 'Engine ".($isNewMake ? "Make":"Code")."'! Are you sure you want to add a new engine? Please check carefully the info above!". $more;
+				$ret["text"] = "This tune is for a new Vehicle! Are you sure you want to add it? Please check carefully the info above!". $more;
+			}
+			else if ($isNewMakeCode)
+			{
+				$ret["text"] = "The Engine Make or Code is different in this tune from the stored for your vehicle! Are you sure you want to update them? Please check carefully the info above!". $more;
 			}
 			else if ($isNewEngineParams)
 			{
-				$ret["text"] = "The new '".implode(",", $whatIsDifferent)."' info detected for your stored engine! Are you sure you want to update the engine data?". $more;
+				$ret["text"] = "The new '".implode(",", $whatIsDifferent)."' info detected for your stored vehicle! Are you sure you want to update the vehicle data?". $more;
 			}
 		}
 		
@@ -201,7 +205,7 @@ class Rusefi
 
 		if ($notAllParams)
 		{
-			$ret["text"] .= "<div class=warn2><em>Warning! Your engine info is incomplete!</em></div>";
+			$ret["text"] .= "<div class=warn2><em>Warning! Your vehicle info is incomplete!</em></div>";
 		}
 
 		// no warnings?

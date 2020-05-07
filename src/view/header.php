@@ -64,7 +64,12 @@ var hideUpload = <?= ($rusefi->username == "") ? "true" : "false"; ?>;
 		<output id="fileList"></output>
 		<div id="engineInfo" style="display:none;">
 			<fieldset>
-				<legend>Engine Information from your Tune file:</legend>
+				<legend>Vehicle Information from your Tune file:</legend>
+				<div class="formDiv">
+					<label for="name">Vehicle Name:</label>
+					<input id="name" name="name" type="text" placeholder="" maxlength="32" style="width:10em;" readonly required/>
+				</div>
+
 				<div class="formDiv">
 					<label for="make">Engine Make:</label>
 					<input id="make" name="make" type="text" placeholder="" maxlength="32" style="width:10em;" readonly required/>

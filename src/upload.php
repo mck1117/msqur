@@ -119,9 +119,10 @@ if (isset($_POST['upload']) && isset($_FILES))
 	{
 		echo '<div class="info">The file has been uploaded.</div>';
 		
-		if (DEBUG) debug('Adding engine: ' . $_POST['make'] . ', ' . $_POST['code'] . ', ' . $_POST['displacement'] . ', ' . $_POST['compression'] . ', ' . $_POST['induction']);
+		if (DEBUG) debug('Adding engine: ' . $_POST['name'] . ', ' . $_POST['make'] . ', ' . $_POST['code'] . ', ' . $_POST['displacement'] . ', ' . $_POST['compression'] . ', ' . $_POST['induction']);
 		
-		$engineid = $msqur->addEngine($rusefi->userid, 
+		$engineid = $msqur->addOrUpdateVehicle($rusefi->userid, 
+			$rusefi->processValue($_POST['name']), 
 			$rusefi->processValue($_POST['make']), 
 			$rusefi->processValue($_POST['code']), 
 			$rusefi->processValue($_POST['displacement']),
@@ -130,6 +131,7 @@ if (isset($_POST['upload']) && isset($_FILES))
 		);
 		$fileList = $msqur->addMSQs($files, $engineid);
 		
+		$safeName = htmlspecialchars($_POST['name']);
 		$safeMake = htmlspecialchars($_POST['make']);
 		$safeCode = htmlspecialchars($_POST['code']);
 		
@@ -139,7 +141,7 @@ if (isset($_POST['upload']) && isset($_FILES))
 			echo '<div class="info"><ul id="fileList">';
 			foreach ($fileList as $id => $name)
 			{
-				echo '<li><a href="view.php?msq=' . $id . '">' . "$safeMake $safeCode - $name" . '</a></li>';
+				echo '<li><a href="view.php?msq=' . $id . '">' . "$safeName ($safeMake $safeCode) - $name" . '</a></li>';
 
 				// parse and update DB
 				$msqur->view($id);

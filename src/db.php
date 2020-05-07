@@ -126,10 +126,11 @@ class DB
 	 * @param $turbo boolean Forced induction
 	 * @returns the ID of the new engine record, or null if unsuccessful.
 	 */
-	public function addEngine($user_id, $make, $code, $displacement, $compression, $induction)
+	public function addOrUpdateVehicle($user_id, $name, $make, $code, $displacement, $compression, $induction)
 	{
 		$id = null;
 		
+		if ($name == NULL) $name = "";
 		if ($make == NULL) $make = "";
 		if ($code == NULL) $code = "";
 		
@@ -141,18 +142,37 @@ class DB
 			
 			try
 			{
-				if (DEBUG) debug("Add engine: \"$user_id\", \"$make\", \"$code\", $displacement, $compression, $induction");
-				//TODO use any existing one before creating
-				$st = $this->db->prepare("INSERT INTO msqur_engines (user_id, make, code, displacement, compression, induction) VALUES (:user_id, :make, :code, :displacement, :compression, :induction)");
+				$where = "WHERE user_id = :user_id AND name = :name";
+				$st = $this->db->prepare("SELECT id FROM msqur_engines " . $where);
+				DB::tryBind($st, ":user_id", $user_id);
+				DB::tryBind($st, ":name", $name);
+				$st->execute();
+				if ($st->rowCount() > 0)
+				{
+					$result = $st->fetch(PDO::FETCH_ASSOC);
+					$update_id = $result['id'];
+
+					if (DEBUG) debug("Update vehicle: \"$user_id\", \"$name\", \"$make\", \"$code\", $displacement, $compression, $induction");
+	                $st = $this->db->prepare("UPDATE msqur_engines SET make = :make, code = :code, displacement = :displacement, compression = :compression, induction = :induction " . $where);
+	            } else
+	            {
+					if (DEBUG) debug("Add vehicle: \"$user_id\", \"$make\", \"$code\", $displacement, $compression, $induction");
+					$st = $this->db->prepare("INSERT INTO msqur_engines (user_id, name, make, code, displacement, compression, induction) VALUES (:user_id, :name, :make, :code, :displacement, :compression, :induction)");
+					$update_id = -1;
+				}
 				
 				DB::tryBind($st, ":user_id", $user_id);
+				DB::tryBind($st, ":name", $name);
 				DB::tryBind($st, ":make", $make);
 				DB::tryBind($st, ":code", $code);
 				DB::tryBind($st, ":displacement", $displacement);
 				DB::tryBind($st, ":compression", $compression);
 				DB::tryBind($st, ":induction", $induction);
 				
-				if ($st->execute()) $id = $this->db->lastInsertId();
+				if ($st->execute()) 
+				{
+					$id = $update_id > 0 ? $update_id : $this->db->lastInsertId();
+				}
 				else echo "<div class=\"error\">Error adding engine: \"$make\", \"$code\"</div>";
 				$st->closeCursor();
 			}
@@ -301,7 +321,7 @@ class DB
 		
 		try
 		{
-			$statement = "SELECT m.id as mid, user_id, make, code, numCylinders, displacement, compression, induction, firmware, signature, uploadDate, views FROM msqur_metadata m INNER JOIN msqur_engines e ON m.engine = e.id WHERE ";
+			$statement = "SELECT m.id as mid, user_id, name, make, code, numCylinders, displacement, compression, induction, firmware, signature, uploadDate, views FROM msqur_metadata m INNER JOIN msqur_engines e ON m.engine = e.id WHERE ";
 			$where = array();
 			foreach ($bq as $col => $v)
 			{
@@ -357,7 +377,7 @@ class DB
 		//firmware signature e.make e.code e.displacement e.compression e.numCylinders
 		try
 		{
-			$st = $this->db->prepare("SELECT m.id as mid, make, code, numCylinders, displacement, compression, induction, firmware, signature, uploadDate, views FROM msqur_metadata m INNER JOIN msqur_engines e ON m.engine = e.id WHERE firmware LIKE :query");
+			$st = $this->db->prepare("SELECT m.id as mid, name, make, code, numCylinders, displacement, compression, induction, firmware, signature, uploadDate, views FROM msqur_metadata m INNER JOIN msqur_engines e ON m.engine = e.id WHERE firmware LIKE :query");
 			DB::tryBind($st, ":query", "%" . $query . "%"); //TODO exact/wildcard option
 			if ($st->execute())
 			{
@@ -741,12 +761,12 @@ class DB
 	//////////////////////////////////////////////////////////////////////////////
 	// [andreika]: rusEfi
 	
-	public function getUserEngines($user_id)
+	public function getUserVehicles($user_id)
 	{
 		if (!$this->connect()) return FALSE;
 		try
 		{
-			$st = $this->db->prepare("SELECT make, code, displacement, compression, induction FROM msqur_engines WHERE user_id = :user_id");
+			$st = $this->db->prepare("SELECT name, make, code, displacement, compression, induction FROM msqur_engines WHERE user_id = :user_id");
 			DB::tryBind($st, ":user_id", $user_id);
 			$st->execute();
 			if ($st->rowCount() > 0)

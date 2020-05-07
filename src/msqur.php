@@ -185,9 +185,9 @@ class Msqur
 		return null;
 	}
 	
-	public function addEngine($user_id, $make, $code, $displacement, $compression, $turbo)
+	public function addOrUpdateVehicle($user_id, $name, $make, $code, $displacement, $compression, $turbo)
 	{
-		return $this->db->addEngine($user_id, $make, $code, $displacement, $compression, $turbo);
+		return $this->db->addOrUpdateVehicle($user_id, $name, $make, $code, $displacement, $compression, $turbo);
 	}
 }
 
