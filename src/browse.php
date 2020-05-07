@@ -15,10 +15,11 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
-require "msqur.php";
+require_once "msqur.php";
 
 $page = parseQueryString('p') || 0;
 $bq = array();
+$bq['user_id'] = parseQueryString('user_id');
 $bq['make'] = parseQueryString('engineMake'); //TODO Define these API method/strings in one place
 $bq['code'] = parseQueryString('engineCode');
 $bq['firmware'] = parseQueryString('firmware');
@@ -88,11 +89,14 @@ $numResults = count($results);
 
 echo '<div id="content"><div class="info">' . $numResults . ' results.</div>';
 echo '<table ng-controller="BrowseController">';
-echo '<tr><th>Uploaded</th><th>Engine Make</th><th>Engine Code</th><th>Cylinders</th><th>Liters</th><th>Compression</th><th>Aspiration</th><th>Firmware/Version</th><th>Views</th><th>Options</th></tr>';
+echo '<tr><th>Uploaded</th><th>Owner</th><th>Engine Make</th><th>Engine Code</th><th>Cylinders</th><th>Liters</th><th>Compression</th><th>Aspiration</th><th>Firmware/Version</th><th>Views</th><th>Options</th></tr>';
 for ($c = 0; $c < $numResults; $c++)
 {
-	$aspiration = $results[$c]['induction'] == 1 ? "Turbo" : "NA";
-	echo '<tr><td><a href="view.php?msq=' . $results[$c]['mid'] . '">' . $results[$c]['uploadDate'] . '</a></td><td>' . $results[$c]['make'] . '</td><td>' . $results[$c]['code'] . '</td>';
+	$aspiration = $results[$c]['induction'] == 1 ? "Turbo" : "Atmo";
+	echo '<tr><td><a href="view.php?msq=' . $results[$c]['mid'] . '">' . $results[$c]['uploadDate'] . '</a></td>';
+	echo '<td>' . $rusefi->getUserNameFromId($results[$c]['user_id']) . '</td>';
+	echo '<td>' . $results[$c]['make'] . '</td>';
+	echo '<td>' . $results[$c]['code'] . '</td>';
 	echo '<td>' . $results[$c]['numCylinders'] . '</td>';
 	echo '<td>' . $results[$c]['displacement'] . '</td>';
 	echo '<td>' . $results[$c]['compression'] . ':1</td>';

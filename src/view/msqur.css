@@ -40,6 +40,10 @@ div.warn, div.warning {
 	color: darkorange;
 }
 
+div.warn2 {
+	color: orangered;
+}
+
 div.info {
 	color: #111;
 }
@@ -53,6 +57,11 @@ div#navigation {
 	background: #90a4ae;
 	color: black;
 	padding: 8px 24px 8px 24px;
+}
+
+span.logged {
+	float: right;
+	color: #e4e4e4;
 }
 
 div#navigation span {
@@ -251,4 +260,14 @@ aside {
 .browse .category > div {
 	padding: 6px;
 	display: inline-block;
+}
+
+#processing {
+	color: darkorange;
+}
+
+.uploadOutput {
+	background: #dbe5ea;
+	padding: 8px 24px 8px 24px;
+	margin-bottom: 1em;
 }

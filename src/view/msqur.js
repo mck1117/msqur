@@ -32,12 +32,16 @@ $(function() {
 		autoOpen: false,
 		title: "Upload Tune Files",
 		width: "512px",
-		buttons: {
-			Upload: uploadClick,
-			Cancel: function() { $(this).dialog('close'); }
-		}
+		buttons: hideUpload ? [
+			{ text: "Cancel", click: function() { $(this).dialog('close'); } }
+		] :
+		[
+			{ id: "dialogUpload", text: "Upload", click: uploadClick, },
+			{ text: "Cancel", click: function() { $(this).dialog('close'); } }
+		]
 	});
 	
+	enableUploadButton(false);
 	$('#btnUpload').click(function(e) {
 		if (window.File && window.FileReader && window.FileList && window.Blob)
 		{
@@ -247,19 +251,31 @@ $(function() {
 		e.stopPropagation();
 		e.preventDefault();
 		
+		onUpload();
+		
 		var files = e.target.files || e.dataTransfer.files
 		//TODO type check
 		var output = [];
 		for (var i = 0, f; f = files[i]; ++i)
 		{
-			output.push('<li><strong>', escape(f.name), '</strong> (', f.type || 'n/a', ') - ',
-			f.size, ' bytes, last modified: ',
-			f.lastModifiedDate ? f.lastModifiedDate.toLocaleDateString() : 'n/a',
+			var ft = getFileType(f.name);
+			output.push('<li><strong>', escape(f.name), '</strong> (', ft || 'n/a', ') - ',
+			f.size, ' bytes',
+			f.lastModifiedDate ? ', last modified: ' + f.lastModifiedDate.toLocaleDateString() : '',
 			'</li>');
+			if (ft == "Tune")
+			{
+				startGettingEngineInfoFromTuneFile(f);
+			}
+			else
+			{
+				// todo: add Log real-time parsing?
+				//enableUploadButton(true);
+			}
 		}
 		$('output#fileList').html('<ul>' + output.join('') + '</ul>');
 	}
-	
+
 	function uploadDragOver(e)
 	{
 		e.stopPropagation();
@@ -277,27 +293,113 @@ $(function() {
 	
 	function uploadClick()
 	{
-		//var files = $('input#fileSelect').val();
-		var make = $('input#make').val();
-		var model = $('input#code').val();
-		var disp = $('input#displacement').val();
-		var comp = $('input#compression').val();
-		
-		//put in array and map/reduce?
-		if (simpleValidation(make) && simpleValidation(model) && simpleValidation(disp) && simpleValidation(comp))
-		{
-			$('div#upload form').submit();
-		}
-		else
-		{
-			//TODO some error msg
-		}
+		$('div#upload form').submit();
 	}
 	
 	function searchClick()
 	{
 		$('form#search').submit();
 	}
+
+	//////////////////////////////////////////////////////////////////////////////
+	// [andreika]: rusEFI scripts
+
+	function onUpload()
+	{
+		enableUploadButton(false);
+		$('#engineInfo').hide();
+		$('output#processing').html("");
+	}
+
+	function getFileType(filename)
+	{
+		var ext = filename.split('.').pop();
+		if (ext == "msq")
+			return "Tune";
+		else if (ext == "msl" || ext == "msg")
+			return "Log";
+		return null;
+	}
+
+	function startGettingEngineInfoFromTuneFile(file)
+	{
+		var fr = new FileReader();
+		fr.onload = onFileRead;
+        fr.readAsText(file);
+
+		function onFileRead()
+		{
+			getEngineInfoFromTuneFile(fr.result);
+		}
+	}
+
+	function getEngineInfoFromTuneFile(data)
+	{
+		var eInfo = {
+			// "msqur_field_name": ["TS_tune_file_constant_name"]
+			"make": ["engineMake"],
+			"code": ["engineCode"],
+			"displacement": ["displacement"],
+			"compression": ["compressionRatio"],
+			"induction": ["isForcedInduction"]
+		};
+		for (const field in eInfo)
+		{
+			var re = new RegExp('<constant.*?name="' + eInfo[field][0] + '"[^>]*>([^<]+)</constant>', 'g');
+			var value = "", val = re.exec(data);
+			if (val)
+			{
+				// strip quotes
+				var value = val[1].replace(/['"]+/g, '');
+				// round floats
+				if (!isNaN(value))
+				{
+					value = parseFloat(parseFloat(value).toFixed(2));
+				}
+			}
+			// store the value
+			eInfo[field].push(value);
+			var f = $('input#' + field);
+			// highlight absent values
+			f.css({ "border": (value == "") ? '#FF0000 1px solid' : '#707070 1px solid'});
+			f.val(value == "" ? "?" : value);
+		}
+		$('#engineInfo').show();
+		// center dialog
+		$("div#upload").dialog("option", "position", {my: "center", at: "center", of: window});
+		
+		preprocessEngineInfo(eInfo);
+	}
+
+	function preprocessEngineInfo(eInfo)
+	{
+		//alert(JSON.stringify(eInfo, null, 4));
+		$.get("api.php?method=preprocessTune", { einfo: eInfo }, function(data) {
+			// output the text result
+			$('output#processing').html(data.preprocessTune.text);
+
+			var status = data.preprocessTune.status;
+			// change the message color
+			var clr = "red";
+			if (status == "ok")
+				clr = "green";
+			else if (status == "warn")
+				clr = "darkorange";
+			$('output#processing').css("color", clr);
+			
+			// enable upload button if the status is good enough
+			enableUploadButton(status == "ok" || status == "warn");
+
+		}, "json");
+
+	}
+
+	function enableUploadButton(isEnabled)
+	{
+		$('#dialogUpload').attr("disabled", !isEnabled).css("opacity", isEnabled ? 1.0 : 0.5);
+	}
+	
+
 	
 	$('input#fileSelect').change(uploadAdd);
 	var dropZone = document.getElementById('fileDropZone');

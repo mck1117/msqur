@@ -16,9 +16,9 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
 require_once "config.php";
-require "db.php";
-require "ini.php";
-require "msq.php";
+require_once "db.php";
+require_once "ini.php";
+require_once "msq.php";
 
 /*
  * @brief Defines the actions taken at the user level.
@@ -30,7 +30,7 @@ require "msq.php";
  */
 class Msqur
 {
-	private $db;
+	public $db;
 	
 	function __construct()
 	{
@@ -62,9 +62,9 @@ class Msqur
 		
 		return $fileList;
 	}
-	
+
 	//TODO pass through meta tags via argument to header
-	public function header() { include "view/header.php"; }
+	public function header() { global $rusefi; include_once "view/header.php"; }
 	public function footer() { include "view/footer.php"; }
 	
 	public function splash()
@@ -185,12 +185,14 @@ class Msqur
 		return null;
 	}
 	
-	public function addEngine($make, $code, $displacement, $compression, $turbo)
+	public function addEngine($user_id, $make, $code, $displacement, $compression, $turbo)
 	{
-		return $this->db->addEngine($make, $code, $displacement, $compression, $turbo);
+		return $this->db->addEngine($user_id, $make, $code, $displacement, $compression, $turbo);
 	}
 }
 
 $msqur = new Msqur();
+
+require "rusefi.php";
 
 ?>

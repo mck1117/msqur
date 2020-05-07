@@ -15,7 +15,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
-require "msqur.php";
+require_once "msqur.php";
 
 $msqur->header();
 
@@ -58,8 +58,8 @@ function checkUploads($files)
 			continue;
 		}
 		
-		//Check sizes against 1MiB
-		if ($file['size'] > 1048576)
+		//Check sizes against 5MiB
+		if ($file['size'] > 5*1048576)
 		{
 			unset($files[$index]);
 			continue;
@@ -97,25 +97,37 @@ function acceptableMimeType($mimeType) {
 
 //var_export($_POST);
 //var_export($_FILES);
+echo '<div class="uploadOutput">';
 
 if (isset($_POST['upload']) && isset($_FILES))
 {
 	$files = checkUploads(fixFileArray($_FILES['files']));
-	if (count($files) == 0)
+	if ($rusefi->userid < 1)
+	{
+		echo '<div class="error">You are not logged into rusEFI forum! Please login <a href="'.$rusefi->forum_login_url.'">here</a>!</div>';
+	}
+	else if (count($files) != 1)
 	{
 		//No files made it past the check
-		echo '<div class="error">Your file(s) have asploded.</div>';
+		echo '<div class="error">Cannot upload!</div>';
+	}
+	else if ($rusefi->isTuneAlreadyExists($files, -1))
+	{
+		echo '<div class="error">This tune file already exists in our Database!</div>';
 	}
 	else
 	{
-		if (count($files) == 1)
-			echo '<div class="info">' . count($files) . ' file was uploaded.</div>';
-		else
-			echo '<div class="info">' . count($files) . ' files were uploaded.</div>';
+		echo '<div class="info">The file has been uploaded.</div>';
 		
-		if (DEBUG) debug('Adding engine: ' . $_POST['make'] . ', ' . $_POST['code'] . ', ' . $_POST['displacement'] . ', ' . $_POST['compression'] . ', ' . $_POST['aspiration']);
+		if (DEBUG) debug('Adding engine: ' . $_POST['make'] . ', ' . $_POST['code'] . ', ' . $_POST['displacement'] . ', ' . $_POST['compression'] . ', ' . $_POST['induction']);
 		
-		$engineid = $msqur->addEngine($_POST['make'], $_POST['code'], $_POST['displacement'], $_POST['compression'], $_POST['aspiration']);
+		$engineid = $msqur->addEngine($rusefi->userid, 
+			$rusefi->processValue($_POST['make']), 
+			$rusefi->processValue($_POST['code']), 
+			$rusefi->processValue($_POST['displacement']),
+			$rusefi->processValue($_POST['compression']), 
+			$rusefi->processValue($_POST['induction'])
+		);
 		$fileList = $msqur->addMSQs($files, $engineid);
 		
 		$safeMake = htmlspecialchars($_POST['make']);
@@ -128,15 +140,27 @@ if (isset($_POST['upload']) && isset($_FILES))
 			foreach ($fileList as $id => $name)
 			{
 				echo '<li><a href="view.php?msq=' . $id . '">' . "$safeMake $safeCode - $name" . '</a></li>';
+
+				// parse and update DB
+				$msqur->view($id);
 			}
+			
 			echo '</div></ul>';
+			echo '<div class="info">Thank you!</div>';
 		}
 		else
 		{
 			echo '<div class="error">Unable to store uploaded file.</div>';
 		}
 	}
+} else
+{
+	echo '<div class="error">Nothing to upload!</div>';
 }
 
-$msqur->footer();
+echo '</div>';
+
+require "browse.php";
+
+//$msqur->footer();
 ?>

@@ -53,6 +53,8 @@ class API
 	
 	public function call($method)
 	{
+		global $rusefi;
+
 		$result = array("version" => API::VERSION);
 		
 		if (!$this->isAuthenticated)
@@ -93,6 +95,12 @@ class API
 			case 'aspirations':
 				//SELECT DISTINCT make FROM `engines` WHERE 1
 				break;
+			////////////////////////////////////////////////////////////////////////
+			// [andreika]: rusEfi JSON commands
+			case 'preprocessTune':
+				$result = array($method => $rusefi->preprocessTune());
+				break;
+
 			//TODO upload date range?
 			default:
 				$result["error"] = "Invalid API call";

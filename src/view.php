@@ -34,4 +34,5 @@ if (isset($_GET['msq'])) {
 } else {
 	include "index.php";
 }
+
 ?>

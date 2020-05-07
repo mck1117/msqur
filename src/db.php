@@ -21,9 +21,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>. */
  */
 class DB
 {
-	private $db;
+	public $db;
 	
-	private function connect()
+	public function connect()
 	{
 		if (isset($this->db) && $this->db instanceof PDO)
 		{
@@ -71,7 +71,7 @@ class DB
 			//TODO Compress?
 
 			//TODO transaction so we can rollback (`$db->beginTransaction()`)
-			$st = $this->db->prepare("INSERT INTO msqs (xml) VALUES (:xml)");
+			$st = $this->db->prepare("INSERT INTO msqur_files (xml) VALUES (:xml)");
 			$xml = file_get_contents($file['tmp_name']);
 			//Convert encoding to UTF-8
 			$xml = mb_convert_encoding($xml, "UTF-8");
@@ -81,7 +81,7 @@ class DB
 			if ($st->execute())
 			{
 				$id = $this->db->lastInsertId();
-				$st = $this->db->prepare("INSERT INTO metadata (url,msq,engine,fileFormat,signature,uploadDate) VALUES (:url, :id, :engine, '4.0', 'unknown', :uploaded)");
+				$st = $this->db->prepare("INSERT INTO msqur_metadata (url,file,engine,fileFormat,signature,uploadDate) VALUES (:url, :id, :engine, '4.0', 'unknown', :uploaded)");
 				DB::tryBind($st, ":url", $id); //could do hash but for now, just the id
 				DB::tryBind($st, ":id", $id);
 				if (!is_numeric($engineid)) $engineid = null;
@@ -126,7 +126,7 @@ class DB
 	 * @param $turbo boolean Forced induction
 	 * @returns the ID of the new engine record, or null if unsuccessful.
 	 */
-	public function addEngine($make, $code, $displacement, $compression, $turbo)
+	public function addEngine($user_id, $make, $code, $displacement, $compression, $induction)
 	{
 		$id = null;
 		
@@ -141,20 +141,16 @@ class DB
 			
 			try
 			{
-				if (DEBUG) debug("Add engine: \"$make\", \"$code\", $displacement, $compression, $turbo");
+				if (DEBUG) debug("Add engine: \"$user_id\", \"$make\", \"$code\", $displacement, $compression, $induction");
 				//TODO use any existing one before creating
-				$st = $this->db->prepare("INSERT INTO engines (make, code, displacement, compression, induction) VALUES (:make, :code, :displacement, :compression, :induction)");
+				$st = $this->db->prepare("INSERT INTO msqur_engines (user_id, make, code, displacement, compression, induction) VALUES (:user_id, :make, :code, :displacement, :compression, :induction)");
 				
+				DB::tryBind($st, ":user_id", $user_id);
 				DB::tryBind($st, ":make", $make);
 				DB::tryBind($st, ":code", $code);
 				DB::tryBind($st, ":displacement", $displacement);
 				DB::tryBind($st, ":compression", $compression);
-				
-				if ($turbo == "na")
-					$t = 0;
-				else
-					$t = 1;
-				DB::tryBind($st, ":induction", $t);
+				DB::tryBind($st, ":induction", $induction);
 				
 				if ($st->execute()) $id = $this->db->lastInsertId();
 				else echo "<div class=\"error\">Error adding engine: \"$make\", \"$code\"</div>";
@@ -181,7 +177,7 @@ class DB
 		
 		try
 		{
-			$st = $this->db->prepare("SELECT reingest FROM metadata WHERE metadata.id = :id LIMIT 1");
+			$st = $this->db->prepare("SELECT reingest FROM msqur_metadata WHERE msqur_metadata.id = :id LIMIT 1");
 			DB::tryBind($st, ":id", $id);
 			$st->execute();
 			if ($st->rowCount() > 0)
@@ -218,7 +214,7 @@ class DB
 		try
 		{
 			if (DEBUG) debug('Resetting reingest flag...');
-			$st = $this->db->prepare("UPDATE metadata m SET m.reingest=FALSE WHERE m.id = :id");
+			$st = $this->db->prepare("UPDATE msqur_metadata m SET m.reingest=FALSE WHERE m.id = :id");
 			DB::tryBind($st, ":id", $id);
 			if ($st->execute())
 			{
@@ -265,7 +261,7 @@ class DB
 		
 		try
 		{
-			$st = $this->db->prepare("SELECT html FROM msqs INNER JOIN metadata ON metadata.msq = msqs.id WHERE metadata.id = :id LIMIT 1");
+			$st = $this->db->prepare("SELECT html FROM msqur_files INNER JOIN msqur_metadata ON msqur_metadata.file = msqur_files.id WHERE msqur_metadata.id = :id LIMIT 1");
 			DB::tryBind($st, ":id", $id);
 			$st->execute();
 			if ($st->rowCount() > 0)
@@ -305,7 +301,7 @@ class DB
 		
 		try
 		{
-			$statement = "SELECT m.id as mid, make, code, numCylinders, displacement, compression, induction, firmware, signature, uploadDate, views FROM metadata m INNER JOIN engines e ON m.engine = e.id WHERE ";
+			$statement = "SELECT m.id as mid, user_id, make, code, numCylinders, displacement, compression, induction, firmware, signature, uploadDate, views FROM msqur_metadata m INNER JOIN msqur_engines e ON m.engine = e.id WHERE ";
 			$where = array();
 			foreach ($bq as $col => $v)
 			{
@@ -361,7 +357,7 @@ class DB
 		//firmware signature e.make e.code e.displacement e.compression e.numCylinders
 		try
 		{
-			$st = $this->db->prepare("SELECT m.id as mid, make, code, numCylinders, displacement, compression, induction, firmware, signature, uploadDate, views FROM metadata m INNER JOIN engines e ON m.engine = e.id WHERE firmware LIKE :query");
+			$st = $this->db->prepare("SELECT m.id as mid, make, code, numCylinders, displacement, compression, induction, firmware, signature, uploadDate, views FROM msqur_metadata m INNER JOIN msqur_engines e ON m.engine = e.id WHERE firmware LIKE :query");
 			DB::tryBind($st, ":query", "%" . $query . "%"); //TODO exact/wildcard option
 			if ($st->execute())
 			{
@@ -390,7 +386,7 @@ class DB
 		try
 		{
 			if (DEBUG) debug("Getting firmware list...");
-			$st = $this->db->prepare("SELECT DISTINCT firmware FROM `metadata`");
+			$st = $this->db->prepare("SELECT DISTINCT firmware FROM `msqur_metadata`");
 			
 			if ($st->execute())
 			{
@@ -422,11 +418,11 @@ class DB
 			if (DEBUG) debug("Getting firmware version list...");
 			if ($firmware == null)
 			{
-				$st = $this->db->prepare("SELECT DISTINCT signature FROM `metadata`");
+				$st = $this->db->prepare("SELECT DISTINCT signature FROM `msqur_metadata`");
 			}
 			else
 			{
-				$st = $this->db->prepare("SELECT DISTINCT signature FROM `metadata` WHERE firmware = :fw");
+				$st = $this->db->prepare("SELECT DISTINCT signature FROM `msqur_metadata` WHERE firmware = :fw");
 				DB::tryBind($st, ":fw", $firmware);
 			}
 			
@@ -453,7 +449,7 @@ class DB
 		try
 		{
 			if (DEBUG) debug("Getting engine make list...");
-			$st = $this->db->prepare("SELECT DISTINCT make FROM `engines`");
+			$st = $this->db->prepare("SELECT DISTINCT make FROM `msqur_engines`");
 			
 			if ($st->execute())
 			{
@@ -481,12 +477,12 @@ class DB
 			
 			if ($make !== null && gettype($make) == "string")
 			{
-				$st = $this->db->prepare("SELECT DISTINCT code FROM `engines` WHERE make = :make");
+				$st = $this->db->prepare("SELECT DISTINCT code FROM `msqur_engines` WHERE make = :make");
 				DB::tryBind($st, ":make", $make);
 			}
 			else
 			{
-				$st = $this->db->prepare("SELECT DISTINCT code FROM `engines`");
+				$st = $this->db->prepare("SELECT DISTINCT code FROM `msqur_engines`");
 			}
 			
 			if ($st->execute())
@@ -518,7 +514,7 @@ class DB
 		try
 		{
 			if (DEBUG) debug('Updating HTML cache...');
-			$st = $this->db->prepare("UPDATE msqs ms, metadata m SET ms.html=:html WHERE m.msq = ms.id AND m.id = :id");
+			$st = $this->db->prepare("UPDATE msqur_files ms, msqur_metadata m SET ms.html=:html WHERE m.file = ms.id AND m.id = :id");
 			//$xml = mb_convert_encoding($html, "UTF-8");
 			DB::tryBind($st, ":id", $id);
 			DB::tryBind($st, ":html", $html);
@@ -571,7 +567,7 @@ class DB
 				$setFields[] = "e." . $k . " = :" . $k;
 			}
 
-			$st = $this->db->prepare("UPDATE engines e, metadata m SET " . implode(", ", $setFields) . " WHERE e.id = m.engine AND m.id = :id");
+			$st = $this->db->prepare("UPDATE msqur_engines e, msqur_metadata m SET " . implode(", ", $setFields) . " WHERE e.id = m.engine AND m.id = :id");
 			DB::tryBind($st, ":id", $id);
 
 			foreach ($engine as $k=>$e)
@@ -626,7 +622,7 @@ class DB
 		try
 		{
 			if (DEBUG) debug('Updating MSQ metadata...');
-			$st = $this->db->prepare("UPDATE metadata md SET md.fileFormat = :fileFormat, md.signature = :signature, md.firmware = :firmware, md.author = :author WHERE md.id = :id");
+			$st = $this->db->prepare("UPDATE msqur_metadata md SET md.fileFormat = :fileFormat, md.signature = :signature, md.firmware = :firmware, md.author = :author WHERE md.id = :id");
 			//$xml = mb_convert_encoding($html, "UTF-8");
 			DB::tryBind($st, ":id", $id);
 			DB::tryBind($st, ":fileFormat", $metadata['fileFormat']);
@@ -663,7 +659,7 @@ class DB
 		
 		try
 		{
-			$st = $this->db->prepare("UPDATE metadata SET views = views + 1 WHERE id = :id LIMIT 1");
+			$st = $this->db->prepare("UPDATE msqur_metadata SET views = views + 1 WHERE id = :id LIMIT 1");
 			DB::tryBind($st, ":id", $id);
 			$ret = $st->execute();
 			$st->closeCursor();
@@ -677,7 +673,7 @@ class DB
 		return false;
 	}
 	
-	private static function bindError($e)
+	public static function bindError($e)
 	{
 		if (DEBUG)
 		{
@@ -688,7 +684,7 @@ class DB
 		else echo '<div class="error">Error preparing database query.</div>';
 	}
 	
-	private static function tryBind($statement, $placeholder, $value)
+	public static function tryBind($statement, $placeholder, $value)
 	{
 		//TODO arg check
 		if (!$statement->bindParam($placeholder, $value))
@@ -697,7 +693,7 @@ class DB
 		}
 	}
 	
-	private function dbError($e)
+	public function dbError($e)
 	{
 		if (DEBUG)
 		{
@@ -724,7 +720,7 @@ class DB
 		
 		try
 		{
-			$st = $this->db->prepare("SELECT xml FROM msqs INNER JOIN metadata ON metadata.msq = msqs.id WHERE metadata.id = :id LIMIT 1");
+			$st = $this->db->prepare("SELECT xml FROM msqur_files INNER JOIN msqur_metadata ON msqur_metadata.file = msqur_files.id WHERE msqur_metadata.id = :id LIMIT 1");
 			DB::tryBind($st, ":id", $id);
 			if ($st->execute() && $st->rowCount() === 1)
 			{
@@ -741,6 +737,73 @@ class DB
 		
 		return $xml;
 	}
+
+	//////////////////////////////////////////////////////////////////////////////
+	// [andreika]: rusEfi
+	
+	public function getUserEngines($user_id)
+	{
+		if (!$this->connect()) return FALSE;
+		try
+		{
+			$st = $this->db->prepare("SELECT make, code, displacement, compression, induction FROM msqur_engines WHERE user_id = :user_id");
+			DB::tryBind($st, ":user_id", $user_id);
+			$st->execute();
+			if ($st->rowCount() > 0)
+			{
+				$result = $st->fetchAll(PDO::FETCH_ASSOC);
+				$st->closeCursor();
+				return $result;
+			}
+			else
+			{
+				if (DEBUG) debug("No result for $user_id");
+				$st->closeCursor();
+			}
+		}
+		catch (PDOException $e)
+		{
+			$this->dbError($e);
+		}
+
+		return FALSE;
+	}
+	
+	public function findMSQ($file, $engineid)
+	{
+		if (!$this->connect()) return -1;
+		
+		try
+		{
+			//TODO Compress?
+
+			//TODO transaction so we can rollback (`$db->beginTransaction()`)
+			$st = $this->db->prepare("SELECT id FROM msqur_files WHERE xml = :xml");
+			$xml = file_get_contents($file['tmp_name']);
+			//Convert encoding to UTF-8
+			$xml = mb_convert_encoding($xml, "UTF-8");
+			//Strip out invalid xmlns
+			$xml = preg_replace('/xmlns=".*?"/', '', $xml);
+			DB::tryBind($st, ":xml", $xml);
+			$st->execute();
+			if ($st->rowCount() > 0)
+			{
+				$result = $st->fetch(PDO::FETCH_ASSOC);
+				$st->closeCursor();
+				$id = $result["id"];
+			} else {
+				$id = -1;
+			}
+		}
+		catch (PDOException $e)
+		{
+			$this->dbError($e);
+			$id = -1;
+		}
+		
+		return $id;
+	}
+
 }
 
 ?>

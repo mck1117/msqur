@@ -43,8 +43,13 @@ function parseQueryString($s)
 	$ret = null;
 	if (isset($_GET[$s]))
 	{
-		$ret = htmlspecialchars($_GET[$s]);
-		if (strlen($ret) == 0) $ret = null;
+		$ret = $_GET[$s];
+		
+		if (!is_array($ret))
+		{
+			$ret = htmlspecialchars($ret);
+			if (strlen($ret) == 0) $ret = null;
+		}
 	}
 	
 	return $ret;
