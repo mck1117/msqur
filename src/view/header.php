@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html xmlns:og="https://ogp.me/ns#" xmlns:fb="https://www.facebook.com/2008/fbml" lang="en" ng-app="msqur">
 <head>
-	<title>MSQur</title>
+	<title>rusEFI Online</title>
 	<meta charset="UTF-8">
-	<meta name="description" content="Megasquirt tune file sharing site" />
+	<meta name="description" content="rusEFI tune file sharing site" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 	<link rel="icon" type="image/x-icon" href="view/img/favicon.ico">
 	<link rel="stylesheet" href="view/msqur.css" />
@@ -11,7 +11,7 @@
 	<meta property="fb:admins" content="127238424281477"/>
 	<meta property="og:title" content="msqur" />
 	<meta property="og:type" content="website" />
-	<meta property="og:url" content="https://msqur.com/" />
+	<meta property="og:url" content="https://rusefi.com/online/" />
 	<meta property="og:image" content="https://msqur.com/view/img/tutorial5.png" />
 	<meta property="og:description" content="Megasquirt tune (msq) sharing site" />
 	<meta property="og:site_name" content="msqur" />
