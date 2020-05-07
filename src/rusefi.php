@@ -39,8 +39,8 @@ class Rusefi
 		$this->username = ($this->userid != -1) ? $this->getUserNameFromId($this->userid) : "";
 		
 		//!!!!!!!!!!!
-		$this->userid = 2;
-		$this->username = "AndreyB";
+		//$this->userid = 2;
+		//$this->username = "AndreyB";
 	
 		$this->forum_login_url = $this->forum_url . "/ucp.php?mode=login";
 		$this->forum_user_profile_url = $this->forum_url . "/memberlist.php?mode=viewprofile&u=" . $this->userid;
