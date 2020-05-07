@@ -404,6 +404,9 @@ $(function() {
 	
 	$('input#fileSelect').change(uploadAdd);
 	var dropZone = document.getElementById('fileDropZone');
-	dropZone.addEventListener('dragover', uploadDragOver);
-	dropZone.addEventListener('drop', uploadAdd);
+	if (dropZone != null)
+	{
+		dropZone.addEventListener('dragover', uploadDragOver);
+		dropZone.addEventListener('drop', uploadAdd);
+	}
 });

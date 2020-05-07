@@ -28,6 +28,9 @@ class Rusefi
 		if (isset($_COOKIE['phpbb3_1lnf6_sid'])) {
 			$sid = $_COOKIE['phpbb3_1lnf6_sid'];
 			$this->userid = $this->getUserIdFromSid($sid);
+			// Anonymous user?
+			if ($this->userid <= 1)
+				$this->userid = -1;
 		}
 		
 		// if failed, try to get userid from the stored 'token' cookie
