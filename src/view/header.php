@@ -40,7 +40,7 @@ if (isset($_GET['msq'])) {
 }
 ?>
 <script>var buttons = $('div#upload').dialog('option', 'buttons');
-var hideUpload = <?= ($rusefi->username == "") ? "true" : "false"; ?>;
+var hideUpload = <?= ($rusefi->username == "Anonymous") ? "true" : "false"; ?>;
 </script>
 	<script src="view/msqur.js"></script>
 
@@ -54,9 +54,18 @@ var hideUpload = <?= ($rusefi->username == "") ? "true" : "false"; ?>;
 	<span style="display:none;"><a href="search.php">Search</a></span>
 	<span style="display:none;"><a>Stats</a></span>
 	<span><a href="about.php">About</a></span>
-</span><span class="logged"><?php if($rusefi->username == "") { ?>You are not logged into rusEFI forum! Please login <a href="<?=$rusefi->forum_login_url;?>">here</a>. <?php } else { ?>You are logged in as <a href="<?=$rusefi->forum_user_profile_url;?>"><?=$rusefi->username;?></a><?php }?></span></div>
+</span>
+ <span class="logged">
+<?php if($rusefi->username == "Anonymous") {?>
+You are not logged into rusEFI forum! Please login <a href="<?=$rusefi->forum_login_url;?>">here</a>.
+<?php } else { ?>
+You are logged in as <a href="<?=$rusefi->forum_user_profile_url;?>"><?=$rusefi->username;?></a>
+<?php }?>
+ </span>
+</div>
+
 <div id="upload" style="display:none;">
-<?php if($rusefi->username == "") { ?>You are not logged into rusEFI forum! Please login and open XXX page to authenticate <a href="<?=$rusefi->forum_login_url;?>">here</a>. <?php } else { ?>
+<?php if($rusefi->username == "Anonymous") { ?>You are not logged into rusEFI forum! Please login and open XXX page to authenticate <a href="<?=$rusefi->forum_login_url;?>">here</a>. <?php } else { ?>
 	<form id="engineForm" action="upload.php" method="post" enctype="multipart/form-data">
 		<div id="fileDropZone"><label for="fileSelect">Drop files here</label>
 			<input required type="file" id="fileSelect" accept=".msq,.msl,.mlg" name="files[]"/>
