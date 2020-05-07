@@ -41,7 +41,7 @@ var hideUpload = <?= ($rusefi->username == "") ? "true" : "false"; ?>;
 <body>
 <div id="navigation">
 <span>
-	<span><a href="/online" rel="preload">Browse</a></span>
+	<span><a href="/online" rel="preload"><img src='/forum/ext/rusefi/web/rusEFI_car.png'/> Browse</a></span>
 	<span style="display:none;"><a href="search.php">Search</a></span>
 	<span style="display:none;"><a>Stats</a></span>
 </span>
