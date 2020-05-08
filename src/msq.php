@@ -219,7 +219,23 @@ EOT;
 	{
 		$search = $xml->xpath('//constant[@name="' . $constant . '"]');
 		if ($search === FALSE || count($search) == 0) return NULL;
-		else return $search[0];
+		if (isset($search[0]["digits"]))
+		{
+			$d = intval($search[0]["digits"]);
+			$out = "";
+			$rows = preg_split('/\n+/', $search[0][0], -1, PREG_SPLIT_NO_EMPTY);
+			foreach ($rows as $r)
+			{
+				$vals = preg_split('/\s+/', $r, -1, PREG_SPLIT_NO_EMPTY);
+				foreach ($vals as $v)
+				{
+					$out .= number_format(floatval($v), $d) . " ";
+				}
+				$out .= "\n";
+			}
+			$search[0][0] = $out;
+		}
+		return $search[0];
 	}
 	
 	/**
