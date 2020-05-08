@@ -230,14 +230,14 @@ $(function() {
 	
 	$('input#colorizeData').change(function () {
 		if (this.checked)
-			$('table.msq tbody').each(function(i) { colorTable($(this)); });
+			$('table.msq tbody').each(function(i) { colorTable($(this), true); });
 		else
 			$('table.msq tbody').each(function(i) { clearTableColor($(this)); });
 	});
 	
 	//default
 	$('input#colorizeData').prop('checked', true);
-	$('table.msq tbody').each(function(i) { colorTable($(this)); });
+	$('table.msq tbody').each(function(i) { colorTable($(this), true); });
 	
 	$('input#normalizeData').change(function () {
 		if (this.checked)
