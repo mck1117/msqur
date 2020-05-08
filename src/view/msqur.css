@@ -32,6 +32,20 @@ body, button {
 	font-family: "Verdana", sans-serif;
 }
 
+html, body {
+    position: absolute;
+    width: 100%;
+    min-height: 100%;
+    padding: 0;
+    margin: 0;
+}
+
+body:after {
+    line-height: 120px; /* height of footer */
+    white-space: pre;
+    content: "\A";
+}
+
 div.error {
 	color: darkred;
 }
@@ -295,6 +309,7 @@ footer {
     left: 0;
     bottom: 0;
     height: 120px;
+    margin-top: -120px; /* height of footer */
     width: 100%;
 	overflow: hidden;
 	text-align: center;
