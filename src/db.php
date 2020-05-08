@@ -337,6 +337,8 @@ class DB
 					$statement .= $w;
 				}
 			}
+
+			$statement .= " ORDER BY mid DESC";
 			
 			//echo $statement;
 			
