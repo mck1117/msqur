@@ -169,13 +169,16 @@ table th[scope=row] {
 }
 
 div.curve {
-	display: inline;
+	display: inline-block;
+	vertical-align: top;
 }
 
 div.chart {
 	/* float: right; */
 	padding: 24px;
-	display: inline;
+	display: inline-block;
+	width: 480px;
+	height: 320px;
 }
 
 /* msqur.css | http://localhost:5050/view/msqur.css */

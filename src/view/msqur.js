@@ -86,20 +86,28 @@ $(function() {
 	
 	//2D charts
 	function doChart(event, ui) {
-	//$('div.curve').each(function(i) {
-		//var that = $(this); //ick
 		var that = ui.newPanel;
+
+		// sort ASC for 2D and DESC for 3D tables
+		$('table').tablesorter({sortList: [[0, (that.find('div.table').length != 0) ? 1 : 0]] });
+		
 		if (that.find('tbody').length == 0 || that.find('div.table').length != 0) return; //do nothing if panel is closing, or if 3d table
 		
 		//Find data
 		var tbl = that.find('tbody').get(0);
 		var data = tbl2data($(tbl));
-		//var options = {};
 		
 		var ctx = that.find('canvas').get(0).getContext("2d");
-		var chart = new Chart(ctx).Line(data); //, options);
 		
-	//});
+		var config = {
+			type: 'line',
+			data: data,
+			options: {
+				legend: { display: false },
+			}
+		};
+
+		var chart = new Chart(ctx, config);
 	}
 	
 	function tbl2data(tbl)
@@ -118,7 +126,11 @@ $(function() {
 		
 		var data = {
 			labels: lbls,
-			datasets: [{label: "test", data: cells}]
+			datasets: [{
+				label: "test", 
+				data: cells,
+				borderColor: 'blue',
+			}],
 		};
 		
 		return data;
@@ -217,16 +229,6 @@ $(function() {
 			this.style.backgroundColor = 'rgb(' + r + ',' + g + ',' + b + ')';
 		});
 	}
-	
-	//FIXME Hack for tablesorter bug
-	var hdrObj = {};
-	for (var i = 1; i < 32; ++i)
-		hdrObj[i] = {sorter: false};
-		
-	$('table').tablesorter({
-		headers: hdrObj,
-		sortList: [[0, 1]]
-	});
 	
 	$('input#colorizeData').change(function () {
 		if (this.checked)
