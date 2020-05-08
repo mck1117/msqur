@@ -56,17 +56,31 @@ div.debug {
 div#navigation {
 	background: #90a4ae;
 	color: black;
-	padding: 8px 24px 8px 24px;
+	padding: 8px 10px 8px 0px;
 }
 
 span.logged {
 	float: right;
 	color: #e4e4e4;
+	margin-top: 10px;
 }
 
 div#navigation span {
 	font-weight: bold;
 	padding: 0px 8px 0px 8px;
+	text-decoration: none;
+}
+
+div#navigation logo {
+	margin-right: 5vh;
+}
+
+div#navigation a:link, a:active, a:visited {
+	color: #cfcfcf;
+	text-decoration: none;
+}
+div#navigation a:hover {
+	color: #222222;
 }
 
 /*
@@ -270,4 +284,23 @@ aside {
 	background: #dbe5ea;
 	padding: 8px 24px 8px 24px;
 	margin-bottom: 1em;
+}
+
+footer {
+	display: block;
+	position: absolute;
+    left: 0;
+    bottom: 0;
+    height: 120px;
+    width: 100%;
+	overflow: hidden;
+	text-align: center;
+  }
+
+footer a:link,footer a:active,footer a:visited {
+	color: #f17006;
+	text-decoration: none;
+}
+footer a:hover {
+	color: #222222;
 }

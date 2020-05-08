@@ -42,10 +42,10 @@ var hideUpload = <?= ($rusefi->username == "") ? "true" : "false"; ?>;
 <div id="navigation">
 <span>
 	<span>
-	<a href="/online" rel="preload"><img src='/style/rusefi_online_color.png' width='140'/></a>
+	<a href="/online" rel="preload"><logo><img src='/style/rusefi_online_color.png' width='140'/></logo></a>
 	<a href="/online" rel="preload">Browse</a>
 	</span>
-	<span style="display:none;"><a href="search.php">Search</a></span>
+	<span><a href="search.php">Search</a></span>
 	<span style="display:none;"><a>Stats</a></span>
 </span>
  <span class="logged">
