@@ -18,18 +18,15 @@ if (!DEBUG)
 ?>
 </body>
 
-<br/>
-<br/>
-<center>
-<a href="/"><img src='/style/rusefi_online_color.png' width='140'/></a>
-<br/>
+<footer>
+<a href="https://rusefi.com/"><img src="./rusEFI Online_files/rusefi_online_color.png" width="140"></a>
+<br>
 <small>
 All the tunes here are distributed in the hope that those will be useful educational material, but WITHOUT ANY WARRANTY;
 without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-
-	<span><a href="about.php">About</a></span>
+<br>
+<span><a href="https://rusefi.com/online/about.php">About</a></span>
 </small>
-
-</center>
+</footer>
 
 </html>
