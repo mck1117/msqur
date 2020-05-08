@@ -21,7 +21,7 @@ if (!DEBUG)
 <br/>
 <br/>
 <center>
-<a href="/"><img src='/style/logo_100.gif'></a>
+<a href="/"><img src='/style/rusefi_online_color.png' width='140'/></a>
 <br/>
 <small>
 All the tunes here are distributed in the hope that those will be useful educational material, but WITHOUT ANY WARRANTY;
