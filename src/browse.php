@@ -56,7 +56,7 @@ $msqur->header();
 		}
 		echo '</div>';
 	}
-	
+/*	
 	if ($bq['firmware'] === null)
 	{
 		echo '<div>Firmware: <div class="category" id="firmware">';
@@ -68,10 +68,10 @@ $msqur->header();
 		}
 		echo '</div>';
 	}
-	
+*/	
 	if ($bq['signature']=== null)
 	{
-		echo '<div>Versions: <div class="category" id="versions">';
+		echo '<div>Firmware Versions: <div class="category" id="versions">';
 		foreach ($msqur->getFirmwareVersionList() as $m) { ?>
 			<div>
 				<?php echo "<a href=\"?fwVersion=$m\">$m</a>"; ?>
@@ -87,9 +87,10 @@ $msqur->header();
 $results = $msqur->browse($bq, $page);
 $numResults = count($results);
 
-echo '<div id="content"><div class="info">' . $numResults . ' results.</div>';
-echo '<table ng-controller="BrowseController">';
-echo '<tr><th>Uploaded</th><th>Owner</th><th>Vehicle Name</th><th>Engine Make</th><th>Engine Code</th><th>Cylinders</th><th>Liters</th><th>Compression</th><th>Aspiration</th><th>Firmware/Version</th><th>Views</th><th>Options</th></tr>';
+echo '<div id="content">'; //<div class="info">' . $numResults . ' results.</div>';
+echo '<div id="container"><table id="browseResults" ng-controller="BrowseController">';
+echo '<thead><tr class="theader"><th id="uploaded">Uploaded</th><th>Owner</th><th>Vehicle Name</th><th>Engine Make</th><th>Engine Code</th><th>Cylinders</th><th>Liters</th><th>Compression</th><th>Aspiration</th><th>Firmware/Version</th><th>Views</th><th>Options</th></tr></thead>';
+echo '<tbody>';
 for ($c = 0; $c < $numResults; $c++)
 {
     $engine = $results[$c];
@@ -107,7 +108,7 @@ for ($c = 0; $c < $numResults; $c++)
 	echo '<td>' . $engine['views'] . '</td>';
 	echo '<td><a title="Download MSQ" download href="download.php?msq=' . $engine['mid'] . '">💾</a></td></tr>';
 }
-echo '</table></div>';
+echo '</tbody></table></div></div>';
 
 $msqur->footer();
 ?>

@@ -26,6 +26,14 @@ msqur.controller('SearchController', function ($scope) {
 	
 });
 
+$(document).ready(function() {
+    $('#browseResults')
+		.bind('dynatable:init', function(e, dynatable) {
+		    dynatable.sorts.add('uploaded', -1);
+		})
+    	.dynatable();
+});
+
 $(function() {
 	$('div#upload').dialog({
 		modal: true,

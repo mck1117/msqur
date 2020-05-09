@@ -7,6 +7,7 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 	<link rel="icon" type="image/x-icon" href="view/img/favicon.ico">
 	<link rel="stylesheet" href="view/msqur.css" />
+	<link rel="stylesheet" href="view/lib/dynatable/jquery.dynatable.css" />
 	<!-- Open Graph data -->
 	<meta property="fb:admins" content="xxxtodo"/>
 	<meta property="og:title" content="rusEFI online" />
@@ -21,8 +22,10 @@
 	<script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.11.1/jquery-ui.min.js" integrity="sha384-ovZOciNc/R4uUo2fCVS1oDT0vIBuaou1d39yqL4a9xFdZAYDswCgrJ6tF8ShkqzF" crossorigin="anonymous"></script>
 	<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.5.2/angular.min.js" integrity="sha384-neqWoCEBO5KsP6TEzfMryfZUeh7+qMQEODngh2KGzau+pMU9csLE2azsvQFa8Oel" crossorigin="anonymous"></script>
 	<!-- Hosted scripts -->
+	<script src="view/lib/dynatable/jquery.dynatable.js"></script>
 	<script src="view/lib/tablesorter/jquery.tablesorter.min.js"></script>
 	<script src="view/lib/Chart.js/Chart.min.js"></script>
+	<script src="view/lib/JSZip/jszip.min.js"></script>
 	<script src="view/msqur.js"></script>
 <?php
 if (isset($_GET['msq'])) {
