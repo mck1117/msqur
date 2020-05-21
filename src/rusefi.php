@@ -221,6 +221,11 @@ class Rusefi
 		return $ret;
 	}
 
+	public function preprocessLog()
+	{
+		// todo:
+	}
+
 	public function processValue($v)
 	{
 		$v = trim($v);

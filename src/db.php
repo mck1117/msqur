@@ -68,20 +68,32 @@ class DB
 		
 		try
 		{
-			//TODO Compress?
-
 			//TODO transaction so we can rollback (`$db->beginTransaction()`)
-			$st = $this->db->prepare("INSERT INTO msqur_files (xml) VALUES (:xml)");
+			$st = $this->db->prepare("INSERT INTO msqur_files (type,data) VALUES (:type, COMPRESS(:xml))");
 			$xml = file_get_contents($file['tmp_name']);
 			//Convert encoding to UTF-8
 			$xml = mb_convert_encoding($xml, "UTF-8");
 			//Strip out invalid xmlns
 			$xml = preg_replace('/xmlns=".*?"/', '', $xml);
+			// [andreika]: get date&comment and remove this data from the XML data
+			if (preg_match("/<bibliography(.*?)(author\s*=\s*\"([^\"]*)\"?)\s+(tuneComment\s*=\s*\"([^\"]*)\"?)\s+writeDate\s*=\s*\"([^\"]+)\"\s*\/>/", $xml, $bib)) {
+				$author = $bib[3];
+				$comment = $bib[5];
+				$wdt = strtotime($bib[6]);
+			} else {
+				$author = "";
+				$comment = "";
+				$wdt = 0;
+			}
+			$xml = preg_replace("/<bibliography[^\/]*\/>/", "", $xml);
+			$xml = trim($xml);
+			
+			DB::tryBind($st, ":type", 0);
 			DB::tryBind($st, ":xml", $xml);
 			if ($st->execute())
 			{
 				$id = $this->db->lastInsertId();
-				$st = $this->db->prepare("INSERT INTO msqur_metadata (url,file,engine,fileFormat,signature,uploadDate) VALUES (:url, :id, :engine, '4.0', 'unknown', :uploaded)");
+				$st = $this->db->prepare("INSERT INTO msqur_metadata (url,file,engine,fileFormat,signature,author,uploadDate,writeDate,tuneComment) VALUES (:url, :id, :engine, '4.0', 'unknown', :author, :uploaded, :writeDate, :tuneComment)");
 				DB::tryBind($st, ":url", $id); //could do hash but for now, just the id
 				DB::tryBind($st, ":id", $id);
 				if (!is_numeric($engineid)) $engineid = null;
@@ -90,6 +102,12 @@ class DB
 				$dt = new DateTime();
 				$dt = $dt->format('Y-m-d H:i:s');
 				DB::tryBind($st, ":uploaded", $dt);
+				// [andreika]: fill-in additional fields removed from the xml
+				$wdt = ($wdt != 0) ? date("Y-m-d H:i:s", $wdt) : $dt;
+				DB::tryBind($st, ":writeDate", $wdt);
+				DB::tryBind($st, ":tuneComment", $comment);
+				DB::tryBind($st, ":author", $author);
+
 				if ($st->execute()) {
 					$id = $this->db->lastInsertId();
 				} else {
@@ -634,7 +652,7 @@ class DB
 	{
 		if (!$this->connect()) return false;
 		
-		if (!array_keys_exist($metadata, 'fileFormat', 'signature', 'firmware', 'author'))
+		if (!array_keys_exist($metadata, 'fileFormat', 'signature', 'firmware'))
 		{
 			if (DEBUG) debug('Invalid MSQ metadata: ' . $metadata);
 			echo '<div class="warn">Incomplete MSQ metadata.</div>';
@@ -644,13 +662,12 @@ class DB
 		try
 		{
 			if (DEBUG) debug('Updating MSQ metadata...');
-			$st = $this->db->prepare("UPDATE msqur_metadata md SET md.fileFormat = :fileFormat, md.signature = :signature, md.firmware = :firmware, md.author = :author WHERE md.id = :id");
+			$st = $this->db->prepare("UPDATE msqur_metadata md SET md.fileFormat = :fileFormat, md.signature = :signature, md.firmware = :firmware WHERE md.id = :id");
 			//$xml = mb_convert_encoding($html, "UTF-8");
 			DB::tryBind($st, ":id", $id);
 			DB::tryBind($st, ":fileFormat", $metadata['fileFormat']);
 			DB::tryBind($st, ":signature", $metadata['signature']);
 			DB::tryBind($st, ":firmware", $metadata['firmware']);
-			DB::tryBind($st, ":author", $metadata['author']);
 			if ($st->execute())
 			{
 				if (DEBUG) debug('Metadata updated.');
@@ -742,7 +759,8 @@ class DB
 		
 		try
 		{
-			$st = $this->db->prepare("SELECT xml FROM msqur_files INNER JOIN msqur_metadata ON msqur_metadata.file = msqur_files.id WHERE msqur_metadata.id = :id LIMIT 1");
+			// [andreika]: use compressed data
+			$st = $this->db->prepare("SELECT UNCOMPRESS(data) AS xml FROM msqur_files INNER JOIN msqur_metadata ON msqur_metadata.file = msqur_files.id WHERE msqur_metadata.id = :id LIMIT 1");
 			DB::tryBind($st, ":id", $id);
 			if ($st->execute() && $st->rowCount() === 1)
 			{
@@ -800,12 +818,15 @@ class DB
 			//TODO Compress?
 
 			//TODO transaction so we can rollback (`$db->beginTransaction()`)
-			$st = $this->db->prepare("SELECT id FROM msqur_files WHERE xml = :xml");
+			$st = $this->db->prepare("SELECT id FROM msqur_files WHERE data = COMPRESS(:xml)");
 			$xml = file_get_contents($file['tmp_name']);
 			//Convert encoding to UTF-8
 			$xml = mb_convert_encoding($xml, "UTF-8");
 			//Strip out invalid xmlns
 			$xml = preg_replace('/xmlns=".*?"/', '', $xml);
+			$xml = preg_replace("/<bibliography[^\/]*\/>/", "", $xml);
+			$xml = trim($xml);
+			//print_r($xml);
 			DB::tryBind($st, ":xml", $xml);
 			$st->execute();
 			if ($st->rowCount() > 0)

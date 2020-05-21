@@ -100,6 +100,9 @@ class API
 			case 'preprocessTune':
 				$result = array($method => $rusefi->preprocessTune());
 				break;
+			case 'preprocessLog':
+				$result = array($method => $rusefi->preprocessLog());
+				break;
 
 			//TODO upload date range?
 			default:
