@@ -13,16 +13,18 @@ class Rusefi
 	private $msqur = null;
 	public $username;
 	public $userid;
+	public $isAdminUser;
 	
 	public $forum_url = "https://rusefi.com/forum";
 	public $forum_login_url, $forum_user_profile_url;
 
 	function __construct($msqur)
 	{
-		global $_COOKIE;
+		global $_COOKIE, $_POST;
 		$this->msqur = $msqur;
 
 		$this->userid = -1;
+		$this->isAdminUser = false;
 		
 		// first, get userid from phpbb SESSION_ID
 		if (isset($_COOKIE['phpbb3_1lnf6_sid'])) {
@@ -39,12 +41,19 @@ class Rusefi
 			$this->userid = $this->getUserIdFromToken($rusefi_token);
 		}
 
+		// if failed, try to get userid from the passed POST parameter
+		if ($this->userid < 0 && isset($_POST['rusefi_token'])) {
+			$rusefi_token = $_POST['rusefi_token'];
+			$this->userid = $this->getUserIdFromToken($rusefi_token);
+		}
+
 		$this->username = ($this->userid != -1) ? $this->getUserNameFromId($this->userid) : "";
 		
 		//!!!!!!!!!!!
 		//$this->userid = 2;
 		//$this->username = "AndreyB";
 	
+		$this->isAdminUser = in_array($this->userid, RUSEFI_ADMIN_USER_IDS);
 		$this->forum_login_url = $this->forum_url . "/ucp.php?mode=login";
 		$this->forum_user_profile_url = $this->forum_url . "/memberlist.php?mode=viewprofile&u=" . $this->userid;
 	}

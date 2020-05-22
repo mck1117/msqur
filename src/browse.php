@@ -28,7 +28,39 @@ $bq['signature'] = parseQueryString('fwVersion'); //TODO might make dependant on
 
 //TODO Use http_build_query and/or parse_url and/or parse_str
 
-$msqur->header();
+$action = parseQueryString('action') ?? "";
+if ($action == "delete")
+{
+	$id = isset($_GET['msq']) ? intval($_GET['msq']) : -1;
+	unset($_GET['msq']);
+	
+	$msqur->header();
+
+	echo "<script>var newURL = location.href.split('?')[0]; window.history.replaceState(null, null, newURL);</script>";
+	echo '<div class="uploadOutput">';
+	if (!$rusefi->isAdminUser)
+	{
+		echo '<div class="error">Only administrators can delete items, sorry!</div>';
+	}
+	else if ($id <= 0)
+	{
+		echo '<div class="error">Cannot delete the unknown item!</div>';
+	}
+	else
+	{
+		if (!$msqur->db->deleteFile($id))
+			echo '<div class="error">Error while deleting the item!</div>';
+		else
+			echo '<div class="info">The item has been deleted!</div>';
+	}
+	echo '</div>';
+	
+} else
+{
+	$msqur->header();
+}
+
+
 
 //require "view/browse.php";
 ?>
@@ -106,7 +138,11 @@ for ($c = 0; $c < $numResults; $c++)
 	echo '<td>' . $aspiration . '</td>';
 	echo '<td>' . $engine['firmware'] . '/' . $engine['signature'] . '</td>';
 	echo '<td>' . $engine['views'] . '</td>';
-	echo '<td><a title="Download MSQ" download href="download.php?msq=' . $engine['mid'] . '">💾</a></td></tr>';
+	echo '<td><a class="optionsLink" title="Download MSQ" download href="download.php?msq=' . $engine['mid'] . '">💾</a>';
+	if ($rusefi->isAdminUser) {
+		echo ' <a class="optionsLink" title="Delete MSQ" href="?action=delete&msq=' . $engine['mid'] . '">❌</a>';
+	}
+	echo '</td></tr>';
 }
 echo '</tbody></table></div></div>';
 

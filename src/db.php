@@ -847,6 +847,29 @@ class DB
 		return $id;
 	}
 
+	public function deleteFile($id) {
+		if (!$this->connect()) return false;
+		
+		try
+		{
+			$st = $this->db->prepare("DELETE FROM msqur_files,msqur_metadata USING msqur_files INNER JOIN msqur_metadata WHERE msqur_metadata.file = msqur_files.id AND msqur_files.id = :id");
+			DB::tryBind($st, ":id", $id);
+			$ret = $st->execute();
+			$st->closeCursor();
+
+			// todo: msqur_engines may contain unused records. Do we need to delete them too?
+
+			return true;
+		}
+		catch (PDOException $e)
+		{
+			$this->dbError($e);
+		}
+		
+		return false;
+		
+	}
+
 }
 
 ?>

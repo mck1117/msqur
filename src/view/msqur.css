@@ -313,6 +313,10 @@ aside {
 	margin-bottom: 1em;
 }
 
+.optionsLink {
+	text-decoration: none;
+}
+
 footer {
 	display: block;
 	position: absolute;
