@@ -138,9 +138,9 @@ for ($c = 0; $c < $numResults; $c++)
 	echo '<td>' . $aspiration . '</td>';
 	echo '<td>' . $engine['firmware'] . '/' . $engine['signature'] . '</td>';
 	echo '<td>' . $engine['views'] . '</td>';
-	echo '<td><a class="optionsLink" title="Download MSQ" download href="download.php?msq=' . $engine['mid'] . '">💾</a>';
+	echo '<td><a class="downloadLink" title="Download MSQ" download href="download.php?msq=' . $engine['mid'] . '">💾</a>';
 	if ($rusefi->isAdminUser) {
-		echo ' <a class="optionsLink" title="Delete MSQ" href="?action=delete&msq=' . $engine['mid'] . '">❌</a>';
+		echo ' <a class="deleteLink" title="Delete MSQ" href="?action=delete&msq=' . $engine['mid'] . '">❌</a>';
 	}
 	echo '</td></tr>';
 }

@@ -31,7 +31,15 @@ $(document).ready(function() {
 		.bind('dynatable:init', function(e, dynatable) {
 		    dynatable.sorts.add('uploaded', -1);
 		})
-    	.dynatable();
+    	.dynatable( {
+			dataset: {
+      			perPageDefault: 100
+    		}
+  		});
+
+	$('.deleteLink').unbind('click').bind('click', function () {
+        return confirm('Are you sure?');
+    });
 });
 
 $(function() {

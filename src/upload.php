@@ -17,7 +17,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
 require_once "msqur.php";
 
-$msqur->header();
+$isEmbedded = (isset($_POST['rusefi_token']) && isset($_FILES) && isset($_FILES['upload-file']));
+
 
 /**
  * @brief Restructure file upload array
@@ -28,14 +29,14 @@ $msqur->header();
 function fixFileArray(&$file_post)
 {//From php.net anonymous comment
 	$file_ary = array();
-	$file_count = count($file_post['name']);
+	$file_count = is_array($file_post['name']) ? count($file_post['name']) : 1;
 	$file_keys = array_keys($file_post);
 	
 	for ($i = 0; $i < $file_count; $i++)
 	{
 		foreach ($file_keys as $key)
 		{
-			$file_ary[$i][$key] = $file_post[$key][$i];
+			$file_ary[$i][$key] = is_array($file_post[$key][$i]) ? $file_post[$key][$i] : $file_post[$key];
 		}
 	}
 	
@@ -95,74 +96,162 @@ function acceptableMimeType($mimeType) {
 	}
 }
 
-//var_export($_POST);
-//var_export($_FILES);
-echo '<div class="uploadOutput">';
-
-if (isset($_POST['upload']) && isset($_FILES))
+function addOutput($type, $msg)
 {
-	$files = checkUploads(fixFileArray($_FILES['files']));
+	global $isEmbedded, $embResult;
+	if (!$isEmbedded)
+	{
+		echo '<div class="' . $type . '">' . $msg . '</div>';
+	} else 
+	{
+		if (!isset($embResult[$type]))
+			$embResult[$type] = array();
+		$embResult[$type][] = $msg . "\r\n";
+	}
+}
+
+function fillEngineVarsFromXml($xml, &$vars)
+{
+	$eInfo = array(// "msqur_field_name": ["TS_tune_file_constant_name"]
+			"name" => "vehicleName",
+			"make" => "engineMake",
+			"code" => "engineCode",
+			"displacement" => "displacement",
+			"compression" => "compressionRatio",
+			"induction" => "isForcedInduction"
+	);
+	foreach ($eInfo as $ek=>$ei)
+	{
+		if (preg_match('/<constant.*?name="' . $ei . '"[^>]*>([^<]+)<\/constant>/', $xml, $ret))
+		{
+			$vars[$ek] = $ret[1];
+		}
+	}
+}
+
+//////////////////////////////
+
+if (!$isEmbedded)
+{
+	$msqur->header();
+
+	//var_export($_POST);
+	//var_export($_FILES);
+	echo '<div class="uploadOutput">';
+
+	$fileName = 'files';
+} else {
+	$embResult = array();
+	$fileName = 'upload-file';
+}
+
+if ($isEmbedded || (isset($_POST['upload']) && isset($_FILES)))
+{
+	$files = checkUploads(fixFileArray($_FILES[$fileName]));
 	if ($rusefi->userid < 1)
 	{
-		echo '<div class="error">You are not logged into rusEFI forum! Please login <a href="'.$rusefi->forum_login_url.'">here</a>!</div>';
+		addOutput('error', 'You are not logged into rusEFI forum! Please login <a href="'.$rusefi->forum_login_url.'">here</a>!');
 	}
 	else if (count($files) != 1)
 	{
 		//No files made it past the check
-		echo '<div class="error">Cannot upload!</div>';
+		addOutput('error', 'Cannot upload!');
 	}
 	else if ($rusefi->isTuneAlreadyExists($files, -1))
 	{
-		echo '<div class="error">This tune file already exists in our Database!</div>';
+		addOutput('error', 'This tune file already exists in our Database!');
 	}
 	else
 	{
-		echo '<div class="info">The file has been uploaded.</div>';
-		
-		if (DEBUG) debug('Adding engine: ' . $_POST['name'] . ', ' . $_POST['make'] . ', ' . $_POST['code'] . ', ' . $_POST['displacement'] . ', ' . $_POST['compression'] . ', ' . $_POST['induction']);
-		
-		$engineid = $msqur->addOrUpdateVehicle($rusefi->userid, 
-			$rusefi->processValue($_POST['name']), 
-			$rusefi->processValue($_POST['make']), 
-			$rusefi->processValue($_POST['code']), 
-			$rusefi->processValue($_POST['displacement']),
-			$rusefi->processValue($_POST['compression']), 
-			$rusefi->processValue($_POST['induction'])
-		);
-		$fileList = $msqur->addMSQs($files, $engineid);
-		
-		$safeName = htmlspecialchars($_POST['name']);
-		$safeMake = htmlspecialchars($_POST['make']);
-		$safeCode = htmlspecialchars($_POST['code']);
-		
-		if ($fileList != null)
+		if ($isEmbedded)
 		{
-			//echo '<div class="info">Successful saved MSQ to database.</div>';
-			echo '<div class="info"><ul id="fileList">';
-			foreach ($fileList as $id => $name)
+			$vars = array();
+			$xml = isset($files[0]['tmp_name']) ? file_get_contents($files[0]['tmp_name']) : FALSE;
+			if ($xml === FALSE)
 			{
-				echo '<li><a href="view.php?msq=' . $id . '">' . "$safeName ($safeMake $safeCode) - $name" . '</a></li>';
-
-				// parse and update DB
-				$msqur->view($id);
+				addOutput('error', 'Cannot parse XML Tune file!');
+			} else
+			{
+				fillEngineVarsFromXml($xml, $vars);
 			}
-			
-			echo '</div></ul>';
-			echo '<div class="info">Thank you!</div>';
-		}
-		else
+		} else
 		{
-			echo '<div class="error">Unable to store uploaded file.</div>';
+			$vars = $_POST;
+		}
+		//!!!!!!!!!!!!!!!!!!!!!!!!!
+		//print_r($files);
+		//$xml = file_get_contents($file['tmp_name']);
+		//Convert encoding to UTF-8
+		//$xml = mb_convert_encoding($xml, "UTF-8");
+		//die;
+
+		$varnames = array('name', 'make', 'code', 'displacement', 'compression', 'induction');
+		$notset = array();
+		foreach ($varnames as $vn)
+		{
+			if (!isset($vars[$vn]))
+			{
+				$notset[] = $vn;
+			}
+		}
+		if (count($notset) > 0)
+		{
+			addOutput('error', 'Missing Tune variables: ' . implode(',', $notset));
+		}
+		else 
+		{
+			if (DEBUG) debug('Adding engine: ' . $vars['name'] . ', ' . $vars['make'] . ', ' . $vars['code'] . ', ' . $vars['displacement'] . ', ' . $vars['compression'] . ', ' . $vars['induction']);
+		
+			$engineid = $msqur->addOrUpdateVehicle($rusefi->userid, 
+				$rusefi->processValue($vars['name']), 
+				$rusefi->processValue($vars['make']), 
+				$rusefi->processValue($vars['code']), 
+				$rusefi->processValue($vars['displacement']),
+				$rusefi->processValue($vars['compression']), 
+				$rusefi->processValue($vars['induction'])
+			);
+			$fileList = $msqur->addMSQs($files, $engineid);
+		
+			$safeName = htmlspecialchars($vars['name']);
+			$safeMake = htmlspecialchars($vars['make']);
+			$safeCode = htmlspecialchars($vars['code']);
+		
+			addOutput('info', 'The file has been uploaded!');
+			
+			if ($fileList != null)
+			{
+				//echo '<div class="info">Successful saved MSQ to database.</div>';
+				$fList = '<ul id="fileList">';
+				foreach ($fileList as $id => $name)
+				{
+					$fList .= '<li><a href="view.php?msq=' . $id . '">' . "$safeName ($safeMake $safeCode) - $name" . '</a></li>';
+	
+					// parse and update DB
+					$msqur->view($id);
+				}
+				$fList .= '</ul>';
+				addOutput('info', $fList);
+				addOutput('info', 'Thank you!');
+			}
+			else
+			{
+				addOutput('error', 'Unable to store uploaded file.');
+			}
 		}
 	}
 } else
 {
-	echo '<div class="error">Nothing to upload!</div>';
+	addOutput('error' ,'Nothing to upload!');
 }
 
-echo '</div>';
+if (!$isEmbedded)
+{
+	echo '</div>';
+	require "browse.php";
 
-require "browse.php";
-
-//$msqur->footer();
+	//$msqur->footer();
+} else 
+{
+	echo json_encode($embResult);
+}
 ?>
