@@ -25,7 +25,7 @@
 	<script src="view/lib/dynatable/jquery.dynatable.js"></script>
 	<script src="view/lib/tablesorter/jquery.tablesorter.min.js"></script>
 	<script src="view/lib/Chart.js/Chart.min.js"></script>
-	<script src="view/lib/JSZip/jszip.min.js"></script>
+	<script src="view/lib/pako/pako.min.js"></script>
 	<script src="view/msqur.js"></script>
 <?php
 if (isset($_GET['msq'])) {
