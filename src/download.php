@@ -18,7 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 require "msqur.php";
 
 if (isset($_GET['msq'])) {
-  $id = $_GET['msq']; //TODO Sanitize
+  $id = intval($_GET['msq']);
 
   $xml = $msqur->getMSQForDownload($id);
 
@@ -32,6 +32,25 @@ if (isset($_GET['msq'])) {
     unset($_GET['msq']);
     include "view/header.php";
     echo '<div class="error">404 MSQ file not found.</div>';
+    include "view/footer.php";
+  }
+}
+else if (isset($_GET['log'])) {
+  $id = intval($_GET['log']);
+
+  $data = $rusefi->getLogForDownload($id);
+
+  if ($data) {
+    header('Content-Type: application/octet-stream');
+    // todo: better file name and extension detect
+    header('Content-Disposition: attachment; filename="' . $id . '.mlg"');
+    header('Pragma: no-cache');
+    echo $data;
+  } else {
+    http_response_code(404);
+    unset($_GET['log']);
+    include "view/header.php";
+    echo '<div class="error">404 LOG file not found.</div>';
     include "view/footer.php";
   }
 } else {

@@ -99,7 +99,28 @@ You are logged in as <a href="<?=$rusefi->forum_user_profile_url;?>"><?=$rusefi-
 				<input type="hidden" name="upload" value="upload" style="display:none;">
 			</fieldset>
 		</div>
+		<div id="logInfo" style="display:none;">
+			<fieldset>
+				<legend>Information from your Log file:</legend>
+				<output id="logFields"></output>
+			</fieldset>
+		</div>
 		<output id="processing"></output>
+		<div id="tuneInfo" style="display:none;">
+			<fieldset><small>
+			<label for="tune_id">Please select the corresponding tune:</label>
+			<select id="tune_id" name="tune_id" style="display:block;">
+<?php
+			foreach ($rusefi->userTunes as $id=>$tune) 
+			{
+?>
+				<option value="<?=$id;?>"><?=$tune;?></option>
+<?php			
+			}
+?>
+			</select>
+			</small></fieldset>
+		</div>
 	</form>
 <?php } ?>
 </div>
@@ -115,6 +136,11 @@ if (isset($_GET['msq'])) {
 	</div>
 </div>
 <div id="downloadLink"><a title="Download MSQ File" href="download.php?msq=<?php echo $_GET['msq']; ?>">💾 Download MSQ</a></div>
+<?php
+}
+else if (isset($_GET['log'])) {
+?>
+<div id="downloadLink"><a title="Download LOG File" href="download.php?log=<?php echo $_GET['log']; ?>">💾 Download LOG</a></div>
 <?php
 }
 ?>

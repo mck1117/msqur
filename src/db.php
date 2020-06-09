@@ -333,7 +333,7 @@ class DB
 	 * @param $bq The BrowseQuery to filter results
 	 * @returns A list of metadata, or null if unsuccessful
 	 */
-	public function browse($bq)
+	public function browseMsq($bq)
 	{
 		if (!$this->connect()) return null;
 		
@@ -808,6 +808,37 @@ class DB
 
 		return FALSE;
 	}
+
+	public function getUserTunes($user_id)
+	{
+		if (!$this->connect()) return array();
+		try
+		{
+			$st = $this->db->prepare("SELECT m.id as mid, name, make, code, numCylinders, displacement, compression, uploadDate FROM msqur_metadata m INNER JOIN msqur_engines e ON m.engine = e.id WHERE e.user_id = :user_id ORDER BY m.uploadDate DESC");
+			DB::tryBind($st, ":user_id", $user_id);
+			$st->execute();
+			if ($st->rowCount() > 0)
+			{
+				$result = $st->fetchAll(PDO::FETCH_ASSOC);
+				$res = array();
+				foreach ($result as $r)
+					$res[$r["mid"]] = $r;
+				$st->closeCursor();
+				return $res;
+			}
+			else
+			{
+				$st->closeCursor();
+				return array();
+			}
+		}
+		catch (PDOException $e)
+		{
+			$this->dbError($e);
+		}
+
+		return array();
+	}
 	
 	public function findMSQ($file, $engineid)
 	{
@@ -870,6 +901,154 @@ class DB
 		
 	}
 
+	public function addLog($file, $user_id, $tune_id)
+	{
+		global $rusefi;
+
+		if (!$this->connect()) return -1;
+		
+		try
+		{
+			$flog = file_get_contents($file['tmp_name']);
+			// todo: add compression?
+			//$log = @zlib_decode($zlog);
+			$log = $flog;
+			if ($log === FALSE) {
+				debug('DB::addLog(): Cannot get the log data!');
+				return -1;
+			}
+
+			$st = $this->db->prepare("INSERT INTO msqur_files (type,data) VALUES (:type, COMPRESS(:log))");
+			DB::tryBind($st, ":type", 1);	// 1=log
+			DB::tryBind($st, ":log", $log);
+
+			if ($st->execute())
+			{
+				$id = $this->db->lastInsertId();
+				$st->closeCursor();
+
+				$st = $this->db->prepare("INSERT INTO msqur_logs (user_id,file_id,tune_id,info,uploadDate) VALUES (:user_id, :file_id, :tune_id, :info, :uploaded)");
+				DB::tryBind($st, ":user_id", $user_id);
+				DB::tryBind($st, ":file_id", $id); //could do hash but for now, just the id
+				DB::tryBind($st, ":tune_id", $tune_id);
+
+				// this may take a while to complete...
+				$info = $rusefi->getLogInfo($log);
+				DB::tryBind($st, ":info", $info);
+
+				//TODO Make sure it's an int
+				$dt = new DateTime();
+				$dt = $dt->format('Y-m-d H:i:s');
+				DB::tryBind($st, ":uploaded", $dt);
+
+				if ($st->execute()) {
+					$id = $this->db->lastInsertId();
+				} else {
+					error("Error inserting log metadata");
+					if (DEBUG) {
+						print_r($st->errorInfo());
+					}
+					$id = -1;
+				}
+				$st->closeCursor();
+			} else {
+				error("Error inserting log data");
+				if (DEBUG) {
+					print_r($st->errorInfo());
+				}
+				$id = -1;
+			}
+		}
+		catch (PDOException $e)
+		{
+			$this->dbError($e);
+			$id = -1;
+		}
+		
+		return $id;
+	}
+
+	public function browseLog($bq)
+	{
+		if (!$this->connect()) return null;
+		
+		try
+		{
+			$statement = "SELECT l.id as mid, l.user_id as user_id, l.info as info, l.uploadDate as uploadDate, l.views as views, name, make, code, numCylinders, displacement, compression, induction, firmware, signature FROM msqur_logs l INNER JOIN msqur_metadata m ON m.id = l.tune_id INNER JOIN msqur_engines e ON m.engine = e.id WHERE ";
+			$where = array();
+			foreach ($bq as $col => $v)
+			{
+				//if ($v !== null) $statement .= "$col = :$col ";
+				if ($v !== null) $where[] = "$col = :" . str_replace(".", "", $col) . " ";
+			}
+			
+			if (count($where) === 0) $statement .= "1";
+			else
+			{
+				foreach ($where as $i => $w)
+				{
+					$statement .= $w;
+				}
+			}
+
+			$statement .= " ORDER BY mid DESC";
+			
+			//echo $statement;
+			debug($statement);
+			
+			$st = $this->db->prepare($statement);
+			
+			foreach ($bq as $col => $v)
+			{
+				if ($v !== null) $this->tryBind($st, ":" . str_replace(".", "", $col), $v);
+			}
+			
+			if ($st->execute())
+			{
+				$result = $st->fetchAll(PDO::FETCH_ASSOC);
+				$st->closeCursor();
+				return $result;
+			}
+			else echo '<div class="error">There was a problem constructing the browse query: </div>'; //var_export($st->errorInfo())
+			
+			$st->closeCursor();
+		}
+		catch (PDOException $e)
+		{
+			$this->dbError($e);
+		}
+		
+		return null;
+	}
+
+	public function getLog($id)
+	{
+		if (DEBUG) debug('Getting LOG for id: ' . $id);
+		
+		if (!$this->connect()) return null;
+		
+		$data = null;
+		
+		try
+		{
+			// [andreika]: use compressed data
+			$st = $this->db->prepare("SELECT UNCOMPRESS(data) AS log FROM msqur_files INNER JOIN msqur_logs ON msqur_logs.file_id = msqur_files.id WHERE msqur_logs.id = :id LIMIT 1");
+			DB::tryBind($st, ":id", $id);
+			if ($st->execute() && $st->rowCount() === 1)
+			{
+				if (DEBUG) debug('LOG Found.');
+				$result = $st->fetch(PDO::FETCH_ASSOC);
+				$st->closeCursor();
+				$data = $result['log'];
+			}
+		}
+		catch (PDOException $e)
+		{
+			$this->dbError($e);
+		}
+		
+		return $data;
+	}
 }
 
 ?>

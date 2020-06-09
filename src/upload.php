@@ -36,10 +36,10 @@ function fixFileArray(&$file_post)
 	{
 		foreach ($file_keys as $key)
 		{
-			$file_ary[$i][$key] = is_array($file_post[$key][$i]) ? $file_post[$key][$i] : $file_post[$key];
+			$file_ary[$i][$key] = is_array($file_post[$key]) ? $file_post[$key][$i] : $file_post[$key];
 		}
 	}
-	
+
 	return $file_ary;
 }
 
@@ -59,8 +59,8 @@ function checkUploads($files)
 			continue;
 		}
 		
-		//Check sizes against 5MiB
-		if ($file['size'] > 5*1048576)
+		//Check sizes against 64MiB
+		if ($file['size'] > 64*1048576)
 		{
 			unset($files[$index]);
 			continue;
@@ -76,7 +76,7 @@ function checkUploads($files)
 			continue;
 		}
 	}
-	
+
 	return $files;
 }
 
@@ -88,6 +88,7 @@ function checkUploads($files)
 function acceptableMimeType($mimeType) {
 	switch ($mimeType) {
 		case "application/xml":
+		case "application/octet-stream":
 		case "text/xml":
 		case "text/plain":
 			return true;
@@ -101,6 +102,7 @@ function addOutput($type, $msg)
 	global $isEmbedded, $embResult;
 	if (!$isEmbedded)
 	{
+		echo "<script>var newURL = 'index.php'; window.history.replaceState(null, null, newURL);</script>";
 		echo '<div class="' . $type . '">' . $msg . '</div>';
 	} else 
 	{
@@ -129,6 +131,12 @@ function fillEngineVarsFromXml($xml, &$vars)
 	}
 }
 
+function isLog($files)
+{
+	$ext = pathinfo($files[0]['name'])['extension'];
+	return in_array($ext, array("mlg", "msl"));
+}
+
 //////////////////////////////
 
 if (!$isEmbedded)
@@ -140,7 +148,8 @@ if (!$isEmbedded)
 	echo '<div class="uploadOutput">';
 
 	$fileName = 'files';
-} else {
+} else 
+{
 	$embResult = array();
 	$fileName = 'upload-file';
 }
@@ -148,6 +157,7 @@ if (!$isEmbedded)
 if ($isEmbedded || (isset($_POST['upload']) && isset($_FILES)))
 {
 	$files = checkUploads(fixFileArray($_FILES[$fileName]));
+
 	if ($rusefi->userid < 1)
 	{
 		addOutput('error', 'You are not logged into rusEFI forum! Please login <a href="'.$rusefi->forum_login_url.'">here</a>!');
@@ -159,7 +169,44 @@ if ($isEmbedded || (isset($_POST['upload']) && isset($_FILES)))
 	}
 	else if ($rusefi->isTuneAlreadyExists($files, -1))
 	{
-		addOutput('error', 'This tune file already exists in our Database!');
+		addOutput('error', 'This file already exists in our Database!');
+	}
+	// upload log file
+	else if (isLog($files)) 
+	{
+		// todo: get tune id from the log
+		if (!isset($_POST['tune_id'])) {
+			addOutput('error', 'Please specify the tune corresponding to the log!');
+		} else 
+		{
+			$tune_id = intval($_POST['tune_id']);
+
+			// check if tune_id belongs to current user
+			if (!$rusefi->checkIfTuneIsValidForUser($rusefi->userid, $tune_id))
+			{
+				addOutput('error', 'Cannot find the specified tune!');
+			} else
+			{
+				$fileList = $msqur->addLog($files[0], $rusefi->userid, $tune_id);
+				if ($fileList != null)
+				{
+					addOutput('info', 'The log file has been uploaded!');
+
+					$fList = '<ul id="fileList">';
+					foreach ($fileList as $id => $name)
+					{
+						$fList .= '<li><a href="view.php?log=' . $id . '">' . "$name" . '</a></li>';
+					}
+					$fList .= '</ul>';
+					addOutput('info', $fList);
+					addOutput('info', 'Thank you!');
+				}
+				else
+				{
+					addOutput('error', 'Unable to upload the log file!');
+				}
+			}
+		}
 	}
 	else
 	{
@@ -169,7 +216,7 @@ if ($isEmbedded || (isset($_POST['upload']) && isset($_FILES)))
 			$xml = isset($files[0]['tmp_name']) ? file_get_contents($files[0]['tmp_name']) : FALSE;
 			if ($xml === FALSE)
 			{
-				addOutput('error', 'Cannot parse XML Tune file!');
+				addOutput('error', 'Cannot load the file!');
 			} else
 			{
 				fillEngineVarsFromXml($xml, $vars);
@@ -216,7 +263,7 @@ if ($isEmbedded || (isset($_POST['upload']) && isset($_FILES)))
 			$safeMake = htmlspecialchars($vars['make']);
 			$safeCode = htmlspecialchars($vars['code']);
 		
-			addOutput('info', 'The file has been uploaded!');
+			addOutput('info', 'The tune file has been uploaded!');
 			
 			if ($fileList != null)
 			{

@@ -63,6 +63,17 @@ class Msqur
 		return $fileList;
 	}
 
+	public function addLog($file, $user_id, $tune_id)
+	{
+		//echo 'Adding ' . $file['tmp_name'];
+		$id = $this->db->addLog($file, $user_id, $tune_id);
+		if ($id > 0)
+			$fileList[$id] = htmlspecialchars($file['name']);
+		else
+			$fileList = null;
+		return $fileList;
+	}
+
 	//TODO pass through meta tags via argument to header
 	public function header() { global $rusefi; include_once "view/header.php"; }
 	public function footer() { include "view/footer.php"; }
@@ -74,9 +85,13 @@ class Msqur
 		$this->footer();
 	}
 	
-	public function browse($bq)
+	public function browse($bq, $page, $type)
 	{
-		return $this->db->browse($bq);
+		if ($type == "msq")
+			return $this->db->browseMsq($bq);
+		else if ($type == "log")
+			return $this->db->browseLog($bq);
+		return null;
 	}
 	
 	public function search($query = "")

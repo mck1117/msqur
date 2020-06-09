@@ -1,5 +1,7 @@
 <?php
 
+include "mlg.format.php";
+
 /*
  * @brief Defines the actions taken at the user level.
  * 
@@ -17,6 +19,8 @@ class Rusefi
 	
 	public $forum_url = "https://rusefi.com/forum";
 	public $forum_login_url, $forum_user_profile_url;
+
+	private $reqLogFields = array("time", "rpm", "clt", "tps", "air_fuel_ratio", "engine_load", "vehicle_speed", "throttle_pedal_position");
 
 	function __construct($msqur)
 	{
@@ -56,6 +60,8 @@ class Rusefi
 		$this->isAdminUser = in_array($this->userid, RUSEFI_ADMIN_USER_IDS);
 		$this->forum_login_url = $this->forum_url . "/ucp.php?mode=login";
 		$this->forum_user_profile_url = $this->forum_url . "/memberlist.php?mode=viewprofile&u=" . $this->userid;
+
+		$this->userTunes = $this->getUserTunes($this->userid);
 	}
 
 	private function getUserIdFromToken($token)
@@ -230,9 +236,91 @@ class Rusefi
 		return $ret;
 	}
 
+	private function parseLogData($data, $type, $fullSize)
+	{
+		global $logValues;
+
+		$mlgParser = new MlgParser();
+		if ($type == -1)
+			$type = $mlgParser->detectFormat($data);
+		$mlgParser->initStats();
+		if ($type == "LogBinary")
+			$ret = $mlgParser->parseBinary($data, $this->reqLogFields);
+		else if ($type == "LogText")
+			$ret = $mlgParser->parseText($data, $this->reqLogFields);
+		else
+			$ret = array("text"=>"Unknown log type!", "status"=>"deny");
+
+		// fill info
+		if ($ret["status"] != "deny") {
+			$logValues = $mlgParser->getStats($fullSize);
+			$ret["logValues"] = $logValues;
+			$ret["logFields"] = "<small>".$this->fillLogFields()."</small>";
+		} else {
+			$ret["logValues"] = array();
+			$ret["logFields"] = "";
+		}
+
+		return $ret;
+	}
+
+
 	public function preprocessLog()
 	{
-		// todo:
+		global $_FILES, $_POST;
+
+		if ($this->userid < 0)
+			return array("text"=>"Cannot check your log. Please authorize!", "status"=>"deny");
+
+		//return array("text"=>print_r($_FILES["log"], true), "status"=>"deny");
+
+		if (!isset($_FILES["log"])) {
+			return array("text"=>"Cannot send the file! (The size limit is " . ini_get('post_max_size') . " compressed)", "status"=>"deny");
+		}
+		$logFile = $_FILES["log"];
+		if ($logFile["error"] == 1) {
+			return array("text"=>"The file is too big! The max size is ".ini_get('upload_max_filesize'), "status"=>"deny");
+		}
+		
+		$zdata = isset($logFile['tmp_name']) ? @file_get_contents($logFile['tmp_name']) : FALSE;
+		if ($zdata === FALSE) {
+			return array("text"=>"Cannot read the compressed log data!", "status"=>"deny");
+		}
+
+		$data = @zlib_decode($zdata);
+		if ($data === FALSE) {
+			return array("text"=>"Cannot decompress the log data!", "status"=>"deny");
+		}
+
+		//file_put_contents("log", $data);
+
+		$type = parseQueryString("type");
+		$fullSize = parseQueryString("fullSize");
+		$ret = $this->parseLogData($data, $type, $fullSize);
+
+		return $ret;
+	}
+
+	public function getLogInfo($data) {
+		$fullSize = strlen($data);
+		$ret = $this->parseLogData($data, -1, $fullSize);
+		// store the array as a JSON string
+		return json_encode($ret["logValues"]);
+	}
+
+	public function fillLogFields() {
+		global $logValues;
+		ob_start();
+		include "view/logfields.php";
+		return ob_get_clean();
+	}
+
+	public function fillGeneralLogInfo() {
+		global $logValues;
+		global $rusefi;
+		ob_start();
+		include "view/loggeneral.php";
+		return ob_get_clean();
 	}
 
 	public function processValue($v)
@@ -266,7 +354,50 @@ class Rusefi
 		}
 		return FALSE;
 	}
-	
+
+	public function getUserTunes($user_id) {
+		$list = $this->msqur->db->getUserTunes($user_id);
+		foreach ($list as &$l) {
+			$l = $l["uploadDate"]
+				. " " . implode(" ", array($l["make"], $l["code"], "\"" . $l["name"] . "\""))
+				. " (" . $l["numCylinders"] . "cyl"
+				. " " . $l["displacement"] . "L)";
+		}
+		return $list;
+	}
+
+	public function checkIfTuneIsValidForUser($user_id, $tune_id)
+	{
+		$tunes = $this->getUserTunes($user_id);
+		return isset($tunes[$tune_id]);
+	}
+
+	public function unpackLogInfo(&$results)
+	{
+		foreach ($results as &$r)
+		{
+			$info = json_decode($r["info"]);
+			if (is_object($info))
+				$info = get_object_vars($info);
+			$r = array_merge($r, $info);
+		}
+		return $results;
+	}
+
+	public function viewLog($id)
+	{
+		global $logValues;
+		$res = $this->msqur->db->browseLog(array("l.id"=>$id));
+		$this->unpackLogInfo($res);
+		$logValues = $res[0];
+		return "<div class=logViewPage>".$this->fillGeneralLogInfo().$this->fillLogFields()."</div>";
+	}
+
+	public function getLogForDownload($id)
+	{
+		return $this->msqur->db->getLog($id);
+	}
+
 }
 
 $rusefi = new Rusefi($msqur);

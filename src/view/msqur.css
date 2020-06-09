@@ -136,6 +136,7 @@ div#downloadLink {
 	border: 2px dashed #bbb;
 	border-radius: 5px;
 	padding: 25px;
+    margin: 0 auto;
 	text-align: center;
 	font: 20pt bold 'Vollkorn';
 	color: #bbb;
@@ -222,6 +223,7 @@ span.constant span.value {
 }
 
 #engineForm {
+	width: 100%;
 	display: table;
 }
 
@@ -232,6 +234,56 @@ span.constant span.value {
 #engineForm input, #engineForm label {
 	display: table-cell;
 	width: 100%;
+}
+
+.logTable {
+	width: 100%;
+	padding: 0px;
+}
+
+.logStart {
+	background-color: #efefef;
+	padding-right: 10px;
+	vertical-align: top;
+}
+
+.logIdling {
+	background-color: #efefca;
+	padding-right: 10px;
+	vertical-align: top;
+}
+
+.logRunning {
+	background-color: #d3efd3;
+	padding-right: 10px;
+	vertical-align: top;
+}
+
+.logLabel {
+	display: table-cell;
+	text-align:left;
+}
+
+.logInput {
+	display: table-cell;
+	text-align:right;
+}
+
+.logViewPage {
+	width: 700px;
+	padding: 20px;
+}
+
+input#logLabelOneLine {
+	width:50%;
+	display: inline;
+	text-align:left;
+}
+
+input#logInputOneLine {
+	width:50%;
+	display: inline;
+	text-align:left;
 }
 
 #engineForm span {
@@ -298,7 +350,7 @@ aside {
 	font-size: 0.75em;
 }
 
-#container {
+#containerMsq, #containerLog {
 	display: inline-block;
 	padding: 24px 0px 0px 24px;
 }

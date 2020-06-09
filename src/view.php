@@ -18,7 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 require "msqur.php";
 
 if (isset($_GET['msq'])) {
-	$id = $_GET['msq']; //TODO Sanitize
+	$id = intval($_GET['msq']);
 	$html = $msqur->view($id);
 	if ($html !== null) {
 		include "view/header.php";
@@ -29,6 +29,21 @@ if (isset($_GET['msq'])) {
 		unset($_GET['msq']);
 		include "view/header.php";
 		echo '<div class="error">404 MSQ file not found.</div>';
+		include "view/footer.php";
+	}
+}
+else if (isset($_GET['log'])) {
+	$id = intval($_GET['log']);
+	$html = $rusefi->viewLog($id);
+	if ($html !== null) {
+		include "view/header.php";
+		echo $html;
+		include "view/footer.php";
+	} else {
+		http_response_code(404);
+		unset($_GET['log']);
+		include "view/header.php";
+		echo '<div class="error">404 LOG file not found.</div>';
 		include "view/footer.php";
 	}
 } else {

@@ -116,35 +116,71 @@ if ($action == "delete")
 <!-- script src="view/browse.js"></script -->
 <?php
 
-$results = $msqur->browse($bq, $page);
-$numResults = count($results);
-
-echo '<div id="content">'; //<div class="info">' . $numResults . ' results.</div>';
-echo '<div id="container"><table id="browseResults" ng-controller="BrowseController">';
-echo '<thead><tr class="theader"><th id="uploaded">Uploaded</th><th>Owner</th><th>Vehicle Name</th><th>Engine Make</th><th>Engine Code</th><th>Cylinders</th><th>Liters</th><th>Compression</th><th>Aspiration</th><th>Firmware/Version</th><th>Views</th><th>Options</th></tr></thead>';
-echo '<tbody>';
-for ($c = 0; $c < $numResults; $c++)
+function putResultsInTable($results, $type)
 {
-    $engine = $results[$c];
-	$aspiration = $engine['induction'] == 1 ? "Turbo" : "Atmo";
-	echo '<tr><td><a href="view.php?msq=' . $engine['mid'] . '">' . $engine['uploadDate'] . '</a></td>';
-	echo '<td><a href=/forum/memberlist.php?mode=viewprofile&u=' . $engine['user_id'] . '>' . $rusefi->getUserNameFromId($engine['user_id']) . '</a></td>';
-	echo '<td>' . $engine['name'] . '</td>';
-	echo '<td>' . $engine['make'] . '</td>';
-	echo '<td>' . $engine['code'] . '</td>';
-	echo '<td>' . $engine['numCylinders'] . '</td>';
-	echo '<td>' . $engine['displacement'] . '</td>';
-	echo '<td>' . $engine['compression'] . ':1</td>';
-	echo '<td>' . $aspiration . '</td>';
-	echo '<td>' . $engine['firmware'] . '/' . $engine['signature'] . '</td>';
-	echo '<td>' . $engine['views'] . '</td>';
-	echo '<td><a class="downloadLink" title="Download MSQ" download href="download.php?msq=' . $engine['mid'] . '">💾</a>';
-	if ($rusefi->isAdminUser) {
-		echo ' <a class="deleteLink" title="Delete MSQ" href="?action=delete&msq=' . $engine['mid'] . '">❌</a>';
+	global $rusefi;
+
+	if (!is_array($results))
+		return;
+	$numResults = count($results);
+
+	$headers = array(
+		"msq" => array("uploaded"=>"Uploaded", "Owner", "Vehicle Name", "Engine Make", "Engine Code", "Cylinders", 
+					"Liters", "Compression", "Aspiration", "Firmware/Version", "Views", "Options"),
+		"log" => array("uploaded"=>"Uploaded", "Owner", "Duration", "Views", "Options"),
+	);
+
+	$ttype = ucfirst($type);
+
+	echo '<div id="content'.$ttype.'">'; //<div class="info">' . $numResults . ' results.</div>';
+	echo '<div id="container'.$ttype.'"><table id="browse'.$ttype.'Results" ng-controller="BrowseController">';
+	echo '<thead><tr class="theader">';
+	foreach ($headers[$type] as $hn=>$h) {
+		echo '<th' . (is_string($hn) ? ' id="uploaded'.$ttype.'"' : '') . ">$h</th>\r\n";
 	}
-	echo '</td></tr>';
+	echo '</tr></thead>';
+	echo '<tbody>';
+	for ($c = 0; $c < $numResults; $c++)
+	{
+    	$res = $results[$c];
+		echo '<tr><td><a href="view.php?' . $type . '=' . $res['mid'] . '">' . $res['uploadDate'] . '</a></td>';
+		echo '<td><a href=/forum/memberlist.php?mode=viewprofile&u=' . $res['user_id'] . '>' . $rusefi->getUserNameFromId($res['user_id']) . '</a></td>';
+		if ($type == "msq")
+		{
+			echo '<td>' . $res['name'] . '</td>';
+			echo '<td>' . $res['make'] . '</td>';
+			echo '<td>' . $res['code'] . '</td>';
+			echo '<td>' . $res['numCylinders'] . '</td>';
+			echo '<td>' . $res['displacement'] . '</td>';
+			echo '<td>' . $res['compression'] . ':1</td>';
+			$aspiration = $res['induction'] == 1 ? "Turbo" : "Atmo";
+			echo '<td>' . $aspiration . '</td>';
+			echo '<td>' . $res['firmware'] . '/' . $res['signature'] . '</td>';
+		}
+		else if ($type == "log")
+		{
+			echo '<td>' . $res['duration'] . '</td>';
+		}
+		echo '<td>' . $res['views'] . '</td>';
+		echo '<td><a class="downloadLink" title="Download ' . strtoupper($type). '" download href="download.php?' . $type . '=' . $res['mid'] . '">💾</a>';
+		if ($rusefi->isAdminUser) {
+			echo ' <a class="deleteLink" title="Delete ' . strtoupper($type). '" href="?action=delete&' . $type . '=' . $res['mid'] . '">❌</a>';
+		}
+		echo "</td></tr>\r\n";
+	}
+	echo '</tbody></table></div></div>';
 }
-echo '</tbody></table></div></div>';
+
+$resultsMsq = $msqur->browse($bq, $page, "msq");
+echo '<div>Tunes:';
+putResultsInTable($resultsMsq, "msq");
+echo '</div>';
+
+$resultsLog = $msqur->browse($bq, $page, "log");
+$rusefi->unpackLogInfo($resultsLog);
+echo '<div>Logs:';
+putResultsInTable($resultsLog, "log");
+echo '</div>';
 
 $msqur->footer();
 ?>

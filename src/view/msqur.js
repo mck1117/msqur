@@ -27,9 +27,19 @@ msqur.controller('SearchController', function ($scope) {
 });
 
 $(document).ready(function() {
-    $('#browseResults')
+    $('#browseMsqResults')
 		.bind('dynatable:init', function(e, dynatable) {
-		    dynatable.sorts.add('uploaded', -1);
+		    dynatable.sorts.add('uploadedMsq', -1);
+		})
+    	.dynatable( {
+			dataset: {
+      			perPageDefault: 100
+    		}
+  		});
+
+    $('#browseLogResults')
+		.bind('dynatable:init', function(e, dynatable) {
+		    dynatable.sorts.add('uploadedLog', -1);
 		})
     	.dynatable( {
 			dataset: {
@@ -46,8 +56,8 @@ $(function() {
 	$('div#upload').dialog({
 		modal: true,
 		autoOpen: false,
-		title: "Upload Tune Files",
-		width: "512px",
+		title: "Upload Tune or Log Files",
+		width: "712px",
 		buttons: hideUpload ? [
 			{ text: "Cancel", click: function() { $(this).dialog('close'); } }
 		] :
@@ -274,6 +284,7 @@ $(function() {
 		var files = e.target.files || e.dataTransfer.files
 		//TODO type check
 		var output = [];
+		output.push('<small>');
 		for (var i = 0, f; f = files[i]; ++i)
 		{
 			var ft = getFileType(f.name);
@@ -285,12 +296,12 @@ $(function() {
 			{
 				startGettingEngineInfoFromTuneFile(f);
 			}
-			else
+			else if (ft.substring(0, 3) == "Log")
 			{
-				// todo: add Log real-time parsing?
-				//enableUploadButton(true);
+				startGettingInfoFromLogFile(f, ft);
 			}
 		}
+		output.push('</small>');
 		$('output#fileList').html('<ul>' + output.join('') + '</ul>');
 	}
 
@@ -326,6 +337,8 @@ $(function() {
 	{
 		enableUploadButton(false);
 		$('#engineInfo').hide();
+		$('#logInfo').hide();
+		$('#tuneInfo').hide();
 		$('output#processing').html("");
 	}
 
@@ -334,8 +347,10 @@ $(function() {
 		var ext = filename.split('.').pop();
 		if (ext == "msq")
 			return "Tune";
-		else if (ext == "msl" || ext == "msg")
-			return "Log";
+		else if (ext == "msl")
+			return "LogText";
+		else if (ext == "mlg")
+			return "LogBinary";
 		return null;
 	}
 
@@ -412,6 +427,140 @@ $(function() {
 		}, "json");
 
 	}
+
+	////////////////////////////////////////////////////////////////
+	var status = "";
+	function clearStatus()
+	{
+		status = "";
+		printStatus("");
+	}
+
+	function addStatus(st)
+	{
+		status += st + "<br />";
+	}
+
+	function printStatus(st = "")
+	{
+		$('output#processing').html(status + st);
+	}
+
+	function startGettingInfoFromLogFile(file, ft)
+	{
+		// This may take a while...
+		$('output#processing').css("color", "darkorange");
+		clearStatus();
+		addStatus("Reading...");
+		printStatus();
+
+		var fr = new FileReader();
+		fr.onload = onFileRead;
+        if (ft == "LogText")
+        	fr.readAsText(file);
+		else
+			fr.readAsArrayBuffer(file);
+
+		function onFileRead()
+		{
+			getInfoFromLogFile(fr.result, ft);
+		}
+		// todo: add Log real-time parsing?
+		enableUploadButton(true);
+	}
+
+	function getInfoFromLogFile(data, ft)
+	{
+		const maxPreprocessFileSize = 32*1024*1024;
+
+		// we cannot preview too large files...
+		var fileSize = data.byteLength;
+		if (fileSize > maxPreprocessFileSize) {
+			data = data.slice(0, maxPreprocessFileSize);
+		}
+
+		addStatus("Compressing...");
+		printStatus();
+		var output = pako.deflate(data);
+		var content = new Blob([output], { type: 'application/zip' });
+		var fd = new FormData();
+		fd.append("log", content);
+
+		printStatus("Sending...");
+
+		$.ajax({
+			url: "api.php?method=preprocessLog&type=" + ft + "&fullSize=" + fileSize,
+			type: "POST",
+			data: fd,
+    		xhr: function() {
+		        var xhr = new window.XMLHttpRequest();
+		        xhr.upload.addEventListener("progress", function(evt) {
+		            if (evt.lengthComputable) {
+		                var percentComplete = Math.round(100.0 * evt.loaded / evt.total);
+		                if (percentComplete > 0 && percentComplete < 100)
+		                	printStatus("Sending... " + percentComplete + "%");
+						else if (percentComplete >= 100) {
+							addStatus("Analyzing...");
+							printStatus();
+						}
+		            }
+		       }, false);
+		       return xhr;
+		    },
+    		processData: false,
+			contentType: false,
+			success: function(response) {
+				var data;
+				var status;
+				var text;
+				try {
+					data = JSON.parse(response);
+					status = data.preprocessLog.status;
+					text = data.preprocessLog.text;
+				} catch (e) {
+					text = "There was an error while processing. Cannot read the processed results!";
+					status = "deny";
+				}
+				// output the text result
+				clearStatus();
+				printStatus(text);
+				
+				if (status != "deny") {
+					// output the fields
+					$('output#logFields').html(data.preprocessLog.logFields);
+					// center dialog
+					$("div#upload").dialog("option", "position", {my: "center", at: "center", of: window});
+					// display the table
+					$('#logInfo').show();
+
+					// todo: set a selected option from the log file data
+					$('#tuneInfo').show();
+				}
+
+				// change the message color
+				var clr = "red";
+				if (status == "ok")
+					clr = "green";
+				else if (status == "warn")
+					clr = "darkorange";
+				$('output#processing').css("color", clr);
+		
+				// enable upload button if the status is good enough
+				enableUploadButton(status == "ok" || status == "warn");
+	       },
+	       error: function(jqXHR, textStatus, errorMessage) {
+	           console.log(errorMessage);
+	       }
+	    });
+
+		//alert(data.length);
+		//var array = new UInt8Array(data);
+		//if (array[0] 
+		//alert(JSON.stringify(array, null, 4));
+		//alert(JSON.stringify(data[0], null, 4));
+	}
+
+
 
 	function enableUploadButton(isEnabled)
 	{
