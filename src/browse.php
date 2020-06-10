@@ -125,7 +125,7 @@ function putResultsInTable($results, $type)
 	$numResults = count($results);
 
 	$headers = array(
-		"msq" => array("uploaded"=>"Uploaded", "Owner", "Vehicle Name", "Engine Make", "Engine Code", "Cylinders", 
+		"msq" => array("uploaded"=>"Uploaded", "Owner", "Vehicle Name", "Engine Make/Code", "Cylinders", 
 					"Liters", "Compression", "Aspiration", "Firmware/Version", "Views", "Options"),
 		"log" => array("uploaded"=>"Uploaded", "Owner", "Duration", "Views", "Options"),
 	);
@@ -148,8 +148,7 @@ function putResultsInTable($results, $type)
 		if ($type == "msq")
 		{
 			echo '<td>' . $res['name'] . '</td>';
-			echo '<td>' . $res['make'] . '</td>';
-			echo '<td>' . $res['code'] . '</td>';
+			echo '<td>' . $res['make'] . ' ' . $res['code'] . '</td>';
 			echo '<td>' . $res['numCylinders'] . '</td>';
 			echo '<td>' . $res['displacement'] . '</td>';
 			echo '<td>' . $res['compression'] . ':1</td>';
