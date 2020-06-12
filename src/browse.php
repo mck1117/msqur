@@ -29,19 +29,30 @@ $bq['signature'] = parseQueryString('fwVersion'); //TODO might make dependant on
 
 //TODO Use http_build_query and/or parse_url and/or parse_str
 
-$action = parseQueryString('action') ?? "";
-if ($action == "delete")
+function actionStartHeader()
 {
-	$id = isset($_GET['msq']) ? intval($_GET['msq']) : -1;
-	unset($_GET['msq']);
-	
+	global $msqur, $rusefi;
+
 	$msqur->header();
 
 	echo "<script>var newURL = location.href.split('?')[0]; window.history.replaceState(null, null, newURL);</script>";
 	echo '<div class="uploadOutput">';
 	if (!$rusefi->isAdminUser)
 	{
-		echo '<div class="error">Only administrators can delete items, sorry!</div>';
+		echo '<div class="error">Only administrators can do this, sorry!</div>';
+		return false;
+	}
+	return true;
+}
+
+$action = parseQueryString('action') ?? "";
+if ($action == "delete")
+{
+	$id = isset($_GET['msq']) ? intval($_GET['msq']) : -1;
+	unset($_GET['msq']);
+	
+	if (!actionStartHeader())
+	{
 	}
 	else if ($id <= 0)
 	{
@@ -53,6 +64,21 @@ if ($action == "delete")
 			echo '<div class="error">Error while deleting the item!</div>';
 		else
 			echo '<div class="info">The item has been deleted!</div>';
+	}
+	echo '</div>';
+	
+} else if ($action == "engines_cleanup")
+{
+	if (!actionStartHeader())
+	{
+	}
+	else
+	{
+		$cnt = $msqur->db->deleteUnusedEngines();
+		if ($cnt === FALSE)
+			echo '<div class="error">Error while deleting the unused engines!</div>';
+		else
+			echo '<div class="info">'. $cnt . ' engine(s) has been deleted!</div>';
 	}
 	echo '</div>';
 	

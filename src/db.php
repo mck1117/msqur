@@ -888,7 +888,7 @@ class DB
 			$ret = $st->execute();
 			$st->closeCursor();
 
-			// todo: msqur_engines may contain unused records. Do we need to delete them too?
+			$this->deleteUnusedEngines();
 
 			return true;
 		}
@@ -899,6 +899,27 @@ class DB
 		
 		return false;
 		
+	}
+
+	public function deleteUnusedEngines()
+	{
+		if (!$this->connect()) return false;
+		
+		try
+		{
+			$st = $this->db->prepare("DELETE FROM msqur_engines WHERE id NOT IN (SELECT engine FROM msqur_metadata)");
+			$st->execute();
+			$ret = $st->rowCount();	// return the number of deleted engines
+			$st->closeCursor();
+
+			return $ret;
+		}
+		catch (PDOException $e)
+		{
+			$this->dbError($e);
+		}
+		
+		return false;
 	}
 
 	public function addLog($file, $user_id, $tune_id)
