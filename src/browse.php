@@ -20,6 +20,7 @@ require_once "msqur.php";
 $page = parseQueryString('p') || 0;
 $bq = array();
 $bq['user_id'] = parseQueryString('user_id');
+$bq['name'] = parseQueryString('vehicleName');
 $bq['make'] = parseQueryString('engineMake'); //TODO Define these API method/strings in one place
 $bq['code'] = parseQueryString('engineCode');
 $bq['firmware'] = parseQueryString('firmware');
@@ -147,7 +148,7 @@ function putResultsInTable($results, $type)
 		echo '<td><a href=/forum/memberlist.php?mode=viewprofile&u=' . $res['user_id'] . '>' . $rusefi->getUserNameFromId($res['user_id']) . '</a></td>';
 		if ($type == "msq")
 		{
-			echo '<td>' . $res['name'] . '</td>';
+			echo '<td><a href="?vehicleName='.urlencode($res['name']).'">' . $res['name'] . '</a></td>';
 			echo '<td>' . $res['make'] . ' ' . $res['code'] . '</td>';
 			echo '<td>' . $res['numCylinders'] . '</td>';
 			echo '<td>' . $res['displacement'] . '</td>';
