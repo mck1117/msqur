@@ -883,14 +883,15 @@ class DB
 		
 		try
 		{
-			$st = $this->db->prepare("DELETE FROM msqur_files,msqur_metadata USING msqur_files INNER JOIN msqur_metadata WHERE msqur_metadata.file = msqur_files.id AND msqur_files.id = :id");
+			$st = $this->db->prepare("DELETE FROM msqur_files,msqur_metadata USING msqur_files INNER JOIN msqur_metadata WHERE msqur_files.id = msqur_metadata.file AND msqur_metadata.id = :id");
 			DB::tryBind($st, ":id", $id);
-			$ret = $st->execute();
+			$st->execute();
+			$ret = $st->rowCount();
 			$st->closeCursor();
 
 			$this->deleteUnusedEngines();
 
-			return true;
+			return $ret > 0;
 		}
 		catch (PDOException $e)
 		{
