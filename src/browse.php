@@ -153,7 +153,7 @@ function putResultsInTable($results, $type)
 
 	$headers = array(
 		"msq" => array("uploaded"=>"Uploaded", "Owner", "Vehicle Name", "Engine Make/Code", "Cylinders", 
-					"Liters", "Compression", "Aspiration", "Firmware/Version", "Views", "Options"),
+					"Liters", "Compression", "Aspiration", /*"Firmware/Version", */"Views", "Options"),
 		"log" => array("uploaded"=>"Uploaded", "Owner", "Duration", "Views", "Options"),
 	);
 
@@ -181,7 +181,7 @@ function putResultsInTable($results, $type)
 			echo '<td>' . $res['compression'] . ':1</td>';
 			$aspiration = $res['induction'] == 1 ? "Turbo" : "Atmo";
 			echo '<td>' . $aspiration . '</td>';
-			echo '<td>' . $res['firmware'] . '/' . $res['signature'] . '</td>';
+			//echo '<td>' . $res['firmware'] . '/' . $res['signature'] . '</td>';
 		}
 		else if ($type == "log")
 		{
