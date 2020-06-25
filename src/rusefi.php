@@ -442,6 +442,12 @@ class Rusefi
 		return array();
 	}
 
+	public function getTuneList($vehicleName)
+	{
+		$list = $this->msqur->db->getUserTunes($this->userid, $vehicleName);
+		return $list;
+	}
+
 	public function getMsqConstant($c)
 	{
 		$cc = $this->msq->findConstant($this->msq->msq, $c);

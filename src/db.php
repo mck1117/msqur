@@ -806,13 +806,16 @@ class DB
 		return FALSE;
 	}
 
-	public function getUserTunes($user_id)
+	public function getUserTunes($user_id, $vehicleName = "")
 	{
 		if (!$this->connect()) return array();
 		try
 		{
-			$st = $this->db->prepare("SELECT m.id as mid, name, make, code, numCylinders, displacement, compression, uploadDate FROM msqur_metadata m INNER JOIN msqur_engines e ON m.engine = e.id WHERE e.user_id = :user_id ORDER BY m.uploadDate DESC");
+			$vehicleFilter = !empty($vehicleName) ? "AND e.name = :vehicleName" : "";
+			$st = $this->db->prepare("SELECT m.id as mid, name, make, code, numCylinders, displacement, compression, uploadDate FROM msqur_metadata m INNER JOIN msqur_engines e ON m.engine = e.id WHERE (e.user_id = :user_id ".$vehicleFilter.") ORDER BY m.uploadDate DESC");
 			DB::tryBind($st, ":user_id", $user_id);
+			if (!empty($vehicleName))
+				DB::tryBind($st, ":vehicleName", $vehicleName);
 			$st->execute();
 			if ($st->rowCount() > 0)
 			{

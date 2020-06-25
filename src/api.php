@@ -103,10 +103,15 @@ class API
 			case 'preprocessLog':
 				$result = array($method => $rusefi->preprocessLog());
 				break;
+			case 'tuneList':
+				$vehicleName = parseQueryString('vehicleName');
+				$result = array($method => $rusefi->getTuneList($vehicleName));
+				break;
+
 
 			//TODO upload date range?
 			default:
-				$result["error"] = "Invalid API call";
+				$result["error"] = "Invalid API call: $method";
 				break;
 		}
 		
