@@ -48,7 +48,7 @@ $(document).ready(function() {
   		});
 
 	$('.deleteLink').unbind('click').bind('click', function () {
-        return confirm('Are you sure?');
+        return confirm('You are about to delete the tune: "' + $(this).attr('info') + '".\r\n\r\nAre you sure?');
     });
 });
 

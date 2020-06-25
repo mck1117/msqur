@@ -190,7 +190,7 @@ function putResultsInTable($results, $type)
 		echo '<td>' . $res['views'] . '</td>';
 		echo '<td><a class="downloadLink" title="Download ' . strtoupper($type). '" download href="download.php?' . $type . '=' . $res['mid'] . '">💾</a>';
 		if ($rusefi->isAdminUser) {
-			echo ' <a class="deleteLink" title="Delete ' . strtoupper($type). '" href="?action=delete&' . $type . '=' . $res['mid'] . '">❌</a>';
+			echo ' <a class="deleteLink" title="Delete ' . strtoupper($type). '" info="'.$res['uploadDate'].' '.$res['name'].'" href="?action=delete&' . $type . '=' . $res['mid'] . '">❌</a>';
 		}
 		echo "</td></tr>\r\n";
 	}
