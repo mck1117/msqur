@@ -576,4 +576,27 @@ $(function() {
 		dropZone.addEventListener('dragover', uploadDragOver);
 		dropZone.addEventListener('drop', uploadAdd);
 	}
+
+	$('.tsSettingsSelect').change(function() { 
+	  	var options = $('#' + $(this).attr('id') + ' option');
+	  	var optionsList = new Array();
+		options.each(function() {
+			optionsList.push($(this).val());
+		});
+
+	  	var url = new URL(window.location.href);
+		var settings = url.searchParams.get('settings');
+		settings = settings ? settings.split("|") : [];
+		var settingsFiltered = new Array();
+		// remove all settings included in this 
+		settings.forEach(function(value, idx, object) {
+			if (optionsList.indexOf(value) < 0)
+				settingsFiltered.push(value);
+		});
+		
+		settingsFiltered.push($(this).val());
+		settings = settingsFiltered.join("|");
+		url.searchParams.set('settings', settings);
+		window.location.href = url.href;
+	});
 });

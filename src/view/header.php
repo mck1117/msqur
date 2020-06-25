@@ -17,9 +17,9 @@
 	<meta property="og:description" content="rusEFI tune file sharing site" />
 	<meta property="og:site_name" content="rusEFI online" />
 	<!-- External scripts -->
-	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js" integrity="sha384-UM1JrZIpBwVf5jj9dTKVvGiiZPZTLVoq4sfdvIe9SBumsvCuv6AHDNtEiIb5h1kU" crossorigin="anonymous"></script>
-	<link rel="stylesheet" href="//ajax.googleapis.com/ajax/libs/jqueryui/1.11.1/themes/smoothness/jquery-ui.css" integrity="sha384-5L1Zwk1YapN1l4l4rYc+1fr3Z0g23LbCBztpq0LQcbDCelzqgFb96BMCFtDwjq/b" crossorigin="anonymous">
-	<script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.11.1/jquery-ui.min.js" integrity="sha384-ovZOciNc/R4uUo2fCVS1oDT0vIBuaou1d39yqL4a9xFdZAYDswCgrJ6tF8ShkqzF" crossorigin="anonymous"></script>
+	<script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+	<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+	<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 	<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.5.2/angular.min.js" integrity="sha384-neqWoCEBO5KsP6TEzfMryfZUeh7+qMQEODngh2KGzau+pMU9csLE2azsvQFa8Oel" crossorigin="anonymous"></script>
 	<!-- Hosted scripts -->
 	<script src="view/lib/dynatable/jquery.dynatable.js"></script>
@@ -136,6 +136,29 @@ if (isset($_GET['msq'])) {
 	</div>
 </div>
 <div id="downloadLink"><a title="Download MSQ File" href="download.php?msq=<?php echo $_GET['msq']; ?>">💾 Download MSQ</a></div>
+<div id="tsSettings">
+<?php
+if ($viewMode == "ts") {
+	$options = $rusefi->getOptions();
+	foreach ($options as $opt) {
+?>
+<select class="tsSettingsSelect" id="<?=$opt[0];?>">
+<option value="">...<?=$opt[1];?>...</option>
+<option value="" disabled="disabled">─────────────────────────</option>
+<?php
+		foreach ($opt[2] as $sel) {
+			$isSel = in_array($sel[0], $settings) ? " selected='selected'" : "";
+?>
+		<option value="<?=$sel[0];?>"<?=$isSel;?>><?=$sel[1];?></option>
+<?php
+		}
+?>
+</select>
+<?php
+	}
+}
+?>
+</div>
 <?php
 }
 else if (isset($_GET['log'])) {

@@ -84,6 +84,7 @@ class LogStats {
 
 	public $prevTime;
 	public $timeDeltaAverageCnt;
+	public $prevAfr;
 };
 
 class MlgParser {
@@ -333,12 +334,18 @@ class MlgParser {
 		$this->state->prevTime = $d[IDX_TIME];
 
 		// get AFR deviation
-		if ($d[IDX_AFR] >= AFR_MIN && $d[IDX_AFR] <= AFR_MAX) {
-			$this->state->isAfrDetected = 1;
-			$deltaAfrSq = ($d[IDX_AFR] - $d[IDX_TARGET_AFR]);
-			$deltaAfrSq *= $deltaAfrSq;	// squared
-		} else {
-			$deltaAfrSq = AFR_UNKNOWN;
+		$deltaAfrSq = AFR_UNKNOWN;
+		$afr = $d[IDX_AFR];
+		if ($afr >= AFR_MIN && $afr <= AFR_MAX) {
+			if ($this->state->prevAfr == AFR_UNKNOWN)
+				$this->state->prevAfr = $afr;
+			if ($d[IDX_AFR] != $this->state->prevAfr) {
+				$this->state->isAfrDetected = 1;
+			}
+			if ($this->state->isAfrDetected) {
+				$deltaAfrSq = ($afr - $d[IDX_TARGET_AFR]);
+				$deltaAfrSq *= $deltaAfrSq;	// squared
+			}
 		}
 		
 		// now we know the current state, let's gather the stats
@@ -428,6 +435,7 @@ class MlgParser {
 		$this->reqFields = $this->reqFieldsForStats;
 		$this->state->startingFastestTime = INF;
 		$this->state->prevTime = INF;
+		$this->state->prevAfr = AFR_UNKNOWN;
 	}
 
 	function printTime($t) {
@@ -481,9 +489,9 @@ class MlgParser {
 		$idlingAverageAfrDeltaSq = $this->divide($this->state->idlingAverageAfrDeltaSqSum, $this->state->idlingAfrCnt);
 		$runningAverageAfrDeltaSq = $this->divide($this->state->runningAverageAfrDeltaSqSum, $this->state->runningAfrCnt);
 
-		$avgTimePerRecord = $this->state->duration / $this->state->timeDeltaAverageCnt;
+		$avgTimePerRecord = $this->divide($this->state->duration, $this->state->timeDeltaAverageCnt);
 		$estimatedNumRecords = floatVal($fullSize - $this->state->dataStartOffset) / $this->state->dataRecordSize;
-		$estimatedTotalDuration = $estimatedNumRecords * $avgTimePerRecord;
+		$estimatedTotalDuration = $this->printRound($estimatedNumRecords * $avgTimePerRecord);
 /*
 		//!!!!!!!!!!!
 		print_r($this->state);

@@ -19,7 +19,9 @@ require "msqur.php";
 
 if (isset($_GET['msq'])) {
 	$id = intval($_GET['msq']);
-	$html = $msqur->view($id);
+	$viewMode = parseQueryString('view');
+	$settings = explode("|", parseQueryString('settings'));
+	$html = $msqur->view($id, $viewMode, $settings);
 	if ($html !== null) {
 		include "view/header.php";
 		echo $html;

@@ -18,7 +18,7 @@ if (!DEBUG)
 ?>
 </body>
 
-<footer>
+<footer id="footer">
 <a href="https://rusefi.com/"><img src="/style/rusefi_online_color.png" width="140"></a>
 <br>
 <small>

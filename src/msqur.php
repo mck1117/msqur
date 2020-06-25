@@ -153,9 +153,17 @@ class Msqur
 	 * parse xml and update engine
 	 * else if cached just return html
 	 */
-	public function view($id)
+	public function view($id, $viewMode, $settings)
 	{
+		global $rusefi;
+
 		if (DEBUG) debug('Load MSQ: ' . $id);
+
+		if ($viewMode == "ts")
+		{
+			return $rusefi->viewTs($id, $settings);
+		}
+
 		//Get cached HTML and display it, or reparse and display (in order)
 		$html = $this->getCachedMSQ($id);
 		if ($html !== FALSE)
@@ -170,7 +178,7 @@ class Msqur
 				$xml = $this->db->getXML($id);
 				if ($xml !== null) {
 					try {
-						$groupedHtml = $msq->parseMSQ($xml, $engine, $metadata);
+						$groupedHtml = $msq->parseMSQ($xml, $engine, $metadata, "", $settings);
 						$this->db->updateMetadata($id, $metadata);
 						$this->db->updateEngine($id, $engine, $metadata);
 						

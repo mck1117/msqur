@@ -132,6 +132,11 @@ div#downloadLink {
 	float: right;
 }
 
+div#tsSettings {
+	margin: 5px 20px 5px 5px;
+	float: right;
+}
+
 #fileDropZone {
 	border: 2px dashed #bbb;
 	border-radius: 5px;
@@ -302,6 +307,10 @@ input:focus:invalid {
   color: red;
 }
 
+input:disabled {
+  color: #b7cee7;
+}
+
 ul.supportList {
 	list-style: none;
   padding: 0;
@@ -387,4 +396,203 @@ footer a:link,footer a:active,footer a:visited {
 }
 footer a:hover {
 	color: #222222;
+}
+
+.ui-dialog .ui-dialog-titlebar, .ui-dialog .ui-dialog-buttonpane { 
+	font-size: 0.8em; 
+	font-weight: normal;
+}
+
+#ts-dialogs {
+	display: none;
+	margin: 10px; 
+}
+
+#ts-menu {
+	position: absolute;
+	display: none;
+	position: relative; 
+	z-index: 999;
+	background-color: #eeeeee;
+}
+
+.tsMenuItem {
+    float: left;
+	display: flex;
+	/*min-width: 195px;*/
+	height: 30px;
+	border: 1px solid #7a8a99;
+	background: linear-gradient(0deg, rgba(224,234,244,1) 0%, rgba(255,255,255,1) 66%, rgba(190,211,231,1) 100%);
+	/*padding: 0px 0px 0px 40px !important;*/
+	align-items: center;
+	justify-content: center;
+	margin: 5px !important;
+}
+
+.tsMenuItem:hover {
+	height: 28px;
+	border: 2px solid #b8cfe5;
+}
+
+.tsMenuItemImg {
+}
+
+.tsMenuSeparator {
+	border: 1px solid #6382bf !important;
+	background: #eeeeee !important;
+}
+
+.tsMenuItemText {
+	display:inline-block;
+	font-size: 0.75em;
+	font-weight: bold;
+	text-decoration: none;
+	text-align: left;
+}
+
+.tsMenuItemText:hover {
+	background-color: #eeeeee;
+}
+
+.ui-menu { 
+    overflow: hidden;
+}
+.ui-menu .ui-menu {
+    overflow: visible !important;
+}
+.ui-menu > li { 
+	background-color: #eeeeee;
+    width: auto !important;
+}
+.ui-menu ul li {
+    width:auto;
+    display:block;
+    float:none;
+}
+.ui-menu ul li ul li {
+    width:auto;
+}
+.ui-menu ul li ul li a {
+    float:left;
+}
+.ui-menu .ui-menu-icon { 
+    margin-top: 0.3em !important;
+}
+.ui-menu .ui-menu .ui-menu li { 
+    float: left;
+    display: block;
+}
+
+.ui-state-active {
+	background: none !important;
+	border: none !important;
+	color: inherit !important;
+	font-weight: bold !important;
+}
+
+.ui-menu-item-wrapper {
+	display: block !important;
+	padding: 3px 5px 3px .4em !important;
+}
+
+.tsDialog {
+	overflow: hidden;
+	background: #eeeeee !important;
+	font-size: 1em; 
+	padding: 0 10px 10px 0 !important;
+	margin: 0;
+}
+
+.tsDialogClass .ui-dialog-titlebar {
+	background: linear-gradient(0deg, rgba(238,238,238,1) 0%, rgba(255,255,255,1) 100%);
+}
+
+.ts-controlgroup {
+	width: 100%;
+	padding: 0;
+}
+
+.ts-field-table {
+	width: 100%;
+	border: none;
+	margin: 0;
+	padding: 0;
+}
+
+.ts-field-td-label {
+	text-align: left;
+	padding: 0 0 0 10px;
+	border: none;
+}
+
+.ts-field-label {
+	background: none;
+	white-space: nowrap;
+	padding-right: 5px;
+	font-weight: normal;
+	font-size: 1em;
+}
+
+.ts-field-label[disabled="disabled"] {
+    color: #a798b5;
+}
+
+.ts-field-td-item {
+	text-align: right;
+	padding: 2px 0 0 10px;
+	border: none;
+}
+
+.ts-field-item {
+	margin: auto 0 auto auto;
+	font-size: 0.8em;
+	padding: 2px; 
+}
+
+.ts-field-item-option {
+	display: block;
+}
+
+.ts-label {
+	margin: auto 0 auto auto;
+	text-align: left;
+	font-weight: bold;
+	padding: 2px; 
+	border: none;
+}
+
+.ts-label-red {
+	background-color: red;
+	color: white;
+}
+
+.ts-label-blue {
+	background-color: blue;
+	color: white;
+}
+
+.ts-ui-controlgroup-label {
+	background: none;
+}
+
+.ts-panel {
+	font-size: 0.9em;
+	font-weight: bold;
+	vertical-align: top;
+	border: 1px solid #b8cfe5 !important;
+	padding: 5px;
+	margin: 0;
+}
+
+.ts-panel-horizontal {
+	display: inline-block;
+}
+
+.ts-panel-vertical {
+	display: block;
+	height:100%;
+}
+
+.ts-panel-notitle {
+	border: none;
 }

@@ -24,6 +24,9 @@ include "util.php";
  */
 class MSQ
 {
+	public $msqMap;
+	public $msq;
+
 	/**
 	 * @brief Format a constant to HTML
 	 * @param $constant The constant name
@@ -45,7 +48,7 @@ class MSQ
 	 * @param $metadata 
 	 * @returns String HTML
 	 */
-	public function parseMSQ($xml, &$engine, &$metadata)
+	public function parseMSQ($xml, &$engine, &$metadata, $viewType, $settings)
 	{
 		$html = array();
 		if (DEBUG) debug('Parsing XML...');
@@ -62,6 +65,8 @@ class MSQ
 
 			throw new MSQ_ParseException("Error parsing XML", '<div class="error">Unable to parse MSQ.</div>');
 		} else if ($msq) {
+			$this->msq = $msq;
+
 			$msqHeader = '<div class="info">';
 			$msqHeader .= "<div>Format Version: " . $msq->versionInfo['fileFormat'] . "</div>";
 			$msqHeader .= "<div>MS Signature: " . $msq->versionInfo['signature'] . "</div>";
@@ -74,11 +79,13 @@ class MSQ
 			$sigString = $sig;
 			try {
 				$iniFile = INI::getConfig($sig);
-				$msqMap = INI::parse($iniFile);
+				$msqMap = INI::parse($iniFile, $msq, $settings);
+				$this->msqMap = $msqMap;
 			} catch (MSQ_ConfigException $e) {
 				error('Error parsing config file: ' . $e->getMessage());
 				$issueTitle = urlencode("INI Request: $sigString");
 				$htmlMessage = $msqHeader . '<div class="error">Unable to load the corresponding configuration file for that MSQ. Please <a href="https://github.com/nearwood/msqur/issues/new?title=' . $issueTitle . '">file a bug!</a></div>';
+				$this->msqMap = array();
 				throw new MSQ_ParseException("Could not load configuration file for MSQ: " . $e->getMessage(), $htmlMessage, 100, $e);
 			}
 			
@@ -87,6 +94,12 @@ class MSQ
 			$metadata['signature'] = $sig[1];
 			$metadata['firmware'] = $sig[0];
 			$metadata['author'] = $msq->bibliography['author'];
+
+			if ($viewType == "ts")
+			{
+				include_once "view/view_ts.php";
+				return $html;
+			}
 			
 			$constants = array();
 			$helpTexts = array();
@@ -215,7 +228,7 @@ EOT;
 	 * @param $constant ID of constant to search for
 	 * @returns String of constant value, or NULL if not found
 	 */
-	private function findConstant($xml, $constant)
+	public function findConstant($xml, $constant)
 	{
 		$search = $xml->xpath('//constant[@name="' . $constant . '"]');
 		if ($search === FALSE || count($search) == 0) return NULL;

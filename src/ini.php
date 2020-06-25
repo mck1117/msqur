@@ -110,7 +110,7 @@ class INI
 	 * @param $file The path to the INI file that will be loaded and parsed.
 	 * @returns A huge array of arrays, starting with sections.
 	 */
-	public static function parse($file)
+	public static function parse($file, $msq, $optionValues)
 	{
 		try
 		{
@@ -137,15 +137,27 @@ class INI
 		$table = array();
 		$currentSection = NULL;
 		$values = array();
-		
+		$outputs = array();
+		$conditions = array();
+
+		$directives = array();
+		$skipByDirective = false;
+		$settings = array();
+		$curSettingGroup = NULL;
+
 		foreach ($ini as $line)
 		{
 			$line = trim($line);
 			if ($line == '' || $line[0] == ';') continue;
 			if ($line[0] == '#')
-			{//TODO Parse directives, each needs to be a checkbox (combobox?) on the FE
+			{
+				$skipByDirective = INI::processDirective($line, $directives, $settings);
 				continue;
 			}
+
+			// see INI::processDirective()
+			if ($skipByDirective)
+				continue;
 			
 			//[ at the beginning of the line is the indicator of a new section.
 			if ($line[0] == '[') //TODO until before ] not end of line
@@ -156,23 +168,25 @@ class INI
 				continue;
 			}
 			
+			//Pretty much anything left has an equals sign I think.
+			//Key-value pair around equals sign
+			list($key, $value) = explode('=', $line, 2);
+			$key = trim($key);
+			
 			//We don't handle formulas/composites yet
+			$condition = NULL;
 			if (strpos($line, '{') !== FALSE)
 			{
 				//isolate expression, parse it, fill in variables from msq, give back result (true,false,42?)
 				//These are used in the ReferenceTables, Menus, and output/logging sections
 				
 				//For the menu, this is whether the menu item is visible or enabled.
-				INI::parseExpression($line);
-				
-				//if (DEBUG) debug("Skipping expression in line: $line");
-				continue;
+				$condition = INI::parseExpression($line, $msq, $outputs);
+				if ($condition === NULL) {
+					if (DEBUG) debug("Skipping expression in line: $line");
+					continue;
+				}
 			}
-			
-			//Pretty much anything left has an equals sign I think.
-			//Key-value pair around equals sign
-			list($key, $value) = explode('=', $line, 2);
-			$key = trim($key);
 			
 			//Remove any line end comment
 			//This could be moved somewhere else, but works fine here I guess.
@@ -193,8 +207,31 @@ class INI
 				
 				//Whenever I do menu recreation these two will be used
 				case "Menu":
+					if ($key == "menu")
+					{
+						$curMenu = INI::defaultSectionHandler($value);
+					}
+					if (isset($curMenu))
+					{
+						$values["menu"][$curMenu][$key][] = INI::defaultSectionHandler($value);
+					}
+					break;
 					break;
 				case "UserDefined":
+					if ($key == "dialog")
+					{
+						$curDialog = INI::defaultSectionHandler($value);
+					}
+					if (is_array($curDialog))
+					{
+						$dlg = INI::defaultSectionHandler($value);
+						if (is_array($dlg)) {
+							if ($condition !== NULL) {
+								$dlg[count($dlg) - 1] = $condition;
+							}
+						}
+						$values["dialog"][$curDialog[0]][$key][] = $dlg;
+					}
 					break;
 				
 				case "CurveEditor": //2D Graph //curve = coldAdvance, "Cold Ignition Advance Offset"
@@ -335,7 +372,6 @@ class INI
 				//Don't care about these
 				case "MegaTune":
 				case "ReferenceTables": //misc MAF stuff
-				case "SettingGroups": //misc settings
 				case "ConstantsExtensions": //misc reset required fields
 				case "PortEditor": //not sure
 				case "GaugeConfigurations": //Not relevant
@@ -344,7 +380,25 @@ class INI
 				case "Tuning": //Not relevant
 				case "AccelerationWizard": //Not sure
 				case "BurstMode": //Not relevant
+					break;
 				case "OutputChannels": //These are for gauges and datalogging
+					$outputs[$key] = INI::defaultSectionHandler($value);
+					break;
+				case "SettingGroups": //misc settings
+					$values = INI::defaultSectionHandler($value);
+					if ($key == "settingGroup") {
+						$curSettingGroup = isset($settings[$key]) ? count($settings[$key]) : 0;
+						// this will be the options list
+						$values[] = array();
+					} else {
+						// store the current value
+						$values[] = in_array($values[0], $optionValues) ? 1 : 0;
+						// we also add this option to the current group list
+						$settings["settingGroup"][$curSettingGroup][2][] = $values;
+					}
+					$settings[$key][] = $values;
+
+					break;
 				case "Datalog": //Not relevant
 				default:
 					break;
@@ -355,9 +409,9 @@ class INI
 				break;
 			}
 		}
-		
+
 		//var_export($values);
-		return $values + $globals;
+		return $values + $globals + $conditions + $settings;
 	}
 	
 	/**
@@ -370,16 +424,74 @@ class INI
 		//For things like "nCylinders      = bits,    U08,      0,"
 		//split CSV into an array
 		if (strpos($value, ',') !== FALSE)
-			return array_map('trim', explode(',', $value)); //Use trim() as a callback on elements returned from explode()
+			$v = array_map('trim', explode(',', $value)); //Use trim() as a callback on elements returned from explode()
 		else //otherwise just return the value
-			return trim($value);
+			$v = trim($value);
+		return preg_replace("/\"([^\"]+)\"/", "$1", $v);
 	}
 	
-	public static function parseExpression($line)
+	public static function parseExpression($line, $msq, $outputs)
 	{
-		
-		
-		return NULL;
+		// we'll use eval() for these expressions, so we need to be extremely careful & paranoic here
+		$separators = "\-\+\!\/\?\:=><&|(),";
+		if (!preg_match ("/{([A-Za-z_0-9".$separators."\s]+)}/", $line, $ret)) {
+			return NULL;
+		}
+
+		// filter out excessive whitespace
+		$text = trim(preg_replace("/[\s]+/", " ", $ret[1]));
+		// parse lexemes
+		$lexemes = preg_split("/\s*([".$separators."]+)\s*/", $text, -1, PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE);
+
+		// process lexemes - add our getters for the variables and outputChannels
+		foreach ($lexemes as &$l) {
+			// check if we know this variable and have a value for it
+			if (preg_match("/[A-Za-z_][A-Za-z_0-9]*/", $l)) {
+				// first, search the variables
+				$search = $msq->xpath('//constant[@name="' . $l . '"]');
+				if ($search !== FALSE && count($search) > 0) {
+					$l = "\$rusefi->getMsqConstant('".$l."')";
+				}
+				// try outputChannels?
+				else if (array_key_exists($l, $outputs)) {
+					$l = "\$rusefi->getMsqOutput('".$l."')";
+				}
+				else {
+					//echo "~~~~~~~~~~~ ".$l."\r\n";
+					return NULL;
+				}
+			}
+		}
+
+		// reconstruct the expression
+		return "return " . implode(" ", $lexemes) . ";";
+	}
+
+	public static function processDirective($line, &$directives, $settings)
+	{
+		$c = count($directives) - 1;
+		if (preg_match("/#if\s+([A-Za-z0-9]+)/", $line, $ret)) {
+			array_push($directives, INI::checkOption($ret[1], $settings));
+		}
+		else if (preg_match("/#elif\s+([A-Za-z0-9]+)/", $line, $ret)) {
+			$directives[$c] = INI::checkOption($ret[1], $settings);
+		}
+		else if (preg_match("/#else/", $line, $ret)) {
+			$directives[$c] = 1 - $directives[$c];
+		}
+		else if (preg_match("/#endif/", $line, $ret)) {
+			array_pop($directives);
+		}
+		return count($directives) != 0 && end($directives) != 1;
+	}
+
+	public static function checkOption($optionName, $settings)
+	{
+		foreach ($settings["settingOption"] as $so) {
+			if ($so[0] == $optionName)
+				return $so[2];
+		}
+		return false;
 	}
 }
 ?>

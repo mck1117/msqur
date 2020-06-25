@@ -13,6 +13,7 @@ include "mlg.format.php";
 class Rusefi
 {
 	private $msqur = null;
+	private $msq;
 	public $username;
 	public $userid;
 	public $isAdminUser;
@@ -396,6 +397,74 @@ class Rusefi
 	public function getLogForDownload($id)
 	{
 		return $this->msqur->db->getLog($id);
+	}
+
+	public function viewTs($id, $options)
+	{
+		$xml = $this->msqur->db->getXML($id);
+		if ($xml === null) 
+		{
+			$this->msqur->error("Null xml");
+			return "";
+		}
+		
+		$html = "";
+		try {
+			$this->msq = new MSQ();
+			$engine = array();
+			$metadata = array();
+			$groupedHtml = $this->msq->parseMSQ($xml, $engine, $metadata, "ts", $options);
+						
+			//$this->db->updateMetadata($id, $metadata);
+			//$this->db->updateEngine($id, $engine, $metadata);
+
+			foreach($groupedHtml as $group => $v)
+			{
+				//TODO Group name as fieldset legend or sth
+				//$html .= "<div class=\"group-$group\">";
+				$html .= $v;
+				//$html .= '</div>';
+			}
+
+		} catch (MSQ_ParseException $e) {
+			$html = $e->getHTMLMessage();
+		} finally {
+			return $html;
+		}
+	}
+
+	public function getOptions()
+	{
+		if (isset($this->msq->msqMap["settingGroup"]))
+			return $this->msq->msqMap["settingGroup"];
+		return array();
+	}
+
+	public function getMsqConstant($c)
+	{
+		$cc = $this->msq->findConstant($this->msq->msq, $c);
+		if ($cc === NULL)
+			return NULL;
+		$value = trim($cc, '"');
+		// post-process the value
+		if (isset($this->msq->msqMap["Constants"][$c])) {
+			$cons = $this->msq->msqMap["Constants"][$c];
+			if ($cons[0] == "bits") {
+				$options = array_slice($cons, 4);
+				$idx = array_search($value, $options, TRUE);
+				if ($idx !== FALSE) {
+					$value = $idx;
+				}
+			}
+		}
+		//print_r($value);
+		return trim($value);
+	}
+	
+	public function getMsqOutput($o)
+	{
+		// todo:
+		return "";
 	}
 
 }
