@@ -403,6 +403,10 @@ footer a:hover {
 	font-weight: normal;
 }
 
+.ui-widget-content {
+	background-color: #eeeeee !important;
+}
+
 #ts-dialogs {
 	display: none;
 	margin: 10px; 
@@ -440,6 +444,7 @@ footer a:hover {
 .tsMenuSeparator {
 	border: 1px solid #6382bf !important;
 	background: #eeeeee !important;
+	background-color: #eeeeee !important;
 }
 
 .tsMenuItemText {

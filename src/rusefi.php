@@ -375,6 +375,8 @@ class Rusefi
 
 	public function unpackLogInfo(&$results)
 	{
+		if (!is_array($results))
+			return;
 		foreach ($results as &$r)
 		{
 			$info = json_decode($r["info"]);

@@ -350,10 +350,7 @@ class DB
 			if (count($where) === 0) $statement .= "1";
 			else
 			{
-				foreach ($where as $i => $w)
-				{
-					$statement .= $w;
-				}
+				$statement .= "(" . implode(" AND ", $where) . ")";
 			}
 
 			$statement .= " ORDER BY mid DESC";
