@@ -274,7 +274,7 @@ if ($isEmbedded || (isset($_POST['upload']) && isset($_FILES)))
 					$fList .= '<li><a href="view.php?msq=' . $id . '">' . "$safeName ($safeMake $safeCode) - $name" . '</a></li>';
 	
 					// parse and update DB
-					$msqur->view($id);
+					$msqur->view($id, "", array());
 				}
 				$fList .= '</ul>';
 				addOutput('info', $fList);
