@@ -426,7 +426,7 @@ class INI
 		if (strpos($value, ',') !== FALSE) {
 			// a simple explode() by comma is not enough since we have expressions like "text,text"
 			$v = $value;
-			if (preg_match_all("/\"[^\"]*\"|[A-Za-z0-9\.\[\]\:]+/", $value, $ret))
+			if (preg_match_all("/\"[^\"]*\"|[A-Za-z0-9_\.\[\]\:]+|{[^\}]+}/", $value, $ret))
 				$v = $ret[0];
 		}
 		else //otherwise just return the value
