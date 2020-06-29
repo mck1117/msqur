@@ -423,8 +423,12 @@ class INI
 	{
 		//For things like "nCylinders      = bits,    U08,      0,"
 		//split CSV into an array
-		if (strpos($value, ',') !== FALSE)
-			$v = array_map('trim', explode(',', $value)); //Use trim() as a callback on elements returned from explode()
+		if (strpos($value, ',') !== FALSE) {
+			// a simple explode() by comma is not enough since we have expressions like "text,text"
+			$v = $value;
+			if (preg_match_all("/\"[^\"]*\"|[A-Za-z0-9\.\[\]\:]+/", $value, $ret))
+				$v = $ret[0];
+		}
 		else //otherwise just return the value
 			$v = trim($value);
 		return preg_replace("/\"([^\"]+)\"/", "$1", $v);

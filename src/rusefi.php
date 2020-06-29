@@ -450,10 +450,10 @@ class Rusefi
 
 	public function getMsqConstant($c)
 	{
-		$cc = $this->msq->findConstant($this->msq->msq, $c);
+		$cc = $this->msq->findConstant($this->msq->msq, $c, false);
 		if ($cc === NULL)
 			return NULL;
-		$value = trim($cc, '"');
+		$value = trim($cc, " \r\n\"");
 		// post-process the value
 		if (isset($this->msq->msqMap["Constants"][$c])) {
 			$cons = $this->msq->msqMap["Constants"][$c];
@@ -464,15 +464,129 @@ class Rusefi
 					$value = $idx;
 				}
 			}
+			$value = explode("\n", $value);
+			if ($cons[0] == "array") {
+				// get 1D array
+				$arr = array();
+				foreach ($value as $row) {
+					$r = explode(" ", trim($row));
+					$arr = array_merge($arr, $r);
+				}
+				$value = $arr;
+				$numeric = true;
+			} else if ($cons[0] == "scalar") {
+				$numeric = true;
+			} else {
+				$numeric = false;
+			}
+
+			if ($numeric) {
+				// unfortunately libxml's thousand separators are unpredictable and OS-dependent
+				$value = array_map(function($v) { return floatval(str_replace(',', '', $v)); }, $value);
+			}
+			if (count($value) == 1)
+				return $value[0];
 		}
-		//print_r($value);
-		return trim($value);
+		return $value;
 	}
 	
 	public function getMsqOutput($o)
 	{
 		// todo:
 		return "";
+	}
+
+	public function calcCrc($skipFields = array("warning_message"))
+	{
+		if (!isset($this->msq->msqMap["Constants"]))
+			return 0;
+		$page = -1;
+		$pageData = array();
+		$i = 0;
+		foreach ($this->msq->msqMap["Constants"] as $consName=>$cons) {
+			if ($consName == "pageSize") {
+				$pageSize = $cons;
+				continue;
+			} else if ($consName == "page") {
+				$page = $cons;
+				$pageData[$page] = array_fill(0, $pageSize, 0);
+				continue;
+			}
+			if ($page < 0)
+				continue;
+			// now we process all page data
+			if (in_array($consName, $skipFields))
+				continue;
+
+			$value = $this->getMsqConstant($consName);
+			if ($value === NULL)
+				continue;
+			$offset = $cons[2];
+			$numBytes = 1;
+			$numElements = 1;
+			if (preg_match("/[FSU]([0-9]+)/", $cons[1], $ret)) {
+				$numBytes = intval($ret[1]) / 8;
+			}
+
+			// write the value
+			if ($cons[0] == "bits") {
+				// read the existing value
+				$v = 0;
+				for ($i = 0; $i < $numBytes; $i++) {
+					$v |= intval($pageData[$page][$offset + $i]) << ($i * 8);
+				}
+				// apply the value as a bitmask
+				if (preg_match("/\[([0-9]+)\:([0-9]+)\]/", $cons[3], $ret)) {
+					$startBit = $ret[1];
+					$numBits = $ret[2] - $startBit + 1;
+					// create a bitmask
+					$val = ($value & ((1 << $numBits) - 1)) << $startBit;
+					// we assume that bits don't overlap, so a simple 'or' should be enough
+					$value = $v | $val;
+				}
+			} else if ($cons[0] == "array") {
+				if (preg_match("/\[([0-9]+)x?([0-9]+)?\]/", $cons[3], $ret)) {
+					$numElements = $ret[1];
+					if (isset($ret[2]))
+						$numElements *= $ret[2];
+				}
+				// scale
+				$value = array_map(function($v) use ($cons) { return $v / $cons[5]; }, $value);
+			} else if ($cons[0] == "scalar") {
+				// scale
+				$value = $value / $cons[4];
+			} else if ($cons[0] == "string") {
+				$numBytes = $cons[3];
+			}
+
+			if ($numElements == 1 && !is_array($value)) {
+				$value = array($value);
+			}
+
+			// save the values
+			$fields = array("U08"=>"C", "S08"=>"c", "U16"=>"S", "S16"=>"s", "U32"=>"L", "S32"=> "l", "F32"=>"f", "ASCII"=>"a".$numBytes);
+			for ($i = 0; $i < $numElements; $i++) {
+				// repack the data into the byte array
+				$bin = pack($fields[$cons[1]], $value[$i]);
+				$v = unpack("C*", $bin);
+				// store the data byte by byte
+				$off = $offset + $i * $numBytes;
+				for ($j = 0; $j < $numBytes; $j++) {
+					// unpack() uses 1-based indices
+					$pageData[$page][$off + $j] = $v[$j + 1];
+				}
+			}
+		}
+		
+		// todo: how to process other pages?
+		$data = implode(array_map("chr", $pageData[array_key_first($pageData)]));
+
+        $crc32 = crc32($data);
+        $crc16 = $crc32 & 0xFFFF;
+        //echo "crc32=".dechex($crc32). " crc16=".dechex($crc16). "\r\n";
+		//file_put_contents("current_configuration.rusefi_binary", "OPEN_SR5_0.1" . $data);
+
+		return $crc16;
 	}
 
 }

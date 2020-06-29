@@ -37,7 +37,7 @@ based on
 	<h2><img src=https://raw.githubusercontent.com/nearwood/msqur/master/src/view/img/favicon.ico>About msqur</h2>
 	<p>Created out of a need to share .MSQ files.</p>
 	<p><a href=https://github.com/nearwood>Nick</a> was tired of downloading files and having to open them in Tuner Studio, so he created msqur.</p>
-	<p>It's open source, so <a href="https://github.com/rusefi/web_backend">anyone can contribute to ROE</a> or <a href="https://github.com/nearwood/msqur">msqur</a>.</p>
+	<p>It's open source, so <a href="https://github.com/rusefi/web_backend">anyone can contribute to REO</a> or <a href="https://github.com/nearwood/msqur">msqur</a>.</p>
 	<p><a href="https://github.com/rusefi/web_backend/issues">Issue Tracker</a></p>
 </div>
 <?php

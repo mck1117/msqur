@@ -118,6 +118,8 @@ class Msqur
 	private static function parseArray($dbResult, $key)
 	{
 		$ret = array();
+		if (!is_array($dbResult))
+			return $ret;
 		foreach ($dbResult as $l)
 		{
 			$a = $l[$key];

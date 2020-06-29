@@ -228,11 +228,11 @@ EOT;
 	 * @param $constant ID of constant to search for
 	 * @returns String of constant value, or NULL if not found
 	 */
-	public function findConstant($xml, $constant)
+	public function findConstant($xml, $constant, $format = true)
 	{
 		$search = $xml->xpath('//constant[@name="' . $constant . '"]');
 		if ($search === FALSE || count($search) == 0) return NULL;
-		if (isset($search[0]["digits"]))
+		if (isset($search[0]["digits"]) && $format)
 		{
 			$d = intval($search[0]["digits"]);
 			$out = "";
