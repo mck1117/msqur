@@ -94,6 +94,10 @@ class INI
 		
 		//store all our hardwork for use in the calling function
 		$signature = array($msVersion, $fwVersion);
+
+		if ($msVersion == "rusEFI") {
+			$fwVersion = str_replace(".", "/", $fwVersion);
+		}
 		
 		$iniFile = "ini/" . $msDir . $fwVersion . ".ini";
 
