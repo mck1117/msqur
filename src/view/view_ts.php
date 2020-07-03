@@ -42,7 +42,7 @@ ob_start();
 				$menuItems[] = $sub[0];
 				$sm = printTsItem($sub[1]);
 ?>
-	<li><a class="tsMenuItemText" href="#<?=$sub[0];?>" id="<?=$sub[0];?>"><?=$sm;?></a></li>
+	<li><a class="tsMenuItemText tsSubMenuItemText" href="#<?=$sub[0];?>" id="<?=$sub[0];?>"><?=$sm;?></a></li>
 <?php
 			}
 		}
@@ -97,7 +97,8 @@ foreach ($menuItems as $mi) {
 		});
 	});
 
-	$('#ts-menu li a').click(function () {
+	$('#ts-menu li a').click(function (e) {
+		e.preventDefault();
 		var dlgId = $(this).attr("id");
 		if ($("#dlg" + dlgId).hasClass('ui-dialog-content') === false) {
 			$("#loading").show();
@@ -111,6 +112,8 @@ foreach ($menuItems as $mi) {
 				dlg.dialog({
 					title: dlgTitle
 				}).dialog('open');
+				fixDialogGroups();
+				fixDialogPositions();
 				$("#loading").hide();
 				findDialog(dlg);
 			});
@@ -166,6 +169,19 @@ foreach ($menuItems as $mi) {
 		return dialog;
 	}
 
+	function fixDialogGroups() {
+		$(".ts-controlgroup-vertical").each(function () {
+			$(this).controlgroup({
+				"direction": "vertical"
+			});
+		});
+		$(".ts-controlgroup-horizontal").each(function () {
+			$(this).controlgroup({
+				"direction": "horizontal"
+			});
+		});
+	}
+
 	function fixDialogPositions() {
 		var maxWidth = 0;
 		var totalHeight = 0;
@@ -211,16 +227,7 @@ foreach ($menuItems as $mi) {
 
 	$(document).ready(function() {
 
-		$(".ts-controlgroup-vertical").each(function () {
-			$(this).controlgroup({
-				"direction": "vertical"
-			});
-		});
-		$(".ts-controlgroup-horizontal").each(function () {
-			$(this).controlgroup({
-				"direction": "horizontal"
-			});
-		});
+		fixDialogGroups();
 
 		fixDialogPositions();
 

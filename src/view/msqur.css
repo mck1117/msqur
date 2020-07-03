@@ -459,8 +459,8 @@ footer a:hover {
 	text-align: left;
 }
 
-.tsMenuItemText:hover {
-	background-color: #eeeeee;
+.tsSubMenuItemText:hover {
+	background: #a3b8cc !important;
 }
 
 .ui-menu { 
