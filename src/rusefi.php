@@ -13,7 +13,7 @@ include "mlg.format.php";
 class Rusefi
 {
 	private $msqur = null;
-	private $msq;
+	public $msq;
 	public $username;
 	public $userid;
 	public $isAdminUser;
@@ -539,6 +539,7 @@ class Rusefi
 				if (preg_match("/\[([0-9]+)\:([0-9]+)\]/", $cons[3], $ret)) {
 					$startBit = $ret[1];
 					$numBits = $ret[2] - $startBit + 1;
+					$value = intval($value);
 					// create a bitmask
 					$val = ($value & ((1 << $numBits) - 1)) << $startBit;
 					// we assume that bits don't overlap, so a simple 'or' should be enough

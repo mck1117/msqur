@@ -225,6 +225,8 @@ class INI
 					if ($key == "dialog")
 					{
 						$curDialog = INI::defaultSectionHandler($value);
+						if (!is_array($curDialog))
+							$curDialog = array($curDialog);
 					}
 					if (is_array($curDialog))
 					{

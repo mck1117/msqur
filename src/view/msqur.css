@@ -420,6 +420,10 @@ footer a:hover {
 	background-color: #eeeeee;
 }
 
+#ts-menu-container {
+	height: 40px;
+}
+
 .tsMenuItem {
     float: left;
 	display: flex;
@@ -600,4 +604,16 @@ footer a:hover {
 
 .ts-panel-notitle {
 	border: none;
+}
+
+#loading {
+	display: none;
+	z-index: 9999;
+	position: absolute;
+    top: 50%;
+    left: 0;
+    width: 100%;
+    margin-top: -10px;
+    line-height: 20px;
+    text-align: center;
 }

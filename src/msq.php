@@ -95,7 +95,7 @@ class MSQ
 			$metadata['firmware'] = $sig[0];
 			$metadata['author'] = $msq->bibliography['author'];
 
-			if ($viewType == "ts")
+			if ($viewType == "ts" || $viewType == "ts-dialog")
 			{
 				include_once "view/view_ts.php";
 				return $html;
@@ -263,7 +263,7 @@ EOT;
 	 * @param $helpText Optional text to display for more information
 	 * @returns A huge string containing a root <table> element
 	 */
-	private function msqTable2D($curve, $xMin, $xMax, $xAxis, $yMin, $yMax, $yAxis, $helpText = null)
+	public function msqTable2D($curve, $xMin, $xMax, $xAxis, $yMin, $yMax, $yAxis, $helpText = null, $hideHeader = false)
 	{
 		$output = "";
 		$hot = 0;
@@ -289,7 +289,9 @@ EOT;
 			return $output;
 		}
 		
-		$output .= '<h3>' . $curve['desc'] . '</h3>';
+		if (!$hideHeader) {
+			$output .= '<h3>' . $curve['desc'] . '</h3>';
+		}
 		$output .= '<div><div class="curve"><table class="msq tablesorter 2d" hot="' . $hot . '">';
 		//if ($helpText != null) $output .= '<caption>' . $helpText . '</caption>';
 		
@@ -314,7 +316,7 @@ EOT;
 	 * @param $helpText Optional text to display for more information
 	 * @returns A huge string containing a root <table> element
 	 */
-	private function msqTable3D($table, $xAxis, $yAxis, $zBins, $helpText)
+	public function msqTable3D($table, $xAxis, $yAxis, $zBins, $helpText, $hideHeader = false)
 	{
 		$output = "";
 		$hot = 0;
@@ -330,7 +332,9 @@ EOT;
 			return $output;
 		}
 		
-		$output .= '<h3>' . $table['desc'] . '</h3><div>';
+		if (!$hideHeader) {
+			$output .= '<h3>' . $table['desc'] . '</h3><div>';
+		}
 		//TODO Probably there's a better way to do this (like on the front end)
 		if (stripos($table['id'], "ve") === FALSE)
 		{

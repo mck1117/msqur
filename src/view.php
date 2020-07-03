@@ -20,12 +20,18 @@ require "msqur.php";
 if (isset($_GET['msq'])) {
 	$id = intval($_GET['msq']);
 	$viewMode = parseQueryString('view');
+	$dialogId = parseQueryString('dialog');
 	$settings = explode("|", parseQueryString('settings'));
 	$html = $msqur->view($id, $viewMode, $settings);
+
 	if ($html !== null) {
-		include "view/header.php";
-		echo $html;
-		include "view/footer.php";
+		if ($viewMode == "ts-dialog") {
+			echo $html;
+		} else {
+			include "view/header.php";
+			echo $html;
+			include "view/footer.php";
+		}
 	} else {
 		http_response_code(404);
 		unset($_GET['msq']);

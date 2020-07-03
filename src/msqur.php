@@ -161,7 +161,7 @@ class Msqur
 
 		if (DEBUG) debug('Load MSQ: ' . $id);
 
-		if ($viewMode == "ts")
+		if ($viewMode == "ts" || $viewMode == "ts-dialog")
 		{
 			return $rusefi->viewTs($id, $settings);
 		}
