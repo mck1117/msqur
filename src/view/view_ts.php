@@ -102,6 +102,7 @@ foreach ($menuItems as $mi) {
 		var dlgId = $(this).attr("id");
 		if ($("#dlg" + dlgId).hasClass('ui-dialog-content') === false) {
 			$("#loading").show();
+			$('#loading').position({my: "center", at: "center", of: window});
 			var dlgDiv = $("<div>", {
 				id: "dlg" + dlgId,
 				title: ""
