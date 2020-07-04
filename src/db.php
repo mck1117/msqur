@@ -64,12 +64,14 @@ class DB
 	 */
 	public function addMSQ($file, $engineid)
 	{
+		global $rusefi;
+
 		if (!$this->connect()) return null;
 		
 		try
 		{
 			//TODO transaction so we can rollback (`$db->beginTransaction()`)
-			$st = $this->db->prepare("INSERT INTO msqur_files (type,data) VALUES (:type, COMPRESS(:xml))");
+			$st = $this->db->prepare("INSERT INTO msqur_files (type,crc,data) VALUES (:type, :crc, COMPRESS(:xml))");
 			$xml = file_get_contents($file['tmp_name']);
 			//Convert encoding to UTF-8
 			$xml = mb_convert_encoding($xml, "UTF-8");
@@ -87,9 +89,13 @@ class DB
 			}
 			$xml = preg_replace("/<bibliography[^\/]*\/>/", "", $xml);
 			$xml = trim($xml);
+
+			// get CRC
+			$crc16 = $rusefi->calcCrcForTune($xml);
 			
 			DB::tryBind($st, ":type", 0);
 			DB::tryBind($st, ":xml", $xml);
+			DB::tryBind($st, ":crc", $crc16);
 			if ($st->execute())
 			{
 				$id = $this->db->lastInsertId();
@@ -842,14 +848,13 @@ class DB
 	
 	public function findMSQ($file, $engineid)
 	{
+		global $rusefi;
 		if (!$this->connect()) return -1;
 		
 		try
 		{
-			//TODO Compress?
-
 			//TODO transaction so we can rollback (`$db->beginTransaction()`)
-			$st = $this->db->prepare("SELECT id FROM msqur_files WHERE data = COMPRESS(:xml)");
+			$st = $this->db->prepare("SELECT id FROM msqur_files WHERE crc = :crc");
 			$xml = file_get_contents($file['tmp_name']);
 			//Convert encoding to UTF-8
 			$xml = mb_convert_encoding($xml, "UTF-8");
@@ -857,8 +862,9 @@ class DB
 			$xml = preg_replace('/xmlns=".*?"/', '', $xml);
 			$xml = preg_replace("/<bibliography[^\/]*\/>/", "", $xml);
 			$xml = trim($xml);
-			//print_r($xml);
-			DB::tryBind($st, ":xml", $xml);
+			// get CRC
+			$crc16 = $rusefi->calcCrcForTune($xml);
+			DB::tryBind($st, ":crc", $crc16);
 			$st->execute();
 			if ($st->rowCount() > 0)
 			{
@@ -1071,6 +1077,50 @@ class DB
 		
 		return $data;
 	}
+
+	public function updateCrc($fileid)
+	{
+		global $rusefi;
+
+		if (!$this->connect()) return -1;
+		
+		try
+		{
+			$st = $this->db->prepare("SELECT id,UNCOMPRESS(data) AS xml FROM msqur_files WHERE type='0' AND " . ($fileid > 0 ? "id = :id" : "1"));
+			if ($fileid > 0)
+				DB::tryBind($st, ":id", $fileid);
+			$st->execute();
+			if ($st->rowCount() > 0)
+			{
+				$result = $st->fetchAll(PDO::FETCH_ASSOC);
+				$st->closeCursor();
+				foreach ($result as $r)
+				{
+					$crc16 = $rusefi->calcCrcForTune($r["xml"]);
+					echo "Tune id=".$r["id"]." crc16=".$crc16." ";
+					$st = $this->db->prepare("UPDATE msqur_files SET crc=:crc WHERE id = :id");
+					DB::tryBind($st, ":id", $r["id"]);
+					DB::tryBind($st, ":crc", $crc16);
+					if ($st->execute())
+					{
+						echo "CRC UPDATED!\r\n";
+					}
+					else {
+						echo "CRC UPDATE FAILED!\r\n";
+					}
+					flush();
+				
+					$st->closeCursor();
+				}
+			}
+		}
+		catch (PDOException $e)
+		{
+			echo "DB Error!\r\n";
+			$this->dbError($e);
+		}
+	}
+
 }
 
 ?>

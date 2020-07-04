@@ -448,15 +448,17 @@ class Rusefi
 		return $list;
 	}
 
-	public function getMsqConstant($c)
+	public function getMsqConstant($c, $msq = null)
 	{
-		$cc = $this->msq->findConstant($this->msq->msq, $c, false);
+		if ($msq == null)
+			$msq = $this->msq;
+		$cc = $msq->findConstant($msq->msq, $c, false);
 		if ($cc === NULL)
 			return NULL;
 		$value = trim($cc, " \r\n\"");
 		// post-process the value
-		if (isset($this->msq->msqMap["Constants"][$c])) {
-			$cons = $this->msq->msqMap["Constants"][$c];
+		if (isset($msq->msqMap["Constants"][$c])) {
+			$cons = $msq->msqMap["Constants"][$c];
 			if ($cons[0] == "bits") {
 				$options = array_slice($cons, 4);
 				$idx = array_search($value, $options, TRUE);
@@ -496,14 +498,28 @@ class Rusefi
 		return "";
 	}
 
-	public function calcCrc($skipFields = array("warning_message"))
+	public function calcCrcForTune($xml)
 	{
-		if (!isset($this->msq->msqMap["Constants"]))
+		$engine = array();
+		$metadata = array();
+		$settings = array();
+		$msq = new MSQ(); //ugh
+		try {
+			$groupedHtml = $msq->parseMSQ($xml, $engine, $metadata, "", $settings);
+		} catch (MSQ_ParseException $e) {
+			return 0;
+		}
+		return $this->calcCrc($msq);
+	}
+
+	public function calcCrc($msq, $skipFields = array("warning_message"))
+	{
+		if (!isset($msq->msqMap["Constants"]))
 			return 0;
 		$page = -1;
 		$pageData = array();
 		$i = 0;
-		foreach ($this->msq->msqMap["Constants"] as $consName=>$cons) {
+		foreach ($msq->msqMap["Constants"] as $consName=>$cons) {
 			if ($consName == "pageSize") {
 				$pageSize = $cons;
 				continue;
@@ -518,7 +534,7 @@ class Rusefi
 			if (in_array($consName, $skipFields))
 				continue;
 
-			$value = $this->getMsqConstant($consName);
+			$value = $this->getMsqConstant($consName, $msq);
 			if ($value === NULL)
 				continue;
 			$offset = $cons[2];

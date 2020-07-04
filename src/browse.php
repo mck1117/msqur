@@ -82,6 +82,11 @@ if ($action == "delete")
 	}
 	echo '</div>';
 	
+} else if ($action == "update_tune_crc")
+{
+	echo "Calculating CRC and updating DB (please wait!)...\r\n";
+	$msqur->db->updateCrc(-1);
+	die;
 } else
 {
 	$msqur->header();
