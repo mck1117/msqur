@@ -209,17 +209,21 @@ class INI
 					$values[$currentSection][$key] = trim($value);
 					break;
 				
-				//Whenever I do menu recreation these two will be used
 				case "Menu":
+					$menu = INI::defaultSectionHandler($value);
+					if (is_array($menu)) {
+						if ($condition !== NULL) {
+							$menu[count($menu) - 1] = $condition;
+						}
+					}
 					if ($key == "menu")
 					{
-						$curMenu = INI::defaultSectionHandler($value);
+						$curMenu = $menu;
 					}
 					if (isset($curMenu))
 					{
-						$values["menu"][$curMenu][$key][] = INI::defaultSectionHandler($value);
+						$values["menu"][$curMenu][$key][] = $menu;
 					}
-					break;
 					break;
 				case "UserDefined":
 					if ($key == "dialog")

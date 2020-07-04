@@ -1,5 +1,6 @@
 <?php
 
+global $rusefi;
 global $id;
 global $dialogId;
 
@@ -41,8 +42,19 @@ ob_start();
 			} else {
 				$menuItems[] = $sub[0];
 				$sm = printTsItem($sub[1]);
+				$isDisabled = false;
+				//if (isset($sub[3]))
+				if (isset($sub[3])) {
+					try
+					{
+						// see INI::parseExpression()
+						$isDisabled = !eval($sub[3]);
+					} catch (Throwable $t) {
+						// todo: should we react somehow?
+					}
+				}
 ?>
-	<li><a class="tsMenuItemText tsSubMenuItemText" href="#<?=$sub[0];?>" id="<?=$sub[0];?>"><?=$sm;?></a></li>
+	<li <?=$isDisabled ? "class=\"ui-state-disabled\"":"";?>><a class="tsMenuItemText tsSubMenuItemText" href="#<?=$sub[0];?>" id="<?=$sub[0];?>"><?=$sm;?></a></li>
 <?php
 			}
 		}
