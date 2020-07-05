@@ -31,8 +31,8 @@ function getDialogTitle($msqMap, $dlg) {
 
 function printField($msqMap, $field) {
 	global $rusefi;
-	
-	if (isset($msqMap["Constants"][$field[1]])) {
+
+	if (isset($field[1]) && isset($msqMap["Constants"][$field[1]])) {
 		$disabled = FALSE;
 		// disable the field if required
 		if (isset($field[2])) {
@@ -73,6 +73,9 @@ function printField($msqMap, $field) {
 		return;
 	}
 
+	if (is_array($field) && count($field) == 1)
+		$field = $field[0];
+
 	// text field?
 	if (is_string($field)) {
 		$field = printTsItem($field);
@@ -89,6 +92,8 @@ function printField($msqMap, $field) {
 }
 
 function printDialog($msqMap, $dialogId, $isPanel) {
+	global $rusefi;
+
 	if (isset($msqMap["dialog"][$dialogId])) {
 		$dlg = $msqMap["dialog"][$dialogId];
 		$dlgTitle = getDialogTitle($msqMap, $dlg);
@@ -108,8 +113,19 @@ function printDialog($msqMap, $dialogId, $isPanel) {
 	// draw panels (recursive)
 	if (isset($dlg["panel"])) {
 		foreach ($dlg["panel"] as $panel) {
-			if (is_array($panel))
+			$isDisabled = false;
+			if (is_array($panel)) {
+				if (isset($panel[1])) {
+					try
+					{
+						// see INI::parseExpression()
+						$isDisabled = !eval($panel[1]);
+					} catch (Throwable $t) {
+						// todo: should we react somehow?
+					}
+				}
 				$panel = $panel[0];
+			}
 			if (isset($msqMap["dialog"][$panel])) {
 				$p = $msqMap["dialog"][$panel];
 				$pt = getDialogTitle($msqMap, $p);
@@ -121,7 +137,7 @@ function printDialog($msqMap, $dialogId, $isPanel) {
 				$fClass = $isHorizontal ? "class='ts-panel ts-panel-horizontal'" : "class='ts-panel ts-panel-vertical'";
 				if (!empty($pt)) {
 ?>
-	<fieldset <?=$fClass;?>><legend><?=$pt;?></legend>
+	<fieldset <?=$fClass;?> <?=$isDisabled ? "disabled":"";?>><legend><?=$pt;?></legend>
 <?php
 				} else {
 			$fClass = $isHorizontal ? "class='ts-panel-notitle ts-panel-horizontal'" : "class='ts-panel-notitle'";

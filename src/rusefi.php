@@ -567,11 +567,11 @@ class Rusefi
 					if (isset($ret[2]))
 						$numElements *= $ret[2];
 				}
-				// scale
-				$value = array_map(function($v) use ($cons) { return $v / $cons[5]; }, $value);
+				// scale (we use bcdiv because we want a precise java-compliant float division)
+				$value = array_map(function($v) use ($cons) { return bcdiv($v, $cons[5], 100); }, $value);
 			} else if ($cons[0] == "scalar") {
 				// scale
-				$value = $value / $cons[4];
+				$value = bcdiv($value, $cons[4], 100);
 			} else if ($cons[0] == "string") {
 				$numBytes = $cons[3];
 			}
@@ -586,6 +586,7 @@ class Rusefi
 				// repack the data into the byte array
 				$bin = pack($fields[$cons[1]], $value[$i]);
 				$v = unpack("C*", $bin);
+
 				// store the data byte by byte
 				$off = $offset + $i * $numBytes;
 				for ($j = 0; $j < $numBytes; $j++) {
