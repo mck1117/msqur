@@ -9,11 +9,12 @@ function printTsItem($mn) {
 }
 
 function getDialogTitle($msqMap, $dlg) {
-	if (is_array($dlg["dialog"][0])) {
-		$dlgName = $dlg["dialog"][0][0];
-		$dlgTitle = printTsItem($dlg["dialog"][0][1]);
-	} else {
+	
+	if (is_array($dlg["dialog"])) {
 		$dlgName = $dlg["dialog"][0];
+		$dlgTitle = printTsItem($dlg["dialog"][1]);
+	} else {
+		$dlgName = $dlg["dialog"];
 		$dlgTitle = "";
 	}
 	if (empty($dlgTitle)) {
@@ -29,7 +30,7 @@ function getDialogTitle($msqMap, $dlg) {
 	return $dlgTitle;
 }
 
-function printField($msqMap, $field) {
+function printField($msqMap, $field, $isPanelDisabled) {
 	global $rusefi;
 
 	if (isset($field[1]) && isset($msqMap["Constants"][$field[1]])) {
@@ -44,18 +45,73 @@ function printField($msqMap, $field) {
 				// todo: should we react somehow?
 			}
 		}
+		// hide the field if required
+		$hidden = false;
+		if (isset($field[3])) {
+			try
+			{
+				// see INI::parseExpression()
+				$hidden = !eval($field[3]);
+			} catch (Throwable $t) {
+				// todo: should we react somehow?
+			}
+		}
+		if ($hidden)
+			return;
+		$disabled |= $isPanelDisabled;
 		if ($disabled)
 			$disabled = " disabled='disabled' ";
 
+		// todo: add edit mode
+		$readOnly = "readonly";
+
 		$curValue = $rusefi->getMsqConstant($field[1]);
+		$cons = $msqMap["Constants"][$field[1]];
+		$units = "";
+		if ($cons[0] == "scalar") {
+			$units = printTsItem($cons[3]);
+			if (!empty($units)) {
+				$units = "(" . $units . ")";
+			}
+		}
+
+		$hint = "";
+		if (isset($msqMap["SettingContextHelp"][$field[1]])) {
+			$hint = printTsItem($msqMap["SettingContextHelp"][$field[1]]);
+			$hint = " title=\"".$hint."\"";
+			//print_r($hint);
+			//$hint
+		}
+
+		// print hint icon
+		echo "<td class='ts-field-td-hint'>";
+		if (!empty($hint))
+			echo "<img src=\"view/img/ts-icons/hint.png\" ".$hint.">";
+		echo "</td>\r\n";
+
+		$addToLabel = "";
+		// slider is a special case
+		if ($field["key"] == "slider") {
+			echo "<td colspan=2 class='ts-field-td-label'><table width='100%' class='ts-field-table' cellspacing='2' cellpadding='2'><tbody><tr>\r\n";
+			echo "<td class='ts-field-td-slider'><div class='ts-slider' value='".$curValue."' input='".$field[1]."'></div></td>\r\n";
+			echo "<td class='ts-field-td-item'><input id='".$field[1]."' class='ts-field-item-text' value='".$curValue."' >";
+			echo "</td></tr><tr>";
+			$addToLabel = " colspan=2 style='text-align:center'";
+		}
 
 		// print text label
-		echo "<td class='ts-field-td-label'><label for=".$field[1]." class='ts-field-label' $disabled>".printTsItem($field[0])."</label></td>\r\n";
+		echo "<td class='ts-field-td-label' $addToLabel><label for=".$field[1]." class='ts-field-label' $disabled $readOnly ".$hint.">".printTsItem($field[0]).$units."</label></td>\r\n";
+
+		// skip the rest
+		if ($field["key"] == "slider") {
+			echo "</tr></tbody></table></td>";
+			return;
+		}
+
 		echo "<td class='ts-field-td-item'>\r\n";
 
-		$cons = $msqMap["Constants"][$field[1]];
 		if ($cons[0] == "bits") {
-			echo "<select class='ts-field-item' id='".$field[1]."' $disabled>\r\n";
+			echo "<select class='ts-field-item ts-field-item-select' id='".$field[1]."' $disabled $readOnly>\r\n";
         	for ($i = 4; $i < count($cons); $i++) {
         		$selected = ($curValue == ($i - 4)) ? " selected='selected' " : "";
         		echo "<option class='ts-field-item-option' $selected>".printTsItem($cons[$i])."</option>\r\n";
@@ -63,10 +119,10 @@ function printField($msqMap, $field) {
       		echo "</select>\r\n";
 		}
 		else if ($cons[0] == "scalar") {
-			echo "<input id='".$field[1]."' class='ui-spinner-input ts-field-item' value='".$curValue."' $disabled>";
+			echo "<input id='".$field[1]."' class='ui-spinner-input ts-field-item ts-field-item-text' value='".$curValue."' $disabled $readOnly>";
 		}
 		else if ($cons[0] == "string") {
-			echo "<input id='".$field[1]."' class='ts-field-item' value='".$curValue."' $disabled>";
+			echo "<input id='".$field[1]."' class='ts-field-item' value='".$curValue."' $disabled $readOnly>";
 		}
 		echo "</td>";
 		//print_r($cons);
@@ -87,11 +143,11 @@ function printField($msqMap, $field) {
 		else {
 			$clr = "";
 		}
-		echo "<td class='ts-label $clr' colspan='2'>$field</td>\r\n";
+		echo "<td class='ts-label $clr' colspan='3'>$field</td>\r\n";
 	}
 }
 
-function printDialog($msqMap, $dialogId, $isPanel) {
+function printDialog($msqMap, $dialogId, $isPanel, $isDialogDisabled = false) {
 	global $rusefi;
 
 	if (isset($msqMap["dialog"][$dialogId])) {
@@ -109,7 +165,44 @@ function printDialog($msqMap, $dialogId, $isPanel) {
 		return $dlgTitle;
 	}
 
-	$isHorizontal = (isset($dlg["dialog"][0][2]) && $dlg["dialog"][0][2] == "xAxis");
+	$isHorizontal = (isset($dlg["dialog"][2]) && $dlg["dialog"][2] == "xAxis");
+
+	// draw fields first, then panels
+	// create a fake panel for dialogs without panels
+	if (!$isPanel) {
+?>
+<fieldset class='ts-panel-notitle'><div class='ts-controlgroup ts-controlgroup-vertical'>
+<?php
+	}
+?>
+<table class='ts-field-table' cellspacing="2" cellpadding="2"><tbody>
+<?php
+	if (isset($dlg["field"])) {
+		foreach ($dlg["field"] as $field) {
+			//$f = getDialogTitle($msqMap, $field);
+			//print_r($field);
+			if (!$isHorizontal) {
+?>
+<tr>
+<?php
+			}
+			printField($msqMap, $field, $isDialogDisabled);
+			if (!$isHorizontal) {
+?>
+</tr>
+<?php
+			}
+		}
+	}
+?>
+</tbody></table>
+<?php
+	if (!$isPanel) {
+?>
+</div></fieldset>
+<?php
+	}
+
 	// draw panels (recursive)
 	if (isset($dlg["panel"])) {
 		foreach ($dlg["panel"] as $panel) {
@@ -132,58 +225,26 @@ function printDialog($msqMap, $dialogId, $isPanel) {
 			} else {
 				$pt = "";
 			}
-				//print_r($p);
-				$pClass = $isHorizontal ? "class='ts-controlgroup ts-controlgroup-horizontal'" : "class='ts-controlgroup ts-controlgroup-vertical'";
-				$fClass = $isHorizontal ? "class='ts-panel ts-panel-horizontal'" : "class='ts-panel ts-panel-vertical'";
-				if (!empty($pt)) {
+			//print_r($p);
+			$pClass = $isHorizontal ? "class='ts-controlgroup ts-controlgroup-horizontal'" : "class='ts-controlgroup ts-controlgroup-vertical'";
+			$fClass = $isHorizontal ? "class='ts-panel ts-panel-horizontal'" : "class='ts-panel ts-panel-vertical'";
+			if (!empty($pt)) {
 ?>
 	<fieldset <?=$fClass;?> <?=$isDisabled ? "disabled":"";?>><legend><?=$pt;?></legend>
 <?php
-				} else {
+			} else {
 			$fClass = $isHorizontal ? "class='ts-panel-notitle ts-panel-horizontal'" : "class='ts-panel-notitle'";
 ?>
 	<fieldset  <?=$fClass;?>>
 <?php
-				}
+			}
 ?>
     <div <?=$pClass;?>>
 <?php
-				printDialog($msqMap, $panel, TRUE);
+			printDialog($msqMap, $panel, TRUE, $isDisabled);
 ?>
     </div>
   </fieldset>
-<?php
-		}
-	}
-
-	// draw fields
-	if (isset($dlg["field"])) {
-		// create a fake panel for dialogs without panels
-		if (!$isPanel) {
-?>
-<fieldset class='ts-panel-notitle'><div class='ts-controlgroup ts-controlgroup-vertical'>
-<?php
-		}
-?>
-<table class='ts-field-table' cellspacing="2" cellpadding="2"><tbody>
-<?php
-		foreach ($dlg["field"] as $field) {
-			//$f = getDialogTitle($msqMap, $field);
-			//print_r($field);
-?>
-<tr>
-<?php
-			printField($msqMap, $field);
-?>
-</tr>
-<?php
-		}
-?>
-</tbody></table>
-<?php
-		if (!$isPanel) {
-?>
-</div></fieldset>
 <?php
 		}
 	}

@@ -237,10 +237,19 @@ class INI
 						$dlg = INI::defaultSectionHandler($value);
 						if (is_array($dlg)) {
 							if ($condition !== NULL) {
-								$dlg[count($dlg) - 1] = $condition;
+								foreach ($dlg as &$d) {
+									if (strpos($d, '{') !== FALSE)
+										$d = INI::parseExpression($d, $msq, $outputs);
+								}
 							}
+							$dlg["key"] = $key;
 						}
-						$values["dialog"][$curDialog[0]][$key][] = $dlg;
+						if ($key == "dialog")
+							$values["dialog"][$curDialog[0]][$key] = $dlg;
+						else if ($key == "slider")
+							$values["dialog"][$curDialog[0]]["field"][] = $dlg;
+						else
+							$values["dialog"][$curDialog[0]][$key][] = $dlg;
 					}
 					break;
 				
@@ -392,7 +401,11 @@ class INI
 				case "BurstMode": //Not relevant
 					break;
 				case "OutputChannels": //These are for gauges and datalogging
-					$outputs[$key] = INI::defaultSectionHandler($value);
+					$v = INI::defaultSectionHandler($value);
+					// here we store only computable outputs with expressions
+					if (isset($v[0]) && strpos($v[0], '{') !== FALSE && $condition !== NULL) {
+						$outputs["outputs"][$key] = $condition;
+					}
 					break;
 				case "SettingGroups": //misc settings
 					$values = INI::defaultSectionHandler($value);
@@ -421,7 +434,7 @@ class INI
 		}
 
 		//var_export($values);
-		return $values + $globals + $conditions + $settings;
+		return $values + $globals + $conditions + $settings + $outputs;
 	}
 	
 	/**
@@ -467,7 +480,7 @@ class INI
 					$l = "\$rusefi->getMsqConstant('".$l."')";
 				}
 				// try outputChannels?
-				else if (array_key_exists($l, $outputs)) {
+				else if (isset($outputs["outputs"]) && array_key_exists($l, $outputs["outputs"])) {
 					$l = "\$rusefi->getMsqOutput('".$l."')";
 				}
 				else {

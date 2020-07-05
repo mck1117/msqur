@@ -526,12 +526,19 @@ footer a:hover {
 	border: none;
 	margin: 0;
 	padding: 0;
+	empty-cells: show;
 }
 
 .ts-field-td-label {
 	text-align: left;
-	padding: 0 0 0 10px;
+	padding: 0 0 0 5px;
 	border: none;
+}
+
+.ts-field-td-hint {
+	margin: auto !important;
+	padding: 2px 0 0 0px !important;
+	border: none !important;
 }
 
 .ts-field-label {
@@ -558,9 +565,46 @@ footer a:hover {
 	padding: 2px; 
 }
 
+.ts-field-item-text {
+	width: 75px !important;
+}
+
+.ts-field-item-select {
+	width: 175px !important;
+}
+
 .ts-field-item-option {
 	display: block;
 }
+
+.ts-field-td-slider {
+	width: 100%;
+	height: 35px !important;
+	text-align: left;
+	padding: 0 0 0 5px;
+	border: none;
+}
+
+.ts-slider {
+	width: 100%;
+}
+
+.ui-slider-tick-mark{
+    display:inline-block;
+    width:1px;
+    background: #a3b8cc;
+    height:4px;
+    position:absolute;
+    top:10px;
+}
+
+.ui-slider-horizontal .ui-state-default {
+	border: none !important;
+	outline: none !important;
+	background: url("img/ts-icons/slider_handle.png") no-repeat !important;
+	height: 15px !important;
+	margin-bottom: -20px !important;
+}​
 
 .ts-label {
 	margin: auto 0 auto auto;
@@ -584,6 +628,10 @@ footer a:hover {
 	background: none;
 }
 
+.ui-spinner {
+	background: #fff !important;
+}
+
 .ts-panel {
 	font-size: 0.9em;
 	font-weight: bold;
@@ -591,6 +639,10 @@ footer a:hover {
 	border: 1px solid #b8cfe5 !important;
 	padding: 5px;
 	margin: 0;
+}
+
+.ts-panel:disabled {
+	color: #a798b5 !important;
 }
 
 .ts-panel-horizontal {

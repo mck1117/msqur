@@ -494,7 +494,18 @@ class Rusefi
 	
 	public function getMsqOutput($o)
 	{
-		// todo:
+		if (isset($this->msq->msqMap["outputs"][$o])) {
+			$o = $this->msq->msqMap["outputs"][$o];
+			try
+			{
+				// see INI::parseExpression()
+				$value = eval($o);
+				return $value;
+			} catch (Throwable $t) {
+				// todo: should we react somehow?
+			}
+
+		}
 		return "";
 	}
 

@@ -125,6 +125,7 @@ foreach ($menuItems as $mi) {
 				dlg.dialog({
 					title: dlgTitle
 				}).dialog('open');
+				$("#dlg" + dlgId).tooltip();
 				fixDialogGroups();
 				fixDialogPositions();
 				$("#loading").hide();
@@ -191,6 +192,25 @@ foreach ($menuItems as $mi) {
 		$(".ts-controlgroup-horizontal").each(function () {
 			$(this).controlgroup({
 				"direction": "horizontal"
+			});
+		});
+
+		$(".ts-slider").each(function () {
+			$(this).slider({
+				create: function(event, ui) {
+					var el = event.target;
+					var $slider = $(el);
+					var numTicks = 20;
+					var spacing =  100 / numTicks;
+					$slider.find('.ui-slider-tick-mark').remove();
+					for (var i = 0; i <= numTicks; i++) {
+						$('<span class="ui-slider-tick-mark"></span>').css('left', (spacing * i) +  '%').appendTo($slider); 
+					}
+				},
+				slide: function(event, ui) {
+					$("#" + $(this).attr('input')).val(ui.value);
+				},
+				value: $(this).attr('value'),
 			});
 		});
 	}
