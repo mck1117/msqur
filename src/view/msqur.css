@@ -523,7 +523,7 @@ footer a:hover {
 
 .ts-field-table {
 	width: 100%;
-	border: none;
+	border: none !important;
 	margin: 0;
 	padding: 0;
 	empty-cells: show;
@@ -604,14 +604,14 @@ footer a:hover {
 	background: url("img/ts-icons/slider_handle.png") no-repeat !important;
 	height: 15px !important;
 	margin-bottom: -20px !important;
-}​
+}
 
 .ts-label {
 	margin: auto 0 auto auto;
-	text-align: left;
+	text-align: left !important;
 	font-weight: bold;
 	padding: 2px; 
-	border: none;
+	border: none !important;
 }
 
 .ts-label-red {
