@@ -207,7 +207,10 @@ echo '<div>Tunes:';
 putResultsInTable($resultsMsq, "msq");
 echo '</div>';
 
-$resultsLog = $msqur->browse(array(), $page, "log");
+$bqForLogs = array();
+$bqForLogs['e.user_id'] = $bq['user_id'];
+$bqForLogs['name'] = $bq['name'];
+$resultsLog = $msqur->browse($bqForLogs, $page, "log");
 $rusefi->unpackLogInfo($resultsLog);
 echo '<div>Logs:';
 putResultsInTable($resultsLog, "log");
