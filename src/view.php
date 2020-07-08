@@ -23,12 +23,18 @@ if (isset($_GET['msq'])) {
 	$dialogId = parseQueryString('dialog');
 	$settings = explode("|", parseQueryString('settings'));
 	$html = $msqur->view($id, $viewMode, $settings);
+	$engine = $rusefi->getEngineFromTune($id);
+
+	//!!!!!!!!!!!
+	//$rusefi->calcCrc($rusefi->msq);
 
 	if ($html !== null) {
 		if ($viewMode == "ts-dialog") {
 			echo $html;
 		} else {
 			include "view/header.php";
+			echo "<div><a href=\"?vehicleName=".$engine["name"]."&user_id=".$engine["user_id"]."\">More about this " . $engine["make"]. " " .$engine["code"]. " \"" .$engine["name"].  "\"</a></div>";
+
 			echo $html;
 			include "view/footer.php";
 		}

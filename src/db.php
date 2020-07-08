@@ -845,6 +845,34 @@ class DB
 
 		return array();
 	}
+
+	public function getEngineFromTune($tune_id)
+	{
+		if (!$this->connect()) return FALSE;
+		try
+		{
+			$st = $this->db->prepare("SELECT name, make, code, user_id, displacement, compression, induction FROM msqur_engines e INNER JOIN msqur_metadata m ON m.engine = e.id WHERE m.id = :tune_id");
+			DB::tryBind($st, ":tune_id", $tune_id);
+			$st->execute();
+			if ($st->rowCount() > 0)
+			{
+				$result = $st->fetch(PDO::FETCH_ASSOC);
+				$st->closeCursor();
+				return $result;
+			}
+			else
+			{
+				if (DEBUG) debug("No result for $tune_id");
+				$st->closeCursor();
+			}
+		}
+		catch (PDOException $e)
+		{
+			$this->dbError($e);
+		}
+
+		return array();
+	}
 	
 	public function findMSQ($file, $engineid)
 	{

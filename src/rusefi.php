@@ -448,6 +448,11 @@ class Rusefi
 		return $list;
 	}
 
+	public function getEngineFromTune($tuneId)
+	{
+		return $this->msqur->db->getEngineFromTune($tuneId);
+	}
+
 	public function getMsqConstant($c, $msq = null)
 	{
 		if ($msq == null)
