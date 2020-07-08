@@ -167,10 +167,6 @@ if ($isEmbedded || (isset($_POST['upload']) && isset($_FILES)))
 		//No files made it past the check
 		addOutput('error', 'Cannot upload!');
 	}
-	else if ($rusefi->isTuneAlreadyExists($files, -1))
-	{
-		addOutput('error', 'This file already exists in our Database!');
-	}
 	// upload log file
 	else if (isLog($files)) 
 	{
@@ -207,6 +203,10 @@ if ($isEmbedded || (isset($_POST['upload']) && isset($_FILES)))
 				}
 			}
 		}
+	}
+	else if ($rusefi->isTuneAlreadyExists($files, -1))
+	{
+		addOutput('error', 'This file already exists in our Database!');
 	}
 	else
 	{
