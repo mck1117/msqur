@@ -133,6 +133,7 @@ if ($action == "delete")
 		echo '</div>';
 	}
 */	
+/*
 	if ($bq['signature']=== null)
 	{
 		echo '<div>Firmware Versions: <div class="category" id="versions">';
@@ -143,7 +144,9 @@ if ($action == "delete")
 		<?php
 		}
 		echo '</div>';
-	} ?>
+	}
+*/
+	?>
 </div>
 <!-- script src="view/browse.js"></script -->
 <?php
@@ -200,6 +203,11 @@ function putResultsInTable($results, $type)
 		echo "</td></tr>\r\n";
 	}
 	echo '</tbody></table></div></div>';
+}
+
+$topic_id = $rusefi->getForumTopicId($bq['user_id'], $bq['name']);
+if ($topic_id > 0) {
+	echo "<div><a href=\"/forum/viewtopic.php?t=".$topic_id."\">More about ".$bq['name']." on the forum</a></div>\r\n";
 }
 
 $resultsMsq = $msqur->browse($bq, $page, "msq");

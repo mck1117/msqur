@@ -873,6 +873,37 @@ class DB
 
 		return array();
 	}
+
+	public function getForumTopicId($user_id, $vehicleName)
+	{
+		if (empty($user_id) || empty($vehicleName))
+			return -1;
+		if (!$this->connect()) return FALSE;
+		try
+		{
+			$st = $this->db->prepare("SELECT topic_id FROM msqur_engines WHERE (user_id = :user_id AND name= :name)");
+			DB::tryBind($st, ":user_id", $user_id);
+			DB::tryBind($st, ":name", $vehicleName);
+			$st->execute();
+			if ($st->rowCount() > 0)
+			{
+				$result = $st->fetch(PDO::FETCH_ASSOC);
+				$st->closeCursor();
+				return $result["topic_id"];
+			}
+			else
+			{
+				if (DEBUG) debug("No result for $tune_id");
+				$st->closeCursor();
+			}
+		}
+		catch (PDOException $e)
+		{
+			$this->dbError($e);
+		}
+
+		return -1;
+	}
 	
 	public function findMSQ($file, $engineid)
 	{

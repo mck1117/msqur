@@ -453,6 +453,11 @@ class Rusefi
 		return $this->msqur->db->getEngineFromTune($tuneId);
 	}
 
+	public function getForumTopicId($user_id, $vehicleName)
+	{
+		return $this->msqur->db->getForumTopicId($user_id, $vehicleName);
+	}
+
 	public function getMsqConstant($c, $msq = null)
 	{
 		if ($msq == null)
