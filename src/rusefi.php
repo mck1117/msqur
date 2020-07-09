@@ -237,7 +237,7 @@ class Rusefi
 		return $ret;
 	}
 
-	private function parseLogData($data, $type, $fullSize)
+	private function parseLogData($data, $type, $fullSize, $getDataPoints)
 	{
 		global $logValues;
 
@@ -256,9 +256,16 @@ class Rusefi
 		if ($ret["status"] != "deny") {
 			$logValues = $mlgParser->getStats($fullSize);
 			$ret["logValues"] = $logValues;
+			if ($getDataPoints) {
+				$dataPoints = $mlgParser->getDataPoints();
+				$ret["dataPoints"] = $dataPoints;
+			} else {
+				$ret["dataPoints"] = array();
+			}
 			$ret["logFields"] = "<small>".$this->fillLogFields()."</small>";
 		} else {
 			$ret["logValues"] = array();
+			$ret["dataPoints"] = array();
 			$ret["logFields"] = "";
 		}
 
@@ -297,22 +304,23 @@ class Rusefi
 
 		$type = parseQueryString("type");
 		$fullSize = parseQueryString("fullSize");
-		$ret = $this->parseLogData($data, $type, $fullSize);
+		$ret = $this->parseLogData($data, $type, $fullSize, false);
 
 		return $ret;
 	}
 
-	public function getLogInfo($data) {
+	public function getLogInfo($data, &$dataPoints) {
 		$fullSize = strlen($data);
-		$ret = $this->parseLogData($data, -1, $fullSize);
+		$ret = $this->parseLogData($data, -1, $fullSize, true);
+		$dataPoints = $ret["dataPoints"];
 		// store the array as a JSON string
 		return json_encode($ret["logValues"]);
 	}
 
 	public function fillLogFields() {
-		global $logValues;
+		global $logValues, $rusefi;
 		ob_start();
-		include "view/logfields.php";
+		include_once "view/logfields.php";
 		return ob_get_clean();
 	}
 
@@ -377,14 +385,34 @@ class Rusefi
 	{
 		if (!is_array($results))
 			return;
+		$mlgParser = new MlgParser();
 		foreach ($results as &$r)
 		{
 			$info = json_decode($r["info"]);
 			if (is_object($info))
 				$info = get_object_vars($info);
 			$r = array_merge($r, $info);
+			if ($r["data"] == NULL) {
+				$this->msqur->db->updateLogDataPoints($r["mid"]);
+			}
+			$r["data"] = $mlgParser->unpackDataPoints($r["data"]);
 		}
 		return $results;
+	}
+
+	public function getDurationInSeconds($dur)
+	{
+		$secs = 0;
+		if (preg_match("/([0-9]+)\s*h/", $dur, $ret)) {
+			$secs += $ret[1] * 3600;
+		}
+		if (preg_match("/([0-9]+)\s*min/", $dur, $ret)) {
+			$secs += $ret[1] * 60;
+		}
+		if (preg_match("/([0-9]+)\s*sec/", $dur, $ret)) {
+			$secs += $ret[1];
+		}
+		return $secs;
 	}
 
 	public function viewLog($id)

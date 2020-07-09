@@ -85,6 +85,11 @@ class LogStats {
 	public $prevTime;
 	public $timeDeltaAverageCnt;
 	public $prevAfr;
+
+	public $dataPoints;
+	public $dpIdx;
+	public $dpSubIdx;
+	public $dpStep;
 };
 
 class MlgParser {
@@ -265,6 +270,8 @@ class MlgParser {
 			$rec[IDX_RPM] = 0;
 			$this->changeState($rec);
 		}
+		$this->postProcess();
+
 		$timeElapsed = microtime(true) - $timeStart;
 
 		if ($warn) {
@@ -289,16 +296,39 @@ class MlgParser {
 		IDX_AFR=>"air_fuel_ratio", IDX_TARGET_AFR=>"fuel_target_afr", IDX_VE=>"fuel_ve", IDX_SPEED=>"vehicle_speed", IDX_TRIGGER_ERR=>"trg_err",
 		IDX_ETB_DUTY=>"etb_duty");
 
+	private $dataPointFields = array(IDX_RPM, IDX_CLT, IDX_TPS, IDX_AFR);
+	private $dataPointNames = array("RPM", "CLT", "TPS", "AFR");
+	private $dpScale = array(0.02, 1, 1, 10.0);
+	private $dpShift = array(0, 50, 0, 0);
+	private $numDataPoints = 512;
+
+	function storeDataPoint($idx) {
+		for ($i = 0; $i < count($this->dataPointFields); $i++) {
+			$d = $this->state->dataPoints[$i][$idx] / $this->state->dpSubIdx;
+			$d = round($d * $this->dpScale[$i] + $this->dpShift[$i]);
+			$this->state->dataPoints[$i][$idx] = max(0, min(255, $d));
+		}
+		$this->state->dpSubIdx = 0;
+	}
 
 	function preProcess($dataSize, $numRecords, $dataStartOffset, $dataRecordSize) {
 		$this->state->dataSize = $dataSize;
 		$this->state->numRecords = $numRecords;
 		$this->state->dataStartOffset = $dataStartOffset;
 		$this->state->dataRecordSize = $dataRecordSize;
+		$this->state->dpStep = $this->numDataPoints / floatval($numRecords);
 		//!!!!!!!!!!!
 		//echo "Number of records = " . $numRecords . "\r\nTime elapsed: " . $timeElapsed." secs\r\n";
 		//echo "Printing the last record:\r\n";
 		//print_r(array_combine($this->reqFields === NULL ? array_column($fields, "ShortName") : $this->reqFields, $rec));
+	}
+
+	function postProcess() {
+		// finalize the data points array
+		if ($this->state->dpSubIdx > 0) {
+			$dpIdxI = intval($this->state->dpIdx);
+			$this->storeDataPoint($dpIdxI);
+		}
 	}
 
 	function processRecord($d) {
@@ -372,6 +402,17 @@ class MlgParser {
 			if ($d[IDX_SPEED] > $this->state->runningMaxSpeed)
 				$this->state->runningMaxSpeed = $d[IDX_SPEED];
 		}
+
+		// store the data points
+		$dpIdxI = intval($this->state->dpIdx);
+		for ($i = 0; $i < count($this->dataPointFields); $i++) {
+			$this->state->dataPoints[$i][$dpIdxI] += $d[$this->dataPointFields[$i]];
+		}
+		$this->state->dpSubIdx++;
+		$this->state->dpIdx += $this->state->dpStep;
+		if (intval($this->state->dpIdx) != $dpIdxI) {
+			$this->storeDataPoint($dpIdxI);
+		}
 	}
 
 	function changeState($d) {
@@ -436,6 +477,11 @@ class MlgParser {
 		$this->state->startingFastestTime = INF;
 		$this->state->prevTime = INF;
 		$this->state->prevAfr = AFR_UNKNOWN;
+
+		$this->state->dataPoints = array();
+		for ($i = 0; $i < count($this->dataPointFields); $i++) {
+			$this->state->dataPoints[$i] = array_fill(0, $this->numDataPoints, 0);
+		}
 	}
 
 	function printTime($t) {
@@ -526,5 +572,32 @@ class MlgParser {
 			$logValues["estimatedDuration"] = $estimatedTotalDuration;
 
 		return $logValues;
+	}
+
+	function getDataPoints() {
+		$dp = array();
+		for ($i = 0; $i < count($this->dataPointFields); $i++) {
+			$dp = array_merge($dp, $this->state->dataPoints[$i]);
+		}
+		return $dp;
+	}
+
+	function unpackDataPoints($data) {
+		$arr = unpack("C*", $data);
+		$dataPoints = array();
+		for ($i = 0; $i < count($this->dataPointFields); $i++) {
+			$dataPoints[$this->dataPointNames[$i]] = array_fill(0, $this->numDataPoints, 0);
+		}
+		$i = 0;
+		$idx = 0;
+		foreach ($arr as $dp) {
+			$d = ($dp - $this->dpShift[$idx]) / $this->dpScale[$idx];
+			$dataPoints[$this->dataPointNames[$idx]][$i] = $d;
+			if (++$i >= $this->numDataPoints) {
+				$idx++;
+				$i = 0;
+			}
+		}
+		return $dataPoints;
 	}
 };

@@ -1014,14 +1014,17 @@ class DB
 				$id = $this->db->lastInsertId();
 				$st->closeCursor();
 
-				$st = $this->db->prepare("INSERT INTO msqur_logs (user_id,file_id,tune_id,info,uploadDate) VALUES (:user_id, :file_id, :tune_id, :info, :uploaded)");
+				$st = $this->db->prepare("INSERT INTO msqur_logs (user_id,file_id,tune_id,info,data,uploadDate) VALUES (:user_id, :file_id, :tune_id, :info, :data, :uploaded)");
 				DB::tryBind($st, ":user_id", $user_id);
 				DB::tryBind($st, ":file_id", $id); //could do hash but for now, just the id
 				DB::tryBind($st, ":tune_id", $tune_id);
 
 				// this may take a while to complete...
-				$info = $rusefi->getLogInfo($log);
+				$info = $rusefi->getLogInfo($log, $dataPoints);
 				DB::tryBind($st, ":info", $info);
+
+				$data = pack("C*", ...$dataPoints);
+				DB::tryBind($st, ":data", $data);
 
 				//TODO Make sure it's an int
 				$dt = new DateTime();
@@ -1061,7 +1064,7 @@ class DB
 		
 		try
 		{
-			$statement = "SELECT l.id as mid, l.user_id as user_id, l.info as info, l.uploadDate as uploadDate, l.views as views, name, make, code, numCylinders, displacement, compression, induction, firmware, signature FROM msqur_logs l INNER JOIN msqur_metadata m ON m.id = l.tune_id INNER JOIN msqur_engines e ON m.engine = e.id AND l.user_id = e.user_id WHERE ";
+			$statement = "SELECT l.id as mid, l.user_id as user_id, l.info as info, l.data as data, l.uploadDate as uploadDate, l.views as views, name, make, code, numCylinders, displacement, compression, induction, firmware, signature FROM msqur_logs l INNER JOIN msqur_metadata m ON m.id = l.tune_id INNER JOIN msqur_engines e ON m.engine = e.id AND l.user_id = e.user_id WHERE ";
 			$where = array();
 			foreach ($bq as $col => $v)
 			{
@@ -1116,7 +1119,7 @@ class DB
 		try
 		{
 			// [andreika]: use compressed data
-			$st = $this->db->prepare("SELECT UNCOMPRESS(data) AS log FROM msqur_files INNER JOIN msqur_logs ON msqur_logs.file_id = msqur_files.id WHERE msqur_logs.id = :id LIMIT 1");
+			$st = $this->db->prepare("SELECT UNCOMPRESS(msqur_files.data) AS log FROM msqur_files INNER JOIN msqur_logs ON msqur_logs.file_id = msqur_files.id WHERE msqur_logs.id = :id LIMIT 1");
 			DB::tryBind($st, ":id", $id);
 			if ($st->execute() && $st->rowCount() === 1)
 			{
@@ -1124,6 +1127,8 @@ class DB
 				$result = $st->fetch(PDO::FETCH_ASSOC);
 				$st->closeCursor();
 				$data = $result['log'];
+			} else {
+				if (DEBUG) debug('LOG NOT Found.');
 			}
 		}
 		catch (PDOException $e)
@@ -1132,6 +1137,43 @@ class DB
 		}
 		
 		return $data;
+	}
+
+	public function updateLogDataPoints($id)
+	{
+		global $rusefi;
+
+		$log = $this->getLog($id);
+
+		// this may take a while to complete...
+		$info = $rusefi->getLogInfo($log, $dataPoints);
+		$data = pack("C*", ...$dataPoints);
+
+		if (!$this->connect()) return false;
+		
+		try
+		{
+			if (DEBUG) debug('Updating log data points for $id...');
+			$st = $this->db->prepare("UPDATE msqur_logs l SET l.data=:data WHERE l.id = :id");
+			DB::tryBind($st, ":id", $id);
+			DB::tryBind($st, ":data", $data);
+
+			if ($st->execute())
+			{
+				if (DEBUG) debug('Log data updated!');
+				$st->closeCursor();
+				return true;
+			}
+			else
+				if (DEBUG) debug('Unable to update log data.');
+				
+			$st->closeCursor();
+		}
+		catch (PDOException $e)
+		{
+			$this->dbError($e);
+		}
+		return false;
 	}
 
 	public function updateCrc($fileid)

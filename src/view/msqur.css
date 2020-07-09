@@ -241,9 +241,20 @@ span.constant span.value {
 	width: 100%;
 }
 
+.logContainer {
+	width: 95%;
+	margin: 10px 0;
+	border: none;
+}
+
 .logTable {
 	width: 100%;
 	padding: 0px;
+}
+
+.logTd {
+	vertical-align: top;
+	border: none;
 }
 
 .logStart {
@@ -275,7 +286,7 @@ span.constant span.value {
 }
 
 .logViewPage {
-	width: 700px;
+	width: 100%;
 	padding: 20px;
 }
 
@@ -289,6 +300,10 @@ input#logInputOneLine {
 	width:50%;
 	display: inline;
 	text-align:left;
+}
+
+canvas#logCanvas {
+	background-color: #000;
 }
 
 #engineForm span {

@@ -52,7 +52,133 @@
 		putField($lfn, $lf, $logValues[$lfn], true);
 	}
 ?>
-<table class=logTable border=0><tr>
+<table class=logContainer cellspacing="0" cellpadding="0"><tr>
+<td class=logTd width="50%"><div>
+	<canvas id="logCanvas" height="300"></canvas>
+</div></td>
+
+<script>
+	$(document).ready(function() {
+		var ctx = $('#logCanvas');
+		var config = {
+			type: 'LineWithLine',
+			data: {
+<?php
+	// convert duration into seconds
+	$numSeconds = $rusefi->getDurationInSeconds($logValues["duration"]);
+
+	$labels = array();
+	$numDataPoints = count(reset($logValues["data"]));
+	for ($i = 0; $i < $numDataPoints; $i++) {
+		$labels[$i] = "'".round($i * $numSeconds / $numDataPoints, 2) . "s'";
+	}
+?>
+				labels: [<?=implode(",", $labels);?>],
+				datasets: [
+<?php
+	$ldColors = array("white", "red", "green", "yellow");
+	$ldYAxisDisplay = array("true", "false", "false", "false");
+	$j = 0;
+	foreach ($logValues["data"] as $ldName=>$ld) {
+?>
+				{ 
+					data: [<?=implode(",", $ld);?>],
+					label: "<?=$ldName;?>",
+					yAxisID: "<?=$j;?>",
+					borderColor: "<?=$ldColors[$j++];?>",
+					fill: false
+				},
+<?php
+	}
+?>
+				]
+			},
+			options: {
+				legend: { display: true },
+				responsive: true,
+				maintainAspectRatio: false,
+				elements: {
+					point:{
+						radius: 0
+					}
+				},
+				tooltips: {
+					intersect: false,
+					axis: 'x'
+				},
+				scales: {
+					xAxes: [{
+						display: true,
+						gridLines: {
+							display: true,
+							color: "#3F3F3F"
+						},
+						scaleLabel: {
+							display: true,
+							labelString: 'Time'
+						},
+					}],
+					yAxes: [
+<?php
+	$j = 0;
+	foreach ($logValues["data"] as $ldName=>$ld) {
+?>
+					{
+						id: "<?=$j;?>",
+						display: <?=$ldYAxisDisplay[$j++];?>,
+						ticks: {
+							beginAtZero: true
+						},
+						gridLines: {
+							display: true,
+							color: "#3F3F3F"
+						},
+						scaleLabel: {
+							display: true,
+							labelString: 'Value'
+						}
+					},
+<?php
+	}
+?>
+					]
+				}
+			}
+		};
+
+		// draw a vertical line on the chart under the cursor
+		Chart.defaults.LineWithLine = Chart.defaults.line;
+		Chart.controllers.LineWithLine = Chart.controllers.line.extend({
+		   draw: function(ease) {
+			  Chart.controllers.line.prototype.draw.call(this, ease);
+
+			  if (this.chart.tooltip._active && this.chart.tooltip._active.length) {
+				 var activePoint = this.chart.tooltip._active[0],
+					 ctx = this.chart.ctx,
+					 x = activePoint.tooltipPosition().x,
+					 topY = this.chart.scales['0'].top,
+					 bottomY = this.chart.scales['0'].bottom;
+
+				 // draw line
+				 ctx.save();
+				 ctx.beginPath();
+				 ctx.moveTo(x, topY);
+				 ctx.lineTo(x, bottomY);
+				 ctx.lineWidth = 2;
+				 ctx.strokeStyle = '#07C';
+				 ctx.stroke();
+				 ctx.restore();
+			  }
+		   }
+		});
+
+		var chart = new Chart(ctx, config);
+
+	});
+
+</script>
+
+<td class=logTd><table class=logTable border=0><tr>
 <?php
 
 	foreach ($logTable as $ln=>$lt) { ?>
@@ -71,4 +197,5 @@
 <?php
 } 
 ?>
+</tr></table></td>
 </tr></table>
