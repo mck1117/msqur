@@ -143,11 +143,12 @@ EOT;
 				
 				if (array_keys_exist($curve, 'desc', 'xBinConstant', 'yBinConstant', 'xMin', 'xMax', 'yMin', 'yMax'))
 				{
-					$xBins = $this->findConstant($msq, $curve['xBinConstant']);
-					$yBins = $this->findConstant($msq, $curve['yBinConstant']);
+					$digits = array(0, 0);
+					$xBins = $this->findConstant($msq, $curve['xBinConstant'], $digits, true);
+					$yBins = $this->findConstant($msq, $curve['yBinConstant'], $digits, true);
 					$xAxis = preg_split("/\s+/", trim($xBins));
 					$yAxis = preg_split("/\s+/", trim($yBins));
-					$html["tabList"] .= $this->msqTable2D($curve, $curve['xMin'], $curve['xMax'], $xAxis, $curve['yMin'], $curve['yMax'], $yAxis, $help);
+					$html["tabList"] .= $this->msqTable2D($curve, $curve['xMin'], $curve['xMax'], $xAxis, $curve['yMin'], $curve['yMax'], $yAxis, $help, false, $digits);
 				}
 				else if (DEBUG) debug('Missing/unsupported curve information: ' . $curve['id']);
 			}
@@ -166,13 +167,14 @@ EOT;
 				
 				if (array_keys_exist($table, 'desc', 'xBinConstant', 'yBinConstant', 'zBinConstant'))
 				{
-					$xBins = $this->findConstant($msq, $table['xBinConstant']);
-					$yBins = $this->findConstant($msq, $table['yBinConstant']);
-					$zBins = $this->findConstant($msq, $table['zBinConstant']);
+					$digits = array(0, 0, 0);
+					$xBins = $this->findConstant($msq, $table['xBinConstant'], $digits[0], true);
+					$yBins = $this->findConstant($msq, $table['yBinConstant'], $digits[1], true);
+					$zBins = $this->findConstant($msq, $table['zBinConstant'], $digits[2], true);
 					$xAxis = preg_split("/\s+/", trim($xBins));
 					$yAxis = preg_split("/\s+/", trim($yBins));
 					$zData = preg_split("/\s+/", trim($zBins));//, PREG_SPLIT_NO_EMPTY); //, $limit);
-					$html["tabList"] .= $this->msqTable3D($table, $xAxis, $yAxis, $zData, $help);
+					$html["tabList"] .= $this->msqTable3D($table, $xAxis, $yAxis, $zData, $help, false, $digits);
 				}
 				else if (DEBUG) debug('Missing/unsupported table information: ' . $table['id']);
 			}
@@ -183,7 +185,7 @@ EOT;
 			{
 				if ($config[0] == "array") continue; //TODO Skip arrays until blacklist is done
 				
-				$value = $this->findConstant($msq, $key);
+				$value = $this->findConstant($msq, $key, $digits, true);
 				
 				//if (DEBUG) debug("Trying $key for engine data");
 				if ($value !== NULL)
@@ -228,13 +230,15 @@ EOT;
 	 * @param $constant ID of constant to search for
 	 * @returns String of constant value, or NULL if not found
 	 */
-	public function findConstant($xml, $constant, $format = true)
+	public function findConstant($xml, $constant, &$digits, $format = true)
 	{
 		$search = $xml->xpath('//constant[@name="' . $constant . '"]');
 		if ($search === FALSE || count($search) == 0) return NULL;
-		if (isset($search[0]["digits"]) && $format)
+		if (!isset($search[0]["digits"]))
+			return $search[0];
+		$digits = intval($search[0]["digits"]);
+		if ($format)
 		{
-			$d = intval($search[0]["digits"]);
 			$out = "";
 			$rows = preg_split('/\n+/', $search[0][0], -1, PREG_SPLIT_NO_EMPTY);
 			foreach ($rows as $r)
@@ -242,7 +246,7 @@ EOT;
 				$vals = preg_split('/\s+/', $r, -1, PREG_SPLIT_NO_EMPTY);
 				foreach ($vals as $v)
 				{
-					$out .= number_format(floatval($v), $d) . " ";
+					$out .= number_format(floatval($v), $digits) . " ";
 				}
 				$out .= "\n";
 			}
@@ -263,7 +267,7 @@ EOT;
 	 * @param $helpText Optional text to display for more information
 	 * @returns A huge string containing a root <table> element
 	 */
-	public function msqTable2D($curve, $xMin, $xMax, $xAxis, $yMin, $yMax, $yAxis, $helpText = null, $hideHeader = false)
+	public function msqTable2D($curve, $xMin, $xMax, $xAxis, $yMin, $yMax, $yAxis, $helpText, $hideHeader, $digits)
 	{
 		$output = "";
 		$hot = 0;
@@ -299,7 +303,7 @@ EOT;
 		for ($c = 0; $c < $dataCount; $c++)
 		{
 			$output .= '<tr><th class="{sorter: false}">' . $xAxis[$c] . '</th>';
-			$output .= '<td>' . $yAxis[$c] . '</td></tr>';
+			$output .= '<td digits="'.$digits[1].'">' . $yAxis[$c] . '</td></tr>';
 		}
 		
 		$output .= '</tbody></table></div><div class="chart"><canvas id="' . $curve['id'] . '" class="curve" width="360" height="240"></canvas></div></div>';
@@ -316,7 +320,7 @@ EOT;
 	 * @param $helpText Optional text to display for more information
 	 * @returns A huge string containing a root <table> element
 	 */
-	public function msqTable3D($table, $xAxis, $yAxis, $zBins, $helpText, $hideHeader = false)
+	public function msqTable3D($table, $xAxis, $yAxis, $zBins, $helpText, $hideHeader, $digits)
 	{
 		$output = "";
 		$hot = 0;
@@ -359,7 +363,7 @@ EOT;
 			$output .= "<tr><th>" . $yAxis[$r] . "</th>";
 			for ($c = 0; $c < $cols; $c++)
 			{
-				$output .= "<td>" . $zBins[$r * $rows + $c] . "</td>";
+				$output .= "<td digits='".$digits[2]."'>" . $zBins[$r * $rows + $c] . "</td>";
 			}
 		}
 		

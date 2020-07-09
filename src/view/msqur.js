@@ -229,6 +229,10 @@ function colorTable(table, reverseColor)
 		}
 		
 		this.style.backgroundColor = 'rgb(' + r + ',' + g + ',' + b + ')';
+
+		// also round the value
+		if ($(this).attr("digits"))
+			this.textContent = v.toFixed($(this).attr("digits"));
 	});
 }
 
@@ -307,7 +311,7 @@ $(function() {
 		else
 			$('table.msq.ve').each(function(i) { resetTable($(this)); });
 	});
-	
+
 	function uploadAdd(e)
 	{
 		e.stopPropagation();

@@ -320,7 +320,7 @@ class INI
 							break;
 						case "yBins":
 							$value = array_map('trim', explode(',', $value));
-							if (count($value) == 1)
+							if (count($value) >= 1)
 							{
 								$curve['yBinConstant'] = $value[0];
 							}

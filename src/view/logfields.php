@@ -51,6 +51,8 @@
 	foreach ($logGeneral as $lfn=>$lf) {
 		putField($lfn, $lf, $logValues[$lfn], true);
 	}
+
+if (isset($logValues["data"])) {
 ?>
 <table class=logContainer cellspacing="0" cellpadding="0"><tr>
 <td class=logTd width="50%"><div>
@@ -178,7 +180,11 @@
 
 </script>
 
-<td class=logTd><table class=logTable border=0><tr>
+<td class=logTd>
+<?php
+}
+?>
+<table class=logTable border=0><tr>
 <?php
 
 	foreach ($logTable as $ln=>$lt) { ?>
@@ -197,5 +203,11 @@
 <?php
 } 
 ?>
-</tr></table></td>
 </tr></table>
+<?php
+if (isset($logValues["data"])) {
+?>
+</td></tr></table>
+<?php
+}
+?>

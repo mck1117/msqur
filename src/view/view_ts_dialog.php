@@ -65,7 +65,7 @@ function printField($msqMap, $field, $isPanelDisabled) {
 		// todo: add edit mode
 		$readOnly = "readonly";
 
-		$curValue = $rusefi->getMsqConstant($field[1]);
+		$curValue = $rusefi->getMsqConstantFull($field[1], $rusefi->msq, $digits);
 		$cons = $msqMap["Constants"][$field[1]];
 		$units = "";
 		if ($cons[0] == "scalar") {
@@ -119,7 +119,7 @@ function printField($msqMap, $field, $isPanelDisabled) {
       		echo "</select>\r\n";
 		}
 		else if ($cons[0] == "scalar") {
-			echo "<input id='".$field[1]."' class='ui-spinner-input ts-field-item ts-field-item-text' value='".$curValue."' $disabled $readOnly>";
+			echo "<input id='".$field[1]."' class='ui-spinner-input ts-field-item ts-field-item-text' digits='".$digits."' value='".$curValue."' $disabled $readOnly>";
 		}
 		else if ($cons[0] == "string") {
 			echo "<input id='".$field[1]."' class='ts-field-item' value='".$curValue."' $disabled $readOnly>";
@@ -268,22 +268,19 @@ function printCurve($msqMap, $id, $curve) {
 
 	if (array_keys_exist($curve, 'desc', 'xBinConstant', 'yBinConstant', 'zBinConstant'))
 	{
-		$xBins = $rusefi->msq->findConstant($rusefi->msq->msq, $curve['xBinConstant']);
-		$yBins = $rusefi->msq->findConstant($rusefi->msq->msq, $curve['yBinConstant']);
-		$zBins = $rusefi->msq->findConstant($rusefi->msq->msq, $curve['zBinConstant']);
-		$xAxis = preg_split("/\s+/", trim($xBins));
-		$yAxis = preg_split("/\s+/", trim($yBins));
-		$zData = preg_split("/\s+/", trim($zBins));//, PREG_SPLIT_NO_EMPTY); //, $limit);
-		echo $rusefi->msq->msqTable3D($curve, $xAxis, $yAxis, $zData, $help, true);
+		$digits = array(0, 0, 0);
+		$xAxis = $rusefi->getMsqConstantFull($curve['xBinConstant'], $rusefi->msq, $digits[0]);
+		$yAxis = $rusefi->getMsqConstantFull($curve['yBinConstant'], $rusefi->msq, $digits[1]);
+		$zData = $rusefi->getMsqConstantFull($curve['zBinConstant'], $rusefi->msq, $digits[2]);
+		echo $rusefi->msq->msqTable3D($curve, $xAxis, $yAxis, $zData, $help, true, $digits);
 
 	}	
 	else if (array_keys_exist($curve, 'desc', 'xBinConstant', 'yBinConstant', 'xMin', 'xMax', 'yMin', 'yMax'))
 	{
-		$xBins = $rusefi->msq->findConstant($rusefi->msq->msq, $curve['xBinConstant']);
-		$yBins = $rusefi->msq->findConstant($rusefi->msq->msq, $curve['yBinConstant']);
-		$xAxis = preg_split("/\s+/", trim($xBins));
-		$yAxis = preg_split("/\s+/", trim($yBins));
-		echo $rusefi->msq->msqTable2D($curve, $curve['xMin'], $curve['xMax'], $xAxis, $curve['yMin'], $curve['yMax'], $yAxis, $help, true);
+		$digits = array(0, 0);
+		$xAxis = $rusefi->getMsqConstantFull($curve['xBinConstant'], $rusefi->msq, $digits[0]);
+		$yAxis = $rusefi->getMsqConstantFull($curve['yBinConstant'], $rusefi->msq, $digits[1]);
+		echo $rusefi->msq->msqTable2D($curve, $curve['xMin'], $curve['xMax'], $xAxis, $curve['yMin'], $curve['yMax'], $yAxis, $help, true, $digits);
 	}
 
 	echo "</div><script>$('div#".$tabId."').accordion(accordionOptions);

@@ -304,7 +304,7 @@ class Rusefi
 
 		$type = parseQueryString("type");
 		$fullSize = parseQueryString("fullSize");
-		$ret = $this->parseLogData($data, $type, $fullSize, false);
+		$ret = $this->parseLogData($data, $type, $fullSize, true);
 
 		return $ret;
 	}
@@ -486,11 +486,14 @@ class Rusefi
 		return $this->msqur->db->getForumTopicId($user_id, $vehicleName);
 	}
 
-	public function getMsqConstant($c, $msq = null)
+	public function getMsqConstant($c)
 	{
-		if ($msq == null)
-			$msq = $this->msq;
-		$cc = $msq->findConstant($msq->msq, $c, false);
+		return $this->getMsqConstantFull($c, $this->msq, $digits);
+	}
+
+	public function getMsqConstantFull($c, $msq, &$digits)
+	{
+		$cc = $msq->findConstant($msq->msq, $c, $digits, false);
 		if ($cc === NULL)
 			return NULL;
 		$value = trim($cc, " \r\n\"");
@@ -583,7 +586,7 @@ class Rusefi
 			if (in_array($consName, $skipFields))
 				continue;
 
-			$value = $this->getMsqConstant($consName, $msq);
+			$value = $this->getMsqConstantFull($consName, $msq, $digits);
 			if ($value === NULL)
 				continue;
 			$offset = $cons[2];

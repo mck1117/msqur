@@ -126,7 +126,7 @@ foreach ($menuItems as $mi) {
 					title: dlgTitle
 				}).dialog('open');
 				$("#dlg" + dlgId).tooltip();
-				fixDialogGroups();
+				fixDialogControls();
 				fixDialogPositions();
 				$("#loading").hide();
 				findDialog(dlg);
@@ -183,7 +183,7 @@ foreach ($menuItems as $mi) {
 		return dialog;
 	}
 
-	function fixDialogGroups() {
+	function fixDialogControls() {
 		$(".ts-controlgroup-vertical").each(function () {
 			$(this).controlgroup({
 				"direction": "vertical"
@@ -212,6 +212,13 @@ foreach ($menuItems as $mi) {
 				},
 				value: $(this).attr('value'),
 			});
+		});
+
+		$(".ui-spinner-input").each(function(i) {
+			if ($(this).attr("digits")) {
+				var v = parseFloat($(this).val());
+				$(this).val(v.toFixed($(this).attr("digits")));
+			}
 		});
 	}
 
@@ -260,7 +267,7 @@ foreach ($menuItems as $mi) {
 
 	$(document).ready(function() {
 
-		fixDialogGroups();
+		fixDialogControls();
 
 		fixDialogPositions();
 
