@@ -143,7 +143,7 @@ EOT;
 				
 				if (array_keys_exist($curve, 'desc', 'xBinConstant', 'yBinConstant', 'xMin', 'xMax', 'yMin', 'yMax'))
 				{
-					$digits = array(0, 0);
+					$digits = array(2, 2);
 					$xBins = $this->findConstant($msq, $curve['xBinConstant'], $digits, true);
 					$yBins = $this->findConstant($msq, $curve['yBinConstant'], $digits, true);
 					$xAxis = preg_split("/\s+/", trim($xBins));
@@ -167,7 +167,7 @@ EOT;
 				
 				if (array_keys_exist($table, 'desc', 'xBinConstant', 'yBinConstant', 'zBinConstant'))
 				{
-					$digits = array(0, 0, 0);
+					$digits = array(2, 2, 2);
 					$xBins = $this->findConstant($msq, $table['xBinConstant'], $digits[0], true);
 					$yBins = $this->findConstant($msq, $table['yBinConstant'], $digits[1], true);
 					$zBins = $this->findConstant($msq, $table['zBinConstant'], $digits[2], true);
@@ -234,8 +234,11 @@ EOT;
 	{
 		$search = $xml->xpath('//constant[@name="' . $constant . '"]');
 		if ($search === FALSE || count($search) == 0) return NULL;
-		if (!isset($search[0]["digits"]))
+		if (!isset($search[0]["digits"])) {
+			// todo: what number is better?
+			$digits = 2;
 			return $search[0];
+		}
 		$digits = intval($search[0]["digits"]);
 		if ($format)
 		{
