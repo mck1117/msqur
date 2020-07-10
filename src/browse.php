@@ -48,19 +48,21 @@ function actionStartHeader()
 $action = parseQueryString('action') ?? "";
 if ($action == "delete")
 {
-	$id = isset($_GET['msq']) ? intval($_GET['msq']) : -1;
+	$tune_id = isset($_GET['msq']) ? intval($_GET['msq']) : -1;
+	$log_id = isset($_GET['log']) ? intval($_GET['log']) : -1;
 	unset($_GET['msq']);
+	unset($_GET['log']);
 	
 	if (!actionStartHeader())
 	{
 	}
-	else if ($id <= 0)
+	else if ($tune_id <= 0 && $log_id <= 0)
 	{
 		echo '<div class="error">Cannot delete the unknown item!</div>';
 	}
 	else
 	{
-		if (!$msqur->db->deleteFile($id))
+		if (!$msqur->db->deleteFile($tune_id, $log_id))
 			echo '<div class="error">Error while deleting the item!</div>';
 		else
 			echo '<div class="info">The item has been deleted!</div>';
@@ -179,7 +181,7 @@ function putResultsInTable($results, $type)
 	{
     	$res = $results[$c];
 		echo '<tr><td><a href="view.php?' . $type . '=' . $res['mid'] . '">' . $res['uploadDate'] . '</a></td>';
-		echo '<td><a href=/forum/memberlist.php?mode=viewprofile&u=' . $res['user_id'] . '>' . $rusefi->getUserNameFromId($res['user_id']) . '</a></td>';
+		echo '<td><a href="'.$rusefi->getUserProfileLinkFromId($res['user_id']) . '">' . $rusefi->getUserNameFromId($res['user_id']) . '</a></td>';
 		if ($type == "msq")
 		{
 			echo '<td><a href="?vehicleName='.urlencode($res['name']).'&user_id='.$res['user_id'].'">' . $res['name'] . '</a></td>';
