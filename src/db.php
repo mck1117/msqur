@@ -1064,7 +1064,7 @@ class DB
 		
 		try
 		{
-			$statement = "SELECT l.id as mid, l.user_id as user_id, l.info as info, l.data as data, l.uploadDate as uploadDate, l.views as views, name, make, code, numCylinders, displacement, compression, induction, firmware, signature FROM msqur_logs l INNER JOIN msqur_metadata m ON m.id = l.tune_id INNER JOIN msqur_engines e ON m.engine = e.id AND l.user_id = e.user_id WHERE ";
+			$statement = "SELECT l.id as mid, l.user_id as user_id, l.info as info, l.data as data, l.uploadDate as uploadDate, l.views as views, l.tune_id as tune_id, name, make, code, numCylinders, displacement, compression, induction, firmware, signature FROM msqur_logs l INNER JOIN msqur_metadata m ON m.id = l.tune_id INNER JOIN msqur_engines e ON m.engine = e.id AND l.user_id = e.user_id WHERE ";
 			$where = array();
 			foreach ($bq as $col => $v)
 			{

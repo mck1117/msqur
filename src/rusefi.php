@@ -420,13 +420,22 @@ class Rusefi
 		return $secs;
 	}
 
-	public function viewLog($id)
+	public function viewLog($id, &$engine)
 	{
 		global $logValues;
 		$res = $this->msqur->db->browseLog(array("l.id"=>$id));
 		$this->unpackLogInfo($res);
 		$logValues = $res[0];
-		return "<div class=logViewPage>".$this->fillGeneralLogInfo().$this->fillLogFields()."</div>";
+		
+		$engine = $this->getEngineFromTune($logValues["tune_id"]);
+		$moreInfo = "";
+		if ($engine) {
+			ob_start();
+			include "view/more_about_vehicle.php";
+			$moreInfo = ob_get_clean();
+		}
+
+		return "<div class=logViewPage>".$moreInfo.$this->fillGeneralLogInfo().$this->fillLogFields()."</div>";
 	}
 
 	public function getLogForDownload($id)

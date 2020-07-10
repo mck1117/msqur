@@ -33,7 +33,7 @@ if (isset($_GET['msq'])) {
 			echo $html;
 		} else {
 			include "view/header.php";
-			echo "<div><a href=\"?vehicleName=".$engine["name"]."&user_id=".$engine["user_id"]."\">More about this " . $engine["make"]. " " .$engine["code"]. " \"" .$engine["name"].  "\"</a></div>";
+			include "view/more_about_vehicle.php";
 
 			echo $html;
 			include "view/footer.php";
@@ -48,7 +48,7 @@ if (isset($_GET['msq'])) {
 }
 else if (isset($_GET['log'])) {
 	$id = intval($_GET['log']);
-	$html = $rusefi->viewLog($id);
+	$html = $rusefi->viewLog($id, $engine);
 	if ($html !== null) {
 		include "view/header.php";
 		echo $html;
