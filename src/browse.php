@@ -179,7 +179,7 @@ function putResultsInTable($results, $type)
 	{
     	$res = $results[$c];
 		echo '<tr><td><a href="view.php?' . $type . '=' . $res['mid'] . '">' . $res['uploadDate'] . '</a></td>';
-		echo '<td><a href=/forum/memberlist.php?mode=viewprofile&u=' . $res['user_id'] . '>' . $rusefi->getUserNameFromId($res['user_id']) . '</a></td>';
+		echo '<td><a href="'.$rusefi->getUserProfileLinkFromId($res['user_id']) . '">' . $rusefi->getUserNameFromId($res['user_id']) . '</a></td>';
 		if ($type == "msq")
 		{
 			echo '<td><a href="?vehicleName='.urlencode($res['name']).'&user_id='.$res['user_id'].'">' . $res['name'] . '</a></td>';

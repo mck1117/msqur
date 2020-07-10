@@ -149,6 +149,11 @@ class Rusefi
 		return FALSE;
 	}
 
+	public function getUserProfileLinkFromId($id)
+	{
+		return "/forum/memberlist.php?mode=viewprofile&u=" . $id;
+	}
+
 	public function preprocessTune()
 	{
 		$more = " <a target='_blank' href='https://github.com/rusefi/rusefi/wiki/HOWTO_upload_tune'>More...</a>";
