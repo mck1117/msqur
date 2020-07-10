@@ -48,19 +48,21 @@ function actionStartHeader()
 $action = parseQueryString('action') ?? "";
 if ($action == "delete")
 {
-	$id = isset($_GET['msq']) ? intval($_GET['msq']) : -1;
+	$tune_id = isset($_GET['msq']) ? intval($_GET['msq']) : -1;
+	$log_id = isset($_GET['log']) ? intval($_GET['log']) : -1;
 	unset($_GET['msq']);
+	unset($_GET['log']);
 	
 	if (!actionStartHeader())
 	{
 	}
-	else if ($id <= 0)
+	else if ($tune_id <= 0 && $log_id <= 0)
 	{
 		echo '<div class="error">Cannot delete the unknown item!</div>';
 	}
 	else
 	{
-		if (!$msqur->db->deleteFile($id))
+		if (!$msqur->db->deleteFile($tune_id, $log_id))
 			echo '<div class="error">Error while deleting the item!</div>';
 		else
 			echo '<div class="info">The item has been deleted!</div>';

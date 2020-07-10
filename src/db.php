@@ -22,6 +22,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 class DB
 {
 	public $db;
+
+	private $logFilesFolder = "logs/";
 	
 	public function connect()
 	{
@@ -943,18 +945,48 @@ class DB
 		return $id;
 	}
 
-	public function deleteFile($id) {
+	public function deleteFile($tune_id, $log_id) {
 		if (!$this->connect()) return false;
 		
 		try
 		{
-			$st = $this->db->prepare("DELETE FROM msqur_files,msqur_metadata USING msqur_files INNER JOIN msqur_metadata WHERE msqur_files.id = msqur_metadata.file AND msqur_metadata.id = :id");
-			DB::tryBind($st, ":id", $id);
-			$st->execute();
-			$ret = $st->rowCount();
-			$st->closeCursor();
+			if ($tune_id > 0) {
+				if (DEBUG) debug('deleteFile: Deleting Tune ' .$tune_id);
+				$st = $this->db->prepare("DELETE FROM msqur_files,msqur_metadata USING msqur_files INNER JOIN msqur_metadata WHERE msqur_files.id = msqur_metadata.file AND msqur_metadata.id = :id");
+				DB::tryBind($st, ":id", $tune_id);
 
-			$this->deleteUnusedEngines();
+				$st->execute();
+				$ret = $st->rowCount();
+				$st->closeCursor();
+
+				$this->deleteUnusedEngines();
+			}
+			else if ($log_id > 0) {
+				if (DEBUG) debug('deleteFile: Deleting LOG ' . $log_id);
+				// first, get the file id
+				$st = $this->db->prepare("SELECT msqur_files.id as file_id FROM msqur_files INNER JOIN msqur_logs ON msqur_logs.file_id = msqur_files.id WHERE msqur_logs.id = :id LIMIT 1");
+				DB::tryBind($st, ":id", $log_id);
+				$file_id = -1;
+				if ($st->execute() && $st->rowCount() === 1)
+				{
+					$result = $st->fetch(PDO::FETCH_ASSOC);
+					$st->closeCursor();
+					$file_id = $result['file_id'];
+					if (DEBUG) debug('deleteFile: LOG Found, file_id = ' . $file_id);
+				}
+
+				$st = $this->db->prepare("DELETE FROM msqur_files,msqur_logs USING msqur_files INNER JOIN msqur_logs WHERE msqur_files.id = msqur_logs.file_id AND msqur_logs.id = :id");
+				DB::tryBind($st, ":id", $log_id);
+
+				$st->execute();
+				$ret = $st->rowCount();
+				$st->closeCursor();
+
+				if ($ret > 0 && $file_id > 0) {
+					$res = @unlink($this->logFilesFolder.$file_id);
+					if (DEBUG) debug('deleteFile: Deleting physical file: ' . ($res ? "SUCÑESS" : "FAIL"));
+				}
+			}
 
 			return $ret > 0;
 		}
@@ -1007,11 +1039,17 @@ class DB
 
 			$st = $this->db->prepare("INSERT INTO msqur_files (type,data) VALUES (:type, COMPRESS(:log))");
 			DB::tryBind($st, ":type", 1);	// 1=log
-			DB::tryBind($st, ":log", $log);
+			DB::tryBind($st, ":log", "");
 
 			if ($st->execute())
 			{
 				$id = $this->db->lastInsertId();
+
+				// store the log as an external file
+				if ($id > 0) {
+					@file_put_contents($this->logFilesFolder.$id, $log);
+				}
+
 				$st->closeCursor();
 
 				$st = $this->db->prepare("INSERT INTO msqur_logs (user_id,file_id,tune_id,info,data,uploadDate) VALUES (:user_id, :file_id, :tune_id, :info, :data, :uploaded)");
@@ -1119,7 +1157,7 @@ class DB
 		try
 		{
 			// [andreika]: use compressed data
-			$st = $this->db->prepare("SELECT UNCOMPRESS(msqur_files.data) AS log FROM msqur_files INNER JOIN msqur_logs ON msqur_logs.file_id = msqur_files.id WHERE msqur_logs.id = :id LIMIT 1");
+			$st = $this->db->prepare("SELECT UNCOMPRESS(msqur_files.data) AS log, msqur_files.id as file_id FROM msqur_files INNER JOIN msqur_logs ON msqur_logs.file_id = msqur_files.id WHERE msqur_logs.id = :id LIMIT 1");
 			DB::tryBind($st, ":id", $id);
 			if ($st->execute() && $st->rowCount() === 1)
 			{
@@ -1127,6 +1165,11 @@ class DB
 				$result = $st->fetch(PDO::FETCH_ASSOC);
 				$st->closeCursor();
 				$data = $result['log'];
+				if (empty($data)) {
+					$file_id = $result['file_id'];
+					if (DEBUG) debug("Reading log from the file $file_id.");
+					$data = @file_get_contents($this->logFilesFolder.$file_id);
+				}
 			} else {
 				if (DEBUG) debug('LOG NOT Found.');
 			}
