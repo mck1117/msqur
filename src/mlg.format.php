@@ -331,6 +331,7 @@ class MlgParser {
 		}
 	}
 
+    // $d: array of interesting fields for analysis & visual graph
 	function processRecord($d) {
 		// first, try to detect the throttle (todo: we need more clear outputchannel behavior for ETB/noETB)
 		if ($d[IDX_ETB_DUTY] != 0)
@@ -403,7 +404,7 @@ class MlgParser {
 				$this->state->runningMaxSpeed = $d[IDX_SPEED];
 		}
 
-		// store the data points
+		// store the data points for visual chart
 		$dpIdxI = intval($this->state->dpIdx);
 		for ($i = 0; $i < count($this->dataPointFields); $i++) {
 			$this->state->dataPoints[$i][$dpIdxI] += $d[$this->dataPointFields[$i]];
