@@ -129,10 +129,13 @@ class MlgParser {
 	}
 	
 	// Parse binary data
-	function parseBinary($data) {
+	function parseBinary($data, $isDebug = false) {
 		$dataSize = strlen($data);
 
 		$warn = "";
+
+		// start processing...
+		$timeStart = microtime(true);
 
 		if ($dataSize < $this->mlgHeaderSize)
 			return array("text"=>"The log file is too small or empty!", "status"=>"deny");
@@ -225,9 +228,6 @@ class MlgParser {
 		}
 		$numRecords = intVal($numRecords);
 
-		// start record processing...
-		$timeStart = microtime(true);
-
 		$curOffset = $header["DataOffset"];
 		$rdata = substr($data, $curOffset);
 		$records = str_split($rdata, $dataTotalRecordSize);
@@ -270,9 +270,12 @@ class MlgParser {
 			$rec[IDX_RPM] = 0;
 			$this->changeState($rec);
 		}
+
 		$this->postProcess();
 
 		$timeElapsed = microtime(true) - $timeStart;
+		if ($isDebug)
+			echo "Time elapsed: " . $timeElapsed." secs\r\n";
 
 		if ($warn) {
 			return array("text"=> $warn, "status"=>"warn");
@@ -318,7 +321,7 @@ class MlgParser {
 		$this->state->dataRecordSize = $dataRecordSize;
 		$this->state->dpStep = $this->numDataPoints / floatval($numRecords);
 		//!!!!!!!!!!!
-		//echo "Number of records = " . $numRecords . "\r\nTime elapsed: " . $timeElapsed." secs\r\n";
+		//echo "Number of records = " . $numRecords . "\r\n";
 		//echo "Printing the last record:\r\n";
 		//print_r(array_combine($this->reqFields === NULL ? array_column($fields, "ShortName") : $this->reqFields, $rec));
 	}
