@@ -117,7 +117,12 @@ class API
 					$result = array($method => array("ID"=>$user_id, "NAME"=>$username));
 				}
 				break;
-
+			case 'changeTuneNote':
+				$tune_id = parseQueryString('tune_id');
+				$tuneNote = parseQueryString('tuneNote');
+				$ret = $rusefi->changeTuneNote($tune_id, $tuneNote);
+				$result = array($method => $ret);
+				break;
 
 			//TODO upload date range?
 			default:

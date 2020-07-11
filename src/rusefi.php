@@ -564,6 +564,22 @@ class Rusefi
 		return "";
 	}
 
+	public function changeTuneNote($tune_id, $tuneNote)
+	{
+		$engine = $this->getEngineFromTune($tune_id);
+		if (empty($engine)) {
+			return array("status"=>"deny", "text"=>"The tune was not found!");
+		}
+		$isOwner = isset($engine["user_id"]) && ($engine["user_id"] == $this->userid);
+		if (!$isOwner) {
+			return array("status"=>"deny", "text"=>"Only the owner can change the tune note!");
+		}
+
+		if ($this->msqur->db->changeTuneNote($tune_id, $tuneNote)) {
+			return array("status"=>"ok", "text"=>"");
+		}
+	}
+
 	public function calcCrcForTune($xml)
 	{
 		$engine = array();

@@ -347,12 +347,12 @@ class DB
 		
 		try
 		{
-			$statement = "SELECT m.id as mid, user_id, name, make, code, numCylinders, displacement, compression, induction, firmware, signature, uploadDate, views FROM msqur_metadata m INNER JOIN msqur_engines e ON m.engine = e.id WHERE ";
+			$statement = "SELECT m.id as mid, user_id, name, make, code, numCylinders, displacement, compression, induction, firmware, signature, uploadDate, views, tuneComment FROM msqur_metadata m INNER JOIN msqur_engines e ON m.engine = e.id WHERE ";
 			$where = array();
 			foreach ($bq as $col => $v)
 			{
 				//if ($v !== null) $statement .= "$col = :$col ";
-				if ($v !== null) $where[] = "$col = :$col ";
+				if ($v !== null) $where[] = "$col = :".str_replace(".", "", $col)." ";
 			}
 			
 			if (count($where) === 0) $statement .= "1";
@@ -369,7 +369,7 @@ class DB
 			
 			foreach ($bq as $col => $v)
 			{
-				if ($v !== null) $this->tryBind($st, ":$col", $v);
+				if ($v !== null) $this->tryBind($st, ":".str_replace(".", "", $col), $v);
 			}
 			
 			if ($st->execute())
@@ -378,7 +378,7 @@ class DB
 				$st->closeCursor();
 				return $result;
 			}
-			else echo '<div class="error">There was a problem constructing the browse query: </div>'; //var_export($st->errorInfo())
+			else echo '<div class="error">There was a problem constructing the browse query: '.print_r($st->errorInfo(), TRUE).'</div>'; //var_export($st->errorInfo())
 			
 			$st->closeCursor();
 		}
@@ -402,7 +402,7 @@ class DB
 		//firmware signature e.make e.code e.displacement e.compression e.numCylinders
 		try
 		{
-			$st = $this->db->prepare("SELECT m.id as mid, name, make, code, numCylinders, displacement, compression, induction, firmware, signature, uploadDate, views FROM msqur_metadata m INNER JOIN msqur_engines e ON m.engine = e.id WHERE firmware LIKE :query");
+			$st = $this->db->prepare("SELECT m.id as mid, name, make, code, numCylinders, displacement, compression, induction, firmware, signature, uploadDate, views, tuneComment FROM msqur_metadata m INNER JOIN msqur_engines e ON m.engine = e.id WHERE firmware LIKE :query");
 			DB::tryBind($st, ":query", "%" . $query . "%"); //TODO exact/wildcard option
 			if ($st->execute())
 			{
@@ -1196,7 +1196,7 @@ class DB
 		
 		try
 		{
-			if (DEBUG) debug('Updating log data points for $id...');
+			if (DEBUG) debug('Updating log data points for ' . $id);
 			$st = $this->db->prepare("UPDATE msqur_logs l SET l.data=:data WHERE l.id = :id");
 			DB::tryBind($st, ":id", $id);
 			DB::tryBind($st, ":data", $data);
@@ -1260,6 +1260,37 @@ class DB
 			echo "DB Error!\r\n";
 			$this->dbError($e);
 		}
+	}
+
+	public function changeTuneNote($tune_id, $tuneNote)
+	{
+		global $rusefi;
+
+		if (!$this->connect()) return false;
+		
+		try
+		{
+			if (DEBUG) debug('Updating tune note for '.$tune_id);
+			$st = $this->db->prepare("UPDATE msqur_metadata SET tuneComment=:note WHERE id = :id");
+			DB::tryBind($st, ":id", $tune_id);
+			DB::tryBind($st, ":note", $tuneNote);
+
+			if ($st->execute())
+			{
+				if (DEBUG) debug('Tune note updated!');
+				$st->closeCursor();
+				return true;
+			}
+			else
+				if (DEBUG) debug('Unable to update tune note.');
+				
+			$st->closeCursor();
+		}
+		catch (PDOException $e)
+		{
+			$this->dbError($e);
+		}
+		return false;
 	}
 
 }

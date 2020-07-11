@@ -688,6 +688,16 @@ footer a:hover {
 	border: none;
 }
 
+.tune-note-div {
+	padding: 5px 0;
+	display: flex;
+	align-items: center;
+}
+
+.tune-note-button {
+	display: none;
+}
+
 #loading {
 	display: none;
 	z-index: 9999;

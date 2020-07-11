@@ -153,6 +153,27 @@ if ($action == "delete")
 <!-- script src="view/browse.js"></script -->
 <?php
 
+function printTuneComment($c, $isTooltip)
+{
+	// decode from xml format
+	$c = html_entity_decode($c);
+	// compact to 1 line
+	if (!$isTooltip)
+		$c = preg_replace("/\s+/", " ", $c);
+	// for tooltips we show all, otherwise limit the length
+	$limit = 32;
+	$isTooLong = strlen($c) > $limit;
+	// protect from injecting html tags etc.
+	$c = htmlentities($c);
+	// preserve newlines for extended tooltip version
+	if ($isTooltip) {
+		$c = preg_replace("/[\r\n+]/", "<br/>", $c);
+		return $isTooLong ? $c : "";
+	}
+	// add ellipsis
+	return $isTooLong ? (substr($c, 0, $limit) . "&hellip;") : $c;
+}
+
 function putResultsInTable($results, $type)
 {
 	global $rusefi;
@@ -162,7 +183,7 @@ function putResultsInTable($results, $type)
 	$numResults = count($results);
 
 	$headers = array(
-		"msq" => array("uploaded"=>"Uploaded", "Owner", "Vehicle Name", "Engine Make/Code", "Cylinders", 
+		"msq" => array("uploaded"=>"Uploaded", "Owner", "Vehicle Name", "Engine Make/Code", "Tune Note", "Cylinders", 
 					"Liters", "Compression", "Aspiration", /*"Firmware/Version", */"Views", "Options"),
 		"log" => array("uploaded"=>"Uploaded", "Owner", "Duration", "Views", "Options"),
 	);
@@ -186,6 +207,7 @@ function putResultsInTable($results, $type)
 		{
 			echo '<td><a href="?vehicleName='.urlencode($res['name']).'&user_id='.$res['user_id'].'">' . $res['name'] . '</a></td>';
 			echo '<td>' . $res['make'] . ' ' . $res['code'] . '</td>';
+			echo '<td><div class=tuneComment title="' . printTuneComment($res['tuneComment'], true) . '">' . printTuneComment($res['tuneComment'], false) . '</div></td>';
 			echo '<td>' . $res['numCylinders'] . '</td>';
 			echo '<td>' . $res['displacement'] . '</td>';
 			echo '<td>' . $res['compression'] . ':1</td>';

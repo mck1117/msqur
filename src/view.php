@@ -26,6 +26,12 @@ if (isset($_GET['msq'])) {
 	$settings = explode("|", parseQueryString('settings'));
 	$html = $msqur->view($id, $viewMode, $settings);
 	$engine = $rusefi->getEngineFromTune($id);
+	// get extra tune params
+	$tune_id = $id;
+	$tuneParams = $msqur->browse(array("m.id"=>$tune_id), 0, "msq");
+	if (count($tuneParams) == 1)
+		$tuneParams = $tuneParams[0];
+	$isOwner = $engine["user_id"] == $rusefi->userid;
 
 	//!!!!!!!!!!!
 	//$rusefi->calcCrc($rusefi->msq);
@@ -35,6 +41,7 @@ if (isset($_GET['msq'])) {
 			echo $html;
 		} else {
 			include "view/header.php";
+			include "view/tune_note.php";
 			include "view/more_about_vehicle.php";
 
 			echo $html;
