@@ -83,6 +83,8 @@ class DB
 			if (preg_match("/<bibliography(.*?)(author\s*=\s*\"([^\"]*)\"?)\s+(tuneComment\s*=\s*\"([^\"]*)\"?)\s+writeDate\s*=\s*\"([^\"]+)\"\s*\/>/", $xml, $bib)) {
 				$author = $bib[3];
 				$comment = $bib[5];
+				$comment = preg_replace("/^&lt;html&gt;/", "", $comment);
+
 				$wdt = strtotime($bib[6]);
 			} else {
 				$author = "";

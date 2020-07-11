@@ -158,8 +158,10 @@ function printTuneComment($c, $isTooltip)
 	// decode from xml format
 	$c = html_entity_decode($c);
 	// compact to 1 line
-	if (!$isTooltip)
+	if (!$isTooltip) {
 		$c = preg_replace("/\s+/", " ", $c);
+		$c = preg_replace("/^<html>/", "", $c);
+	}
 	// for tooltips we show all, otherwise limit the length
 	$limit = 32;
 	$isTooLong = strlen($c) > $limit;
