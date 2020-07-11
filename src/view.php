@@ -20,6 +20,8 @@ require "msqur.php";
 if (isset($_GET['msq'])) {
 	$id = intval($_GET['msq']);
 	$viewMode = parseQueryString('view');
+	if (empty($viewMode))
+		$viewMode = "ts";
 	$dialogId = parseQueryString('dialog');
 	$settings = explode("|", parseQueryString('settings'));
 	$html = $msqur->view($id, $viewMode, $settings);
