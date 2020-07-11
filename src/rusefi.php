@@ -65,7 +65,7 @@ class Rusefi
 		$this->userTunes = $this->getUserTunes($this->userid);
 	}
 
-	private function getUserIdFromToken($token)
+	public function getUserIdFromToken($token)
 	{
 		if (!$this->msqur->db->connect()) return -1;
 		try
