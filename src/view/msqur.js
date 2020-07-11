@@ -563,6 +563,9 @@ $(function() {
 					text = data.preprocessLog.text;
 				} catch (e) {
 					text = "There was an error while processing. Cannot read the processed results!";
+					console.log("Error", e.stack);
+					console.log("Error", e.name);
+					console.log("Error", e.message);
 					status = "deny";
 				}
 				// output the text result

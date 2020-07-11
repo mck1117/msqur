@@ -309,7 +309,7 @@ class Rusefi
 
 		$type = parseQueryString("type");
 		$fullSize = parseQueryString("fullSize");
-		$ret = $this->parseLogData($data, $type, $fullSize, true);
+		$ret = $this->parseLogData($data, $type, $fullSize, false);
 
 		return $ret;
 	}
