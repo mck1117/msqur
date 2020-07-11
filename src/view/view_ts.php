@@ -30,7 +30,7 @@ ob_start();
 	$menuItems = array();
 	if (isset($msqMap["menu"]))
 	foreach ($msqMap["menu"] as $mn=>$menu) {
-		$mn = printTsItem($mn);
+		$mn = printTsItem($mn, $clr);
 		if ($mn == "Help") continue;
 ?>
 <li class="tsMenuItem"><img class="tsMenuItemImg" src="view/img/ts-icons/menu<?=$mi;?>.png"><span class="tsMenuItemText"><?=$mn;?></span>
@@ -41,7 +41,7 @@ ob_start();
 				echo "<li class='tsMenuSeparator' type='separator'></li>\r\n";
 			} else {
 				$menuItems[] = $sub[0];
-				$sm = printTsItem($sub[1]);
+				$sm = printTsItem($sub[1], $clr);
 				$isDisabled = false;
 				//if (isset($sub[3]))
 				if (isset($sub[3])) {

@@ -4,15 +4,24 @@
 //$html["debug"] = print_r($msqMap["dialog"]["injectionBasic"], TRUE);
 //$html["debug"] = print_r($msqMap["menu"]["&Base &Engine"], TRUE);
 
-function printTsItem($mn) {
-	return preg_replace(array("/&([A-Za-z])/", "/\"/"), array("<u>$1</u>", ""), $mn);
+function printTsItem($mn, &$clr) {
+	$field = preg_replace(array("/&([A-Za-z])/", "/\"/"), array("<u>$1</u>", ""), $mn);
+	// colorize some labels
+	if (!empty($field) && ($field[0] == '#' || $field[0] == '!')) {
+		$clr = ($field[0] == '#') ? "ts-label-blue" : "ts-label-red";
+		$field = substr($field, 1);
+	}
+	else {
+		$clr = "";
+	}
+	return $field;
 }
 
 function getDialogTitle($msqMap, $dlg) {
-	
+	$clr = "";
 	if (is_array($dlg["dialog"])) {
 		$dlgName = $dlg["dialog"][0];
-		$dlgTitle = printTsItem($dlg["dialog"][1]);
+		$dlgTitle = printTsItem($dlg["dialog"][1], $clr);
 	} else {
 		$dlgName = $dlg["dialog"];
 		$dlgTitle = "";
@@ -22,7 +31,7 @@ function getDialogTitle($msqMap, $dlg) {
 		foreach ($msqMap["menu"] as $menu) {
 			foreach ($menu["subMenu"] as $sub) {
 				if ($sub[0] == $dlgName) {
-					$dlgTitle = printTsItem($sub[1]);
+					$dlgTitle = printTsItem($sub[1], $clr);
 				}
 			}
 		}
@@ -33,7 +42,16 @@ function getDialogTitle($msqMap, $dlg) {
 function printField($msqMap, $field, $isPanelDisabled) {
 	global $rusefi;
 
-	if (isset($field[1]) && isset($msqMap["Constants"][$field[1]])) {
+	$clr = "";
+	$cons = NULL;
+	if (isset($field[1])) {
+		if (isset($msqMap["Constants"][$field[1]])) {
+			$cons = $msqMap["Constants"][$field[1]];
+		} else if (isset($msqMap["PcVariables"][$field[1]])) {
+			$cons = $msqMap["PcVariables"][$field[1]];
+		}
+	}
+	if ($cons !== NULL) {
 		$disabled = FALSE;
 		// disable the field if required
 		if (isset($field[2])) {
@@ -66,10 +84,9 @@ function printField($msqMap, $field, $isPanelDisabled) {
 		$readOnly = "readonly";
 
 		$curValue = $rusefi->getMsqConstantFull($field[1], $rusefi->msq, $digits);
-		$cons = $msqMap["Constants"][$field[1]];
 		$units = "";
 		if ($cons[0] == "scalar") {
-			$units = printTsItem($cons[3]);
+			$units = printTsItem($cons[3], $clr);
 			if (!empty($units)) {
 				$units = "(" . $units . ")";
 			}
@@ -77,7 +94,7 @@ function printField($msqMap, $field, $isPanelDisabled) {
 
 		$hint = "";
 		if (isset($msqMap["SettingContextHelp"][$field[1]])) {
-			$hint = printTsItem($msqMap["SettingContextHelp"][$field[1]]);
+			$hint = printTsItem($msqMap["SettingContextHelp"][$field[1]], $clr);
 			$hint = " title=\"".$hint."\"";
 			//print_r($hint);
 			//$hint
@@ -100,7 +117,8 @@ function printField($msqMap, $field, $isPanelDisabled) {
 		}
 
 		// print text label
-		echo "<td class='ts-field-td-label' $addToLabel><label for=".$field[1]." class='ts-field-label' $disabled $readOnly ".$hint.">".printTsItem($field[0]).$units."</label></td>\r\n";
+		$labelLext = printTsItem($field[0], $clr);
+		echo "<td class='ts-field-td-label' $addToLabel><label for=".$field[1]." class='ts-field-label $clr' $disabled $readOnly ".$hint.">".$labelLext.$units."</label></td>\r\n";
 
 		// skip the rest
 		if ($field["key"] == "slider") {
@@ -113,8 +131,8 @@ function printField($msqMap, $field, $isPanelDisabled) {
 		if ($cons[0] == "bits") {
 			echo "<select class='ts-field-item ts-field-item-select' id='".$field[1]."' $disabled $readOnly>\r\n";
         	for ($i = 4; $i < count($cons); $i++) {
-        		$selected = ($curValue == ($i - 4)) ? " selected='selected' " : "";
-        		echo "<option class='ts-field-item-option' $selected>".printTsItem($cons[$i])."</option>\r\n";
+				$selected = ($curValue == ($i - 4)) ? " selected='selected' " : "";
+				echo "<option class='ts-field-item-option' $selected>".printTsItem($cons[$i], $clr)."</option>\r\n";
         	}
       		echo "</select>\r\n";
 		}
@@ -132,17 +150,15 @@ function printField($msqMap, $field, $isPanelDisabled) {
 	if (is_array($field) && count($field) == 1)
 		$field = $field[0];
 
+	if (isset($field["key"]) && $field["key"] == "commandButton") {
+		//print_r($field);
+		echo "<td class='ts-field-button' colspan='3'><button type=\"button\" class=\"ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only ts-button\">";
+		echo "<span class=\"ui-button-text ts-button-text\">". $field[0] . "</span></button></td>\r\n";
+	}
+
 	// text field?
 	if (is_string($field)) {
-		$field = printTsItem($field);
-		// colorize some labels
-		if (!empty($field) && ($field[0] == '#' || $field[0] == '!')) {
-			$clr = ($field[0] == '#') ? "ts-label-blue" : "ts-label-red";
-			$field = substr($field, 1);
-		}
-		else {
-			$clr = "";
-		}
+		$field = printTsItem($field, $clr);
 		echo "<td class='ts-label $clr' colspan='3'>$field</td>\r\n";
 	}
 }
@@ -209,6 +225,8 @@ function printDialog($msqMap, $dialogId, $isPanel, $isDialogDisabled = false) {
 			$isDisabled = false;
 			if (is_array($panel)) {
 				if (isset($panel[1])) {
+					if (in_array($panel[1], array("West", "East")))
+						$isHorizontal = true;
 					try
 					{
 						// see INI::parseExpression()

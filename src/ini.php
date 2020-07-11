@@ -187,7 +187,7 @@ class INI
 				//For the menu, this is whether the menu item is visible or enabled.
 				$condition = INI::parseExpression($line, $msq, $outputs);
 				if ($condition === NULL) {
-					if (DEBUG) debug("Skipping expression in line: $line");
+					//if (DEBUG) debug("Skipping expression in line: $line");
 					continue;
 				}
 			}
@@ -210,7 +210,7 @@ class INI
 					break;
 				
 				case "Menu":
-					$menu = INI::defaultSectionHandler($value);
+					$menu = INI::defaultSectionHandler($value, true);
 					if (is_array($menu)) {
 						if ($condition !== NULL) {
 							$menu[count($menu) - 1] = $condition;
@@ -246,7 +246,7 @@ class INI
 						}
 						if ($key == "dialog")
 							$values["dialog"][$curDialog[0]][$key] = $dlg;
-						else if ($key == "slider")
+						else if ($key == "slider" || $key == "commandButton")
 							$values["dialog"][$curDialog[0]]["field"][] = $dlg;
 						else
 							$values["dialog"][$curDialog[0]][$key][] = $dlg;
@@ -386,20 +386,8 @@ class INI
 							else if (DEBUG) debug("Invalid table Z bins: $key");
 							break;
 					}
-				break;
-				
-				//Don't care about these
-				case "MegaTune":
-				case "ReferenceTables": //misc MAF stuff
-				case "ConstantsExtensions": //misc reset required fields
-				case "PortEditor": //not sure
-				case "GaugeConfigurations": //Not relevant
-				case "FrontPage": //Not relevant
-				case "RunTime": //Not relevant
-				case "Tuning": //Not relevant
-				case "AccelerationWizard": //Not sure
-				case "BurstMode": //Not relevant
 					break;
+				
 				case "OutputChannels": //These are for gauges and datalogging
 					$v = INI::defaultSectionHandler($value);
 					// here we store only computable outputs with expressions
@@ -422,7 +410,22 @@ class INI
 					$settings[$key][] = $values;
 
 					break;
+				case "PcVariables":
+					$values[$currentSection][$key] = INI::defaultSectionHandler($value);
+					break;
+				//Don't care about these
 				case "Datalog": //Not relevant
+				case "MegaTune":
+				case "ReferenceTables": //misc MAF stuff
+				case "ConstantsExtensions": //misc reset required fields
+				case "PortEditor": //not sure
+				case "GaugeConfigurations": //Not relevant
+				case "FrontPage": //Not relevant
+				case "RunTime": //Not relevant
+				case "Tuning": //Not relevant
+				case "AccelerationWizard": //Not sure
+				case "BurstMode": //Not relevant
+					break;
 				default:
 					break;
 				case NULL:
@@ -442,15 +445,17 @@ class INI
 	 * @param $value
 	 * @returns An array if there's a comma, or just the value.
 	 */
-	private static function defaultSectionHandler($value)
+	private static function defaultSectionHandler($value, $isLessStrict = false)
 	{
 		//For things like "nCylinders      = bits,    U08,      0,"
 		//split CSV into an array
-		if (strpos($value, ',') !== FALSE) {
+		if (strpos($value, ',') !== FALSE || $isLessStrict) {
 			// a simple explode() by comma is not enough since we have expressions like "text,text"
 			$v = $value;
 			if (preg_match_all("/\"[^\"]*\"|[A-Za-z0-9_\.\[\]\:]+|{[^\}]+}/", $value, $ret))
 				$v = $ret[0];
+			if (count($v) == 1)
+				$v = $v[0];
 		}
 		else //otherwise just return the value
 			$v = trim($value);
