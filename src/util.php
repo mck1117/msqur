@@ -55,4 +55,22 @@ function parseQueryString($s)
 	return $ret;
 }
 
+function rusefi_file($f)
+{
+	global $test;
+	return isset($test) ? $test->file($f) : file($f);
+}
+
+function rusefi_file_get_contents($f)
+{
+	global $test;
+	return isset($test) ? $test->file_get_contents($f) : file_get_contents($f);
+}
+
+function rusefi_file_put_contents($f, $c)
+{
+	global $test;
+	return isset($test) ? $test->file_put_contents($f, $c) : file_put_contents($f, $c);
+}
+
 ?>

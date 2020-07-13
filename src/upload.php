@@ -17,8 +17,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
 require_once "msqur.php";
 
+global $isEmbedded;
 $isEmbedded = (isset($_POST['rusefi_token']) && isset($_FILES) && isset($_FILES['upload-file']));
-
 
 /**
  * @brief Restructure file upload array

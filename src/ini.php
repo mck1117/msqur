@@ -118,7 +118,7 @@ class INI
 	{
 		try
 		{
-			$ini = file($file, FILE_SKIP_EMPTY_LINES | FILE_IGNORE_NEW_LINES);
+			$ini = rusefi_file($file, FILE_SKIP_EMPTY_LINES | FILE_IGNORE_NEW_LINES);
 		}
 		catch (Exception $e)
 		{
