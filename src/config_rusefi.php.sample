@@ -1,0 +1,7 @@
+<?php
+define('DB_HOST', "xXX");
+define('DB_USERNAME', "XXX");
+define('DB_PASSWORD', "XXX");
+define('DB_NAME', "XXX");
+define('RUSEFI_ADMIN_USER_IDS', array(2,685));
+?>
