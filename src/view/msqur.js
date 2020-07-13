@@ -50,6 +50,12 @@ $(document).ready(function() {
 	$('.deleteLink').unbind('click').bind('click', function () {
         return confirm('You are about to delete the tune: "' + $(this).attr('info') + '".\r\n\r\nAre you sure?');
     });
+
+    $('.tuneComment').tooltip({
+        content:function() {
+            return this.getAttribute("title");
+        }
+    });
 });
 
 //2D charts
@@ -557,6 +563,9 @@ $(function() {
 					text = data.preprocessLog.text;
 				} catch (e) {
 					text = "There was an error while processing. Cannot read the processed results!";
+					console.log("Error", e.stack);
+					console.log("Error", e.name);
+					console.log("Error", e.message);
 					status = "deny";
 				}
 				// output the text result

@@ -274,7 +274,7 @@ class MlgParser {
 		$this->postProcess();
 
 		$timeElapsed = microtime(true) - $timeStart;
-		if ($isDebug)
+		if ($isDebug === TRUE)
 			echo "Time elapsed: " . $timeElapsed." secs\r\n";
 
 		if ($warn) {

@@ -65,7 +65,7 @@ class Rusefi
 		$this->userTunes = $this->getUserTunes($this->userid);
 	}
 
-	private function getUserIdFromToken($token)
+	public function getUserIdFromToken($token)
 	{
 		if (!$this->msqur->db->connect()) return -1;
 		try
@@ -309,7 +309,7 @@ class Rusefi
 
 		$type = parseQueryString("type");
 		$fullSize = parseQueryString("fullSize");
-		$ret = $this->parseLogData($data, $type, $fullSize, true);
+		$ret = $this->parseLogData($data, $type, $fullSize, false);
 
 		return $ret;
 	}
@@ -562,6 +562,22 @@ class Rusefi
 
 		}
 		return "";
+	}
+
+	public function changeTuneNote($tune_id, $tuneNote)
+	{
+		$engine = $this->getEngineFromTune($tune_id);
+		if (empty($engine)) {
+			return array("status"=>"deny", "text"=>"The tune was not found!");
+		}
+		$isOwner = isset($engine["user_id"]) && ($engine["user_id"] == $this->userid);
+		if (!$isOwner) {
+			return array("status"=>"deny", "text"=>"Only the owner can change the tune note!");
+		}
+
+		if ($this->msqur->db->changeTuneNote($tune_id, $tuneNote)) {
+			return array("status"=>"ok", "text"=>"");
+		}
 	}
 
 	public function calcCrcForTune($xml)

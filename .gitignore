@@ -1,6 +1,6 @@
 *.msq
 script.config
-src/config.php
+src/config_rusefi.php
 VERSION
 doxygen/*
 

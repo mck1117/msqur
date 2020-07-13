@@ -107,7 +107,22 @@ class API
 				$vehicleName = parseQueryString('vehicleName');
 				$result = array($method => $rusefi->getTuneList($vehicleName));
 				break;
-
+			case 'getUserByToken':
+				$token = parseQueryString('rusefi_token');
+				$user_id = $rusefi->getUserIdFromToken($token);
+				if ($user_id < 0)
+					$result = array($method => "INVALID");
+				else {
+					$username = ($user_id > 0) ? $rusefi->getUserNameFromId($user_id) : "";
+					$result = array($method => array("ID"=>$user_id, "NAME"=>$username));
+				}
+				break;
+			case 'changeTuneNote':
+				$tune_id = parseQueryString('tune_id');
+				$tuneNote = parseQueryString('tuneNote');
+				$ret = $rusefi->changeTuneNote($tune_id, $tuneNote);
+				$result = array($method => $ret);
+				break;
 
 			//TODO upload date range?
 			default:

@@ -577,7 +577,7 @@ footer a:hover {
 .ts-field-item {
 	margin: auto 0 auto auto;
 	font-size: 0.8em;
-	padding: 2px; 
+	padding: 2px;
 }
 
 .ts-field-item-text {
@@ -625,8 +625,23 @@ footer a:hover {
 	margin: auto 0 auto auto;
 	text-align: left !important;
 	font-weight: bold;
+	padding: 2px;
+	border: none !important;
+}
+
+.ts-field-button {
+	margin: auto 0 auto auto;
+	text-align: center !important;
 	padding: 2px; 
 	border: none !important;
+}
+
+.ts-button {
+	background: linear-gradient(0deg, rgba(224,234,244,1) 0%, rgba(255,255,255,1) 66%, rgba(190,211,231,1) 100%) !important;
+}
+
+.ts-button-text {
+	font-weight: bold !important;
 }
 
 .ts-label-red {
@@ -671,6 +686,16 @@ footer a:hover {
 
 .ts-panel-notitle {
 	border: none;
+}
+
+.tune-note-div {
+	padding: 5px 0;
+	display: flex;
+	align-items: center;
+}
+
+.tune-note-button {
+	display: none;
 }
 
 #loading {
