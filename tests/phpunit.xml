@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<phpunit>
+<testsuite name='rusEFI'>
+      <file>test_db.php</file>
+      <file>test_mlg.php</file>
+      <file>test_upload.php</file>
+</testsuite>
+</phpunit>
