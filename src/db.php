@@ -24,6 +24,9 @@ class DB
 	public $db;
 
 	private $logFilesFolder = "logs/";
+
+	public $COMPRESS = "COMPRESS";
+	public $UNCOMPRESS = "UNCOMPRESS";
 	
 	public function connect()
 	{
@@ -73,7 +76,7 @@ class DB
 		try
 		{
 			//TODO transaction so we can rollback (`$db->beginTransaction()`)
-			$st = $this->db->prepare("INSERT INTO msqur_files (type,crc,data) VALUES (:type, :crc, COMPRESS(:xml))");
+			$st = $this->db->prepare("INSERT INTO msqur_files (type,crc,data) VALUES (:type, :crc, ".$this->COMPRESS."(:xml))");
 			$xml = file_get_contents($file['tmp_name']);
 			//Convert encoding to UTF-8
 			$xml = mb_convert_encoding($xml, "UTF-8");
@@ -175,9 +178,9 @@ class DB
 				DB::tryBind($st, ":user_id", $user_id);
 				DB::tryBind($st, ":name", $name);
 				$st->execute();
-				if ($st->rowCount() > 0)
+				$result = $st->fetch(PDO::FETCH_ASSOC);
+				if ($result && count($result) > 0)
 				{
-					$result = $st->fetch(PDO::FETCH_ASSOC);
 					$update_id = $result['id'];
 
 					if (DEBUG) debug("Update vehicle: \"$user_id\", \"$name\", \"$make\", \"$code\", $displacement, $compression, $induction");
@@ -228,9 +231,9 @@ class DB
 			$st = $this->db->prepare("SELECT reingest FROM msqur_metadata WHERE msqur_metadata.id = :id LIMIT 1");
 			DB::tryBind($st, ":id", $id);
 			$st->execute();
-			if ($st->rowCount() > 0)
+			$result = $st->fetch(PDO::FETCH_ASSOC);
+			if ($result && count($result) > 0)
 			{
-				$result = $st->fetch(PDO::FETCH_ASSOC);
 				$reingest = $result['reingest'];
 				$st->closeCursor();
 				return $reingest;
@@ -312,9 +315,9 @@ class DB
 			$st = $this->db->prepare("SELECT html FROM msqur_files INNER JOIN msqur_metadata ON msqur_metadata.file = msqur_files.id WHERE msqur_metadata.id = :id LIMIT 1");
 			DB::tryBind($st, ":id", $id);
 			$st->execute();
-			if ($st->rowCount() > 0)
+			$result = $st->fetch(PDO::FETCH_ASSOC);
+			if ($result && count($result) > 0)
 			{
-				$result = $st->fetch(PDO::FETCH_ASSOC);
 				$st->closeCursor();
 				$html = $result['html'];
 				if ($html === NULL)
@@ -705,7 +708,7 @@ class DB
 		
 		try
 		{
-			$st = $this->db->prepare("UPDATE msqur_metadata SET views = views + 1 WHERE id = :id LIMIT 1");
+			$st = $this->db->prepare("UPDATE msqur_metadata SET views = views + 1 WHERE id = :id");
 			DB::tryBind($st, ":id", $id);
 			$ret = $st->execute();
 			$st->closeCursor();
@@ -767,12 +770,14 @@ class DB
 		try
 		{
 			// [andreika]: use compressed data
-			$st = $this->db->prepare("SELECT UNCOMPRESS(data) AS xml FROM msqur_files INNER JOIN msqur_metadata ON msqur_metadata.file = msqur_files.id WHERE msqur_metadata.id = :id LIMIT 1");
+			$st = $this->db->prepare("SELECT ".$this->UNCOMPRESS."(data) AS xml FROM msqur_files INNER JOIN msqur_metadata ON msqur_metadata.file = msqur_files.id WHERE msqur_metadata.id = :id LIMIT 1");
 			DB::tryBind($st, ":id", $id);
-			if ($st->execute() && $st->rowCount() === 1)
+			$st->execute();
+			$result = $st->fetch(PDO::FETCH_ASSOC);
+			if ($result && count($result) > 0)
 			{
 				if (DEBUG) debug('XML Found.');
-				$result = $st->fetch(PDO::FETCH_ASSOC);
+				
 				$st->closeCursor();
 				$xml = $result['xml'];
 			}
@@ -796,9 +801,9 @@ class DB
 			$st = $this->db->prepare("SELECT name, make, code, displacement, compression, induction FROM msqur_engines WHERE user_id = :user_id");
 			DB::tryBind($st, ":user_id", $user_id);
 			$st->execute();
-			if ($st->rowCount() > 0)
+			$result = $st->fetchAll(PDO::FETCH_ASSOC);
+			if ($result && count($result) > 0)
 			{
-				$result = $st->fetchAll(PDO::FETCH_ASSOC);
 				$st->closeCursor();
 				return $result;
 			}
@@ -827,9 +832,9 @@ class DB
 			if (!empty($vehicleName))
 				DB::tryBind($st, ":vehicleName", $vehicleName);
 			$st->execute();
-			if ($st->rowCount() > 0)
+			$result = $st->fetchAll(PDO::FETCH_ASSOC);
+			if ($result && count($result) > 0)
 			{
-				$result = $st->fetchAll(PDO::FETCH_ASSOC);
 				$res = array();
 				foreach ($result as $r)
 					$res[$r["mid"]] = $r;
@@ -858,9 +863,9 @@ class DB
 			$st = $this->db->prepare("SELECT name, make, code, user_id, displacement, compression, induction FROM msqur_engines e INNER JOIN msqur_metadata m ON m.engine = e.id WHERE m.id = :tune_id");
 			DB::tryBind($st, ":tune_id", $tune_id);
 			$st->execute();
-			if ($st->rowCount() > 0)
+			$result = $st->fetch(PDO::FETCH_ASSOC);
+			if ($result && count($result) > 0)
 			{
-				$result = $st->fetch(PDO::FETCH_ASSOC);
 				$st->closeCursor();
 				return $result;
 			}
@@ -889,9 +894,9 @@ class DB
 			DB::tryBind($st, ":user_id", $user_id);
 			DB::tryBind($st, ":name", $vehicleName);
 			$st->execute();
-			if ($st->rowCount() > 0)
+			$result = $st->fetch(PDO::FETCH_ASSOC);
+			if ($result && count($result) > 0)
 			{
-				$result = $st->fetch(PDO::FETCH_ASSOC);
 				$st->closeCursor();
 				return $result["topic_id"];
 			}
@@ -929,9 +934,9 @@ class DB
 			$crc16 = $rusefi->calcCrcForTune($xml);
 			DB::tryBind($st, ":crc", $crc16);
 			$st->execute();
-			if ($st->rowCount() > 0)
+			$result = $st->fetch(PDO::FETCH_ASSOC);
+			if ($result && count($result) > 0)
 			{
-				$result = $st->fetch(PDO::FETCH_ASSOC);
 				$st->closeCursor();
 				$id = $result["id"];
 			} else {
@@ -969,9 +974,10 @@ class DB
 				$st = $this->db->prepare("SELECT msqur_files.id as file_id FROM msqur_files INNER JOIN msqur_logs ON msqur_logs.file_id = msqur_files.id WHERE msqur_logs.id = :id LIMIT 1");
 				DB::tryBind($st, ":id", $log_id);
 				$file_id = -1;
-				if ($st->execute() && $st->rowCount() === 1)
+				$st->execute();
+				$result = $st->fetch(PDO::FETCH_ASSOC);
+				if ($result && count($result) > 0)
 				{
-					$result = $st->fetch(PDO::FETCH_ASSOC);
 					$st->closeCursor();
 					$file_id = $result['file_id'];
 					if (DEBUG) debug('deleteFile: LOG Found, file_id = ' . $file_id);
@@ -1039,7 +1045,7 @@ class DB
 				return -1;
 			}
 
-			$st = $this->db->prepare("INSERT INTO msqur_files (type,data) VALUES (:type, COMPRESS(:log))");
+			$st = $this->db->prepare("INSERT INTO msqur_files (type,data) VALUES (:type, ".$this->COMPRESS."(:log))");
 			DB::tryBind($st, ":type", 1);	// 1=log
 			DB::tryBind($st, ":log", "");
 
@@ -1159,12 +1165,14 @@ class DB
 		try
 		{
 			// [andreika]: use compressed data
-			$st = $this->db->prepare("SELECT UNCOMPRESS(msqur_files.data) AS log, msqur_files.id as file_id FROM msqur_files INNER JOIN msqur_logs ON msqur_logs.file_id = msqur_files.id WHERE msqur_logs.id = :id LIMIT 1");
+			$st = $this->db->prepare("SELECT ".$this->UNCOMPRESS."(msqur_files.data) AS log, msqur_files.id as file_id FROM msqur_files INNER JOIN msqur_logs ON msqur_logs.file_id = msqur_files.id WHERE msqur_logs.id = :id LIMIT 1");
 			DB::tryBind($st, ":id", $id);
-			if ($st->execute() && $st->rowCount() === 1)
+			$st->execute();
+			$result = $st->fetch(PDO::FETCH_ASSOC);
+			if ($result && count($result) > 0)
 			{
 				if (DEBUG) debug('LOG Found.');
-				$result = $st->fetch(PDO::FETCH_ASSOC);
+				
 				$st->closeCursor();
 				$data = $result['log'];
 				if (empty($data)) {
@@ -1229,13 +1237,13 @@ class DB
 		
 		try
 		{
-			$st = $this->db->prepare("SELECT id,UNCOMPRESS(data) AS xml FROM msqur_files WHERE type='0' AND " . ($fileid > 0 ? "id = :id" : "1"));
+			$st = $this->db->prepare("SELECT id,".$this->UNCOMPRESS."(data) AS xml FROM msqur_files WHERE type='0' AND " . ($fileid > 0 ? "id = :id" : "1"));
 			if ($fileid > 0)
 				DB::tryBind($st, ":id", $fileid);
 			$st->execute();
-			if ($st->rowCount() > 0)
+			$result = $st->fetchAll(PDO::FETCH_ASSOC);
+			if ($result && count($result) > 0)
 			{
-				$result = $st->fetchAll(PDO::FETCH_ASSOC);
 				$st->closeCursor();
 				foreach ($result as $r)
 				{

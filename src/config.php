@@ -25,7 +25,11 @@ assert_options(ASSERT_QUIET_EVAL, 1);
 //Could move these to msqur class, but php
 function debuglog($type, $message)
 {
-	if (!error_log("$type: $message\n", 3, LOG_FILE))
+	global $test;
+	if (isset($test)) {
+		$test->debugLog($type, $message);
+	}
+	else if (!error_log("$type: $message\n", 3, LOG_FILE))
 		error_log("Error writing to logfile: " . LOG_FILE);
 }
 
