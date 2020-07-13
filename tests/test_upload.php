@@ -15,8 +15,7 @@ class TestUpload extends PHPUnit\Framework\TestCase
 		$_FILES = [
             'upload-file' => [
                 'name' => $uploadedFile,
-                'type' => 'image/png',
-                'size' => 5093,
+                'size' => filesize($uploadedFile),
                 'tmp_name' => $uploadedFile,
                 'error' => 0
             ]
@@ -51,6 +50,8 @@ class TestUpload extends PHPUnit\Framework\TestCase
 		// todo: check the engine fields
 
 		//$html = $msqur->view($tune_id, "ts", array());
+
+		// todo: check the uploaded tune contents
     }
 }
 ?>
