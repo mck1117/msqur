@@ -104,6 +104,14 @@ function tbl2data(tbl)
 	rows.each(function(i) {
 		var that = $(this); //ick
 		
+		// round the x-axis values
+		that.find('th,td').each(function(i) {
+			if ($(this).attr("digits")) {
+				var v = parseFloat(this.textContent);
+				this.textContent = v.toFixed($(this).attr("digits"));
+			}
+		});
+
 		//.html() gets first element in set, .text() all matched elements
 		lbls.push(parseFloat(that.find('th').text()));
 		cells.push(parseFloat(that.find('td').text()));

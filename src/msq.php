@@ -305,7 +305,7 @@ EOT;
 		$output .= '<thead><tr><th>' . $xLabel . '</th><th>' . $yLabel . '</th></tr></thead><tbody>';
 		for ($c = 0; $c < $dataCount; $c++)
 		{
-			$output .= '<tr><th class="{sorter: false}">' . $xAxis[$c] . '</th>';
+			$output .= '<tr><th class="{sorter: false}" digits="'.$digits[0].'">' . $xAxis[$c] . '</th>';
 			$output .= '<td digits="'.$digits[1].'">' . $yAxis[$c] . '</td></tr>';
 		}
 		
