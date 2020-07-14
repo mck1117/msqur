@@ -1,0 +1,30 @@
+name: Unit Tests
+
+on:
+  push:
+   branches:
+     - prod
+  pull_request:
+   branches:
+     - prod
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v1
+
+    - name: Update and install PHP 7.3
+      run: |
+        sudo add-apt-repository ppa:ondrej/php
+        sudo apt-get update
+        sudo apt-get install php7.3 php7.3-xml php7.3-mbstring php7.3-bcmath php7.3-sqlite sqlite
+        sudo update-alternatives --set php /usr/bin/php7.3
+
+    - name: Copy Config
+      run: cp ./src/config_rusefi.php.sample ./src/config_rusefi.php
+
+    - name: Run Tests
+      working-directory: ./tests
+      run: bash run_tests.sh
