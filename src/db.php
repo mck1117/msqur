@@ -34,7 +34,7 @@ class DB
 		{
 			//if (DEBUG) debug("Reusing DB connection.");
 		}
-		else
+		else if (!empty(DB_HOST))
 		{
 			try
 			{
