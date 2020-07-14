@@ -19,4 +19,8 @@ jobs:
       run: |
         sudo add-apt-repository ppa:ondrej/php
         sudo apt-get update
-        sudo apt-get install php7.3
+        sudo apt-get install php7.3 php7.3-xml php7.3-mbstring php7.3-bcmath php7.3-sqlite sqlite
+
+    - name: Run Tests
+      working-directory: ./tests
+      run: bash run_tests.sh
