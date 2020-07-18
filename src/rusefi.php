@@ -445,6 +445,12 @@ class Rusefi
 
 	public function viewTs($id, $options)
 	{
+		$this->msq = new MSQ();
+		return $this->getTs($this->msq, $id, $options, "ts");
+	}
+
+	public function getTs(&$msq, $id, $options, $viewType = "ts")
+	{
 		$xml = $this->msqur->db->getXML($id);
 		if ($xml === null) 
 		{
@@ -454,20 +460,17 @@ class Rusefi
 		
 		$html = "";
 		try {
-			$this->msq = new MSQ();
+			
 			$engine = array();
 			$metadata = array();
-			$groupedHtml = $this->msq->parseMSQ($xml, $engine, $metadata, "ts", $options);
+			$groupedHtml = $msq->parseMSQ($xml, $engine, $metadata, $viewType, $options);
 						
 			//$this->db->updateMetadata($id, $metadata);
 			//$this->db->updateEngine($id, $engine, $metadata);
 
 			foreach($groupedHtml as $group => $v)
 			{
-				//TODO Group name as fieldset legend or sth
-				//$html .= "<div class=\"group-$group\">";
 				$html .= $v;
-				//$html .= '</div>';
 			}
 
 		} catch (MSQ_ParseException $e) {

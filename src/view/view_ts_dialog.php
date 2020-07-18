@@ -39,7 +39,7 @@ function getDialogTitle($msqMap, $dlg) {
 	return $dlgTitle;
 }
 
-function printField($msqMap, $field, $isPanelDisabled) {
+function printField($i, $msqMap, $msq, $field, $isPanelDisabled) {
 	global $rusefi;
 
 	$clr = "";
@@ -83,7 +83,7 @@ function printField($msqMap, $field, $isPanelDisabled) {
 		// todo: add edit mode
 		$readOnly = "readonly";
 
-		$curValue = $rusefi->getMsqConstantFull($field[1], $rusefi->msq, $digits);
+		$curValue = $rusefi->getMsqConstantFull($field[1], $msq, $digits);
 		$units = "";
 		if ($cons[0] == "scalar") {
 			$units = printTsItem($cons[3], $clr);
@@ -106,19 +106,22 @@ function printField($msqMap, $field, $isPanelDisabled) {
 			echo "<img src=\"view/img/ts-icons/hint.png\" ".$hint.">";
 		echo "</td>\r\n";
 
+		$hightlight = isset($field["highlight"]) ? " ts-field-highlight" : "";
+
+		$fieldId = $field[1] . $i;
 		$addToLabel = "";
 		// slider is a special case
 		if ($field["key"] == "slider") {
-			echo "<td colspan=2 class='ts-field-td-label'><table width='100%' class='ts-field-table' cellspacing='2' cellpadding='2'><tbody><tr>\r\n";
+			echo "<td colspan=2 class='ts-field-td-label".$hightlight."'><table width='100%' class='ts-field-table' cellspacing='2' cellpadding='2'><tbody><tr>\r\n";
 			echo "<td class='ts-field-td-slider'><div class='ts-slider' value='".$curValue."' input='".$field[1]."'></div></td>\r\n";
-			echo "<td class='ts-field-td-item'><input id='".$field[1]."' class='ts-field-item-text' value='".$curValue."' >";
+			echo "<td class='ts-field-td-item'><input id='".$fieldId."' class='ts-field-item-text' value='".$curValue."' >";
 			echo "</td></tr><tr>";
 			$addToLabel = " colspan=2 style='text-align:center'";
 		}
 
 		// print text label
 		$labelLext = printTsItem($field[0], $clr);
-		echo "<td class='ts-field-td-label' $addToLabel><label for=".$field[1]." class='ts-field-label $clr' $disabled $readOnly ".$hint.">".$labelLext.$units."</label></td>\r\n";
+		echo "<td class='ts-field-td-label".$hightlight."' $addToLabel><label for=".$fieldId." class='ts-field-label $clr' $disabled $readOnly ".$hint.">".$labelLext.$units."</label></td>\r\n";
 
 		// skip the rest
 		if ($field["key"] == "slider") {
@@ -126,10 +129,10 @@ function printField($msqMap, $field, $isPanelDisabled) {
 			return;
 		}
 
-		echo "<td class='ts-field-td-item'>\r\n";
+		echo "<td class='ts-field-td-item" . $hightlight . "'>\r\n";
 
 		if ($cons[0] == "bits") {
-			echo "<select class='ts-field-item ts-field-item-select' id='".$field[1]."' $disabled $readOnly>\r\n";
+			echo "<select class='ts-field-item ts-field-item-select' id='".$fieldId."' $disabled $readOnly>\r\n";
         	for ($i = 4; $i < count($cons); $i++) {
 				$selected = ($curValue == ($i - 4)) ? " selected='selected' " : "";
 				echo "<option class='ts-field-item-option' $selected>".printTsItem($cons[$i], $clr)."</option>\r\n";
@@ -137,10 +140,10 @@ function printField($msqMap, $field, $isPanelDisabled) {
       		echo "</select>\r\n";
 		}
 		else if ($cons[0] == "scalar") {
-			echo "<input id='".$field[1]."' class='ui-spinner-input ts-field-item ts-field-item-text' digits='".$digits."' value='".$curValue."' $disabled $readOnly>";
+			echo "<input id='".$fieldId."' class='ui-spinner-input ts-field-item ts-field-item-text' digits='".$digits."' value='".$curValue."' $disabled $readOnly>";
 		}
 		else if ($cons[0] == "string") {
-			echo "<input id='".$field[1]."' class='ts-field-item' value='".$curValue."' $disabled $readOnly>";
+			echo "<input id='".$fieldId."' class='ts-field-item' value='".$curValue."' $disabled $readOnly>";
 		}
 		echo "</td>";
 		//print_r($cons);
@@ -163,8 +166,11 @@ function printField($msqMap, $field, $isPanelDisabled) {
 	}
 }
 
-function printDialog($msqMap, $dialogId, $isPanel, $isDialogDisabled = false) {
+function printDialog($i, $msqMap, $msq, $dialogId, $isPanel, $isDialogDisabled = false) {
 	global $rusefi;
+
+	$pVClass = "class='ts-controlgroup ts-controlgroup-vertical'";
+	$fVClass = "class='ts-panel ts-panel-vertical'";
 
 	if (isset($msqMap["dialog"][$dialogId])) {
 		$dlg = $msqMap["dialog"][$dialogId];
@@ -172,12 +178,12 @@ function printDialog($msqMap, $dialogId, $isPanel, $isDialogDisabled = false) {
 	} else if (isset($msqMap["CurveEditor"][$dialogId])) {
 		$curve = $msqMap["CurveEditor"][$dialogId];
 		$dlgTitle = $curve['desc'];
-		printCurve($msqMap, $dialogId, $curve);
+		printCurve($msqMap, $msq, $dialogId, $curve);
 		return $dlgTitle;
 	} else if (isset($msqMap["TableEditor"][$dialogId])) {
 		$curve = $msqMap["TableEditor"][$dialogId];
 		$dlgTitle = $curve['desc'];
-		printCurve($msqMap, $dialogId, $curve);
+		printCurve($msqMap, $msq, $dialogId, $curve);
 		return $dlgTitle;
 	}
 
@@ -186,8 +192,15 @@ function printDialog($msqMap, $dialogId, $isPanel, $isDialogDisabled = false) {
 	// draw fields first, then panels
 	// create a fake panel for dialogs without panels
 	if (!$isPanel) {
+		$fClass = ($i !== "") ? $fVClass : "class='ts-panel-notitle'";
+		$pClass = ($i !== "") ? $pVClass : "class='ts-controlgroup ts-controlgroup-vertical'";
 ?>
-<fieldset class='ts-panel-notitle'><div class='ts-controlgroup ts-controlgroup-vertical'>
+<fieldset <?=$fClass;?>>
+<?php
+		if ($i !== "")
+			echo "<legend>$dlgTitle</legend>";
+?>
+<div <?=$pClass;?>>
 <?php
 	}
 ?>
@@ -202,7 +215,7 @@ function printDialog($msqMap, $dialogId, $isPanel, $isDialogDisabled = false) {
 <tr>
 <?php
 			}
-			printField($msqMap, $field, $isDialogDisabled);
+			printField($i, $msqMap, $msq, $field, $isDialogDisabled);
 			if (!$isHorizontal) {
 ?>
 </tr>
@@ -244,8 +257,8 @@ function printDialog($msqMap, $dialogId, $isPanel, $isDialogDisabled = false) {
 				$pt = "";
 			}
 			//print_r($p);
-			$pClass = $isHorizontal ? "class='ts-controlgroup ts-controlgroup-horizontal'" : "class='ts-controlgroup ts-controlgroup-vertical'";
-			$fClass = $isHorizontal ? "class='ts-panel ts-panel-horizontal'" : "class='ts-panel ts-panel-vertical'";
+			$pClass = $isHorizontal ? "class='ts-controlgroup ts-controlgroup-horizontal'" : $pVClass;
+			$fClass = $isHorizontal ? "class='ts-panel ts-panel-horizontal'" : $fVClass;
 			if (!empty($pt)) {
 ?>
 	<fieldset <?=$fClass;?> <?=$isDisabled ? "disabled":"";?>><legend><?=$pt;?></legend>
@@ -259,7 +272,7 @@ function printDialog($msqMap, $dialogId, $isPanel, $isDialogDisabled = false) {
 ?>
     <div <?=$pClass;?>>
 <?php
-			printDialog($msqMap, $panel, TRUE, $isDisabled);
+			printDialog($i, $msqMap, $msq, $panel, TRUE, $isDisabled);
 ?>
     </div>
   </fieldset>
@@ -270,7 +283,7 @@ function printDialog($msqMap, $dialogId, $isPanel, $isDialogDisabled = false) {
 	return $dlgTitle;
 }
 
-function printCurve($msqMap, $id, $curve) {
+function printCurve($msqMap, $msq, $id, $curve) {
 	global $rusefi;
 
 	$help = array_key_exists('topicHelp', $curve) ? $curve['topicHelp'] : NULL;
@@ -287,18 +300,18 @@ function printCurve($msqMap, $id, $curve) {
 	if (array_keys_exist($curve, 'desc', 'xBinConstant', 'yBinConstant', 'zBinConstant'))
 	{
 		$digits = array(0, 0, 0);
-		$xAxis = $rusefi->getMsqConstantFull($curve['xBinConstant'], $rusefi->msq, $digits[0]);
-		$yAxis = $rusefi->getMsqConstantFull($curve['yBinConstant'], $rusefi->msq, $digits[1]);
-		$zData = $rusefi->getMsqConstantFull($curve['zBinConstant'], $rusefi->msq, $digits[2]);
-		echo $rusefi->msq->msqTable3D($curve, $xAxis, $yAxis, $zData, $help, true, $digits);
+		$xAxis = $rusefi->getMsqConstantFull($curve['xBinConstant'], $msq, $digits[0]);
+		$yAxis = $rusefi->getMsqConstantFull($curve['yBinConstant'], $msq, $digits[1]);
+		$zData = $rusefi->getMsqConstantFull($curve['zBinConstant'], $msq, $digits[2]);
+		echo $msq->msqTable3D($curve, $xAxis, $yAxis, $zData, $help, true, $digits);
 
 	}	
 	else if (array_keys_exist($curve, 'desc', 'xBinConstant', 'yBinConstant', 'xMin', 'xMax', 'yMin', 'yMax'))
 	{
 		$digits = array(0, 0);
-		$xAxis = $rusefi->getMsqConstantFull($curve['xBinConstant'], $rusefi->msq, $digits[0]);
-		$yAxis = $rusefi->getMsqConstantFull($curve['yBinConstant'], $rusefi->msq, $digits[1]);
-		echo $rusefi->msq->msqTable2D($curve, $curve['xMin'], $curve['xMax'], $xAxis, $curve['yMin'], $curve['yMax'], $yAxis, $help, true, $digits);
+		$xAxis = $rusefi->getMsqConstantFull($curve['xBinConstant'], $msq, $digits[0]);
+		$yAxis = $rusefi->getMsqConstantFull($curve['yBinConstant'], $msq, $digits[1]);
+		echo $msq->msqTable2D($curve, $curve['xMin'], $curve['xMax'], $xAxis, $curve['yMin'], $curve['yMax'], $yAxis, $help, true, $digits);
 	}
 
 	echo "</div><script>$('div#".$tabId."').accordion(accordionOptions);

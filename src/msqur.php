@@ -161,9 +161,9 @@ class Msqur
 
 		if (DEBUG) debug('Load MSQ: ' . $id);
 
-		if ($viewMode == "ts" || $viewMode == "ts-dialog")
+		if ($viewMode == "ts" || $viewMode == "ts-dialog" || $viewMode == "diff")
 		{
-			return $rusefi->viewTs($id, $settings);
+			return $rusefi->viewTs($id, $settings, $viewMode);
 		}
 
 		//Get cached HTML and display it, or reparse and display (in order)

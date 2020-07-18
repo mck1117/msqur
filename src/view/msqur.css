@@ -422,9 +422,24 @@ footer a:hover {
 	background-color: #eeeeee !important;
 }
 
-#ts-dialogs {
+.ts-dialogs {
 	display: none;
 	margin: 10px; 
+}
+
+.ts-diff {
+	display: block !important;
+	margin: 10px; 
+}
+
+.ts-diff-separator {
+	width: 20px;
+	background: linear-gradient(90deg, #eeeeee 30%, rgba(255,255,255,1) 50%, #eeeeee 70%);
+	margin: auto 0 auto auto;
+	text-align: left !important;
+	font-weight: bold;
+	padding: 2px;
+	border: none !important;
 }
 
 #ts-menu {
@@ -572,6 +587,11 @@ footer a:hover {
 	text-align: right;
 	padding: 2px 0 0 10px;
 	border: none;
+}
+
+.ts-field-highlight {
+	background-color: #ffff00 !important;
+	background-clip: padding-box;
 }
 
 .ts-field-item {

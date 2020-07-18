@@ -69,7 +69,7 @@ class MSQ
 
 			$msqHeader = '<div class="info">';
 			$msqHeader .= "<div>Format Version: " . $msq->versionInfo['fileFormat'] . "</div>";
-			$msqHeader .= "<div>MS Signature: " . $msq->versionInfo['signature'] . "</div>";
+			$msqHeader .= "<div>Signature: " . $msq->versionInfo['signature'] . "</div>";
 			$msqHeader .= "<div>Tuning SW: " . $msq->bibliography['author'] . "</div>";
 			$msqHeader .= "<div>Date: " . $msq->bibliography['writeDate'] . "</div>";
 			$msqHeader .= '</div>';
@@ -98,6 +98,11 @@ class MSQ
 			if ($viewType == "ts" || $viewType == "ts-dialog")
 			{
 				include_once "view/view_ts.php";
+				return $html;
+			}
+			if ($viewType == "diff")
+			{
+				// we'll compose html later, when both tunes are parsed
 				return $html;
 			}
 			
