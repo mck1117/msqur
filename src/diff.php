@@ -115,6 +115,8 @@ if (isset($_GET['msq1']) && isset($_GET['msq2'])) {
 							}
 						}
 					}
+					// currently we show only the first panel where the constant is mentioned
+					break;
 				}
 			}
 		}

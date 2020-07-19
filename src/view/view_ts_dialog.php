@@ -178,12 +178,12 @@ function printDialog($i, $msqMap, $msq, $dialogId, $isPanel, $isDialogDisabled =
 	} else if (isset($msqMap["CurveEditor"][$dialogId])) {
 		$curve = $msqMap["CurveEditor"][$dialogId];
 		$dlgTitle = $curve['desc'];
-		printCurve($msqMap, $msq, $dialogId, $curve);
+		printCurve($i, $msqMap, $msq, $dialogId, $curve);
 		return $dlgTitle;
 	} else if (isset($msqMap["TableEditor"][$dialogId])) {
 		$curve = $msqMap["TableEditor"][$dialogId];
 		$dlgTitle = $curve['desc'];
-		printCurve($msqMap, $msq, $dialogId, $curve);
+		printCurve($i, $msqMap, $msq, $dialogId, $curve);
 		return $dlgTitle;
 	}
 
@@ -283,7 +283,7 @@ function printDialog($i, $msqMap, $msq, $dialogId, $isPanel, $isDialogDisabled =
 	return $dlgTitle;
 }
 
-function printCurve($msqMap, $msq, $id, $curve) {
+function printCurve($i, $msqMap, $msq, $id, $curve) {
 	global $rusefi;
 
 	$help = array_key_exists('topicHelp', $curve) ? $curve['topicHelp'] : NULL;
@@ -294,7 +294,7 @@ function printCurve($msqMap, $msq, $id, $curve) {
 		heightStyle: 'content',
 	};</script>";
 
-	$tabId = "tab_" . $id;
+	$tabId = "tab_" . $id . $i;
 	echo "<div id='".$tabId."'>";
 
 	if (array_keys_exist($curve, 'desc', 'xBinConstant', 'yBinConstant', 'zBinConstant'))
