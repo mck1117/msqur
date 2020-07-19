@@ -732,6 +732,10 @@ footer a:hover {
 	display: none;
 }
 
+.ts-no-diff {
+	text-align: center !important;
+}
+
 #loading {
 	z-index: 9999;
 	position: absolute;

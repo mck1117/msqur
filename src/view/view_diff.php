@@ -20,7 +20,11 @@ $(function() {
 		itemsOnPage: <?=$panelsNum;?>,
 		currentPage: <?=$pageIdx;?>,
 		hrefTextPrefix: "<?=$baseUrl;?>&page=",
-		cssStyle: 'light-theme'
+		cssStyle: 'light-theme',
+		onPageClick: function (event, page) {
+			$("#loading").show();
+			$(".tsDialog").parent().hide();
+		}
 	});
 });
 </script>
@@ -34,11 +38,11 @@ $(function() {
 </tr>
 <?php
 
-foreach ($panels as $mi) {
+if (count($panels) == 0) {
+	echo "<tr><td class='ts-label ts-no-diff' colspan=3><h3>No differences!</h3></td></tr>";
+}
 
-		//$dlg = $msqMap["dialog"][$mi];
-		//$dlgName = $dlg["dialog"][0][0];
-		//$dlgTitle = getDialogTitle($msqMap, $dlg);
+foreach ($panels as $mi) {
 ?>
 <tr><td class='ts-label'>
 <?php
