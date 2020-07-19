@@ -8,6 +8,7 @@
 	<link rel="icon" type="image/x-icon" href="view/img/favicon.ico">
 	<link rel="stylesheet" href="view/msqur.css" />
 	<link rel="stylesheet" href="view/lib/dynatable/jquery.dynatable.css" />
+	<link rel="stylesheet" href="view/lib/simplePagination/simplePagination.css" />
 	<!-- Open Graph data -->
 	<meta property="fb:admins" content="xxxtodo"/>
 	<meta property="og:title" content="rusEFI online" />

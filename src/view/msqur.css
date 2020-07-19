@@ -428,7 +428,7 @@ footer a:hover {
 }
 
 .ts-diff {
-	display: block !important;
+	display: none;
 	margin: 10px; 
 }
 
@@ -440,6 +440,20 @@ footer a:hover {
 	font-weight: bold;
 	padding: 2px;
 	border: none !important;
+}
+
+.ts-diff-table {
+	width: 100%;
+	border: none !important;
+	margin: 0;
+	padding: 0;
+	empty-cells: show;
+	font-size: 1.25em;
+}
+
+.ts-diff-info {
+	min-width: 350px;
+	font-size: 0.75em;
 }
 
 #ts-menu {
@@ -719,7 +733,6 @@ footer a:hover {
 }
 
 #loading {
-	display: none;
 	z-index: 9999;
 	position: absolute;
     top: 50%;
@@ -728,4 +741,16 @@ footer a:hover {
     margin-top: -10px;
     line-height: 20px;
     text-align: center;
+}
+
+.loading-normal {
+	display: none;
+}
+
+.loading-diff {
+	display:block;
+}
+
+#pageSelector {
+	margin: 10px;
 }

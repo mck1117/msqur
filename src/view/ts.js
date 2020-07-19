@@ -134,9 +134,11 @@
 		var totalHeight = 0;
 		var prevDlg = $(".ts-dialogs");
 		var at = "left top";
-		$(".ts-dialogs>div").each(function () {
+		$(".ts-dialogs>div, .tsDialog").each(function () {
 			//.top(totalHeight);
 			var dlgContent = $(this).find('.ui-dialog-content');
+			if (!dlgContent.length)
+				dlgContent = $(this).parent().find('.ui-dialog-content');
 			var dlg = dlgContent.data('ui-dialog');
 			/*$(this).resizable({
 				handles: "e, s, se",
@@ -153,10 +155,6 @@
 			at = "left bottom+10";
 		});
 
-		$(".ts-dialogs>div").each(function () {
-			//$(this).show();
-		});
-
 		$(".ts-dialogs").width(maxWidth);
 		$(".ts-dialogs").height(totalHeight + 50);
 	}
@@ -164,7 +162,7 @@
 	$(".ts-dialogs").show();
 	var prevDlg = $(".ts-dialogs");
 	var at = "left top";
-	$(".ts-dialogs>div").each(function () {
+	$(".ts-dialogs>div, .tsDialog").each(function () {
 		var isAutoOpen = $(".ts-dialogs").attr("isAutoOpen");
 		var dialog = addDialog($(this), at, prevDlg, isAutoOpen);
 		prevDlg = dialog.parent();
@@ -181,6 +179,7 @@
 
 		//alert($('.ts-dialogs').height());
 		//$('#footer').css('top', $('html').height() +'px');
+		$("#loading").hide();
 	});
 	
 	

@@ -461,7 +461,7 @@ class Rusefi
 		$html = "";
 		try {
 			
-			$engine = array();
+			$engine = $this->getEngineFromTune($id);
 			$metadata = array();
 			$groupedHtml = $msq->parseMSQ($xml, $engine, $metadata, $viewType, $options);
 						

@@ -1,5 +1,5 @@
 <div class=tune-note-div>Tune Note: <?php
-if ($isOwner) {
+if ($isOwner && !isset($isReadOnly)) {
 ?>
 <form id="tuneNoteForm" name="tuneNoteForm" action="#" method="post">
 <input type="hidden" id="tune_id" name="tune_id" value="<?=$tune_id;?>">

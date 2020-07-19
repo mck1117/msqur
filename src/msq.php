@@ -50,6 +50,8 @@ class MSQ
 	 */
 	public function parseMSQ($xml, &$engine, &$metadata, $viewType, $settings)
 	{
+		global $rusefi;
+
 		$html = array();
 		if (DEBUG) debug('Parsing XML...');
 		$errorCount = 0; //Keep track of how many things go wrong.
@@ -68,10 +70,13 @@ class MSQ
 			$this->msq = $msq;
 
 			$msqHeader = '<div class="info">';
-			$msqHeader .= "<div>Format Version: " . $msq->versionInfo['fileFormat'] . "</div>";
-			$msqHeader .= "<div>Signature: " . $msq->versionInfo['signature'] . "</div>";
-			$msqHeader .= "<div>Tuning SW: " . $msq->bibliography['author'] . "</div>";
-			$msqHeader .= "<div>Date: " . $msq->bibliography['writeDate'] . "</div>";
+			if (isset($engine['user_id'])) {
+				$msqHeader .= "<div>Owner: <a href=\"".$rusefi->getUserProfileLinkFromId($engine['user_id'])."\">".$rusefi->getUserNameFromId($engine['user_id'])."</a></div>\r\n";
+			}
+			$msqHeader .= "<div>Format Version: " . $msq->versionInfo['fileFormat'] . "</div>\r\n";
+			$msqHeader .= "<div>Signature: " . $msq->versionInfo['signature'] . "</div>\r\n";
+			$msqHeader .= "<div>Tuning SW: " . $msq->bibliography['author'] . "</div>\r\n";
+			$msqHeader .= "<div>Date: " . $msq->bibliography['writeDate'] . "</div>\r\n";
 			$msqHeader .= '</div>';
 			$html['msqHeader'] = $msqHeader;
 			

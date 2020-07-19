@@ -23,8 +23,8 @@ if (isset($_GET['msq1']) && isset($_GET['msq2'])) {
 	$ids = array(intval($_GET['msq1']), intval($_GET['msq2']));
 	//$dialogId = parseQueryString('dialog');
 	$settings = explode("|", parseQueryString('settings'));
-	$tuneParams = array();
-	$engine = array();
+	$tParams = array();
+	$engines = array();
 	$isOwner = array();
 	$htmls = array();
 	$msqs = array();
@@ -32,14 +32,37 @@ if (isset($_GET['msq1']) && isset($_GET['msq2'])) {
 		// set globals for external view/*.php files
 		$msq = new MSQ();
 		$msqs[$i] = $msq;
-		// parse the tune
-		$htmls[$i] = $rusefi->getTs($msq, $id, $settings, "diff");
-		$engine[$i] = $rusefi->getEngineFromTune($id);
+		
+		// get engine info
+		$engines[$i] = $rusefi->getEngineFromTune($id);
+		$tune_id = $id;
+		$engine = $engines[$i];
+		
+		$isReadOnly = true;
+		
 		// get extra tune params
-		$tuneParams[$i] = $msqur->browse(array("m.id"=>$id), 0, "msq");
-		if (count($tuneParams[$i]) == 1)
-			$tuneParams[$i] = $tuneParams[$i][0];
-		$isOwner[$i] = $engine[$i]["user_id"] == $rusefi->userid;
+		$tParams[$i] = $msqur->browse(array("m.id"=>$id), 0, "msq");
+		if (count($tParams[$i]) == 1)
+			$tParams[$i] = $tParams[$i][0];
+		$tuneParams = $tParams[$i];
+		$isOwner[$i] = $engines[$i]["user_id"] == $rusefi->userid;
+
+		// add vehicle info
+		ob_start();
+		include "view/more_about_vehicle.php";
+		$htmls[$i] = ob_get_contents();
+		ob_end_clean();
+
+		// parse the tune
+		$htmls[$i] .= $rusefi->getTs($msq, $id, $settings, "diff");
+
+		// add tune note
+		ob_start();
+		include "view/tune_note.php";
+		$htmls[$i] .= ob_get_contents();
+		ob_end_clean();
+
+		$htmls[$i] = "<div class='ts-diff-info'>" . $htmls[$i] . "</div>";
 	}
 
 	// gather constants
@@ -97,19 +120,17 @@ if (isset($_GET['msq1']) && isset($_GET['msq2'])) {
 		}
 	}
 
-	$pageStart = 0;
-	$pageNum = 10;
-	$panels = array_values(array_slice($panels, $pageStart, $pageNum));
-	/*print_r($panels);
-	die;*/
-
-	$html = array($htmls[0]);
+	$panelsNum = 3;
+	$panelsTotalNum = count($panels);
+	$pageIdx = max(parseQueryString('page'), 1);
+	$panelsStart = min(($pageIdx - 1) * $panelsNum, $panelsTotalNum);
+	$panels = array_values(array_slice($panels, $panelsStart, $panelsNum));
+	$baseUrl = preg_replace("/&page=[0-9]+/", "", $_SERVER['REQUEST_URI']);
+	$html = array("header"=>array($htmls[0], $htmls[1]));
+	
 	include_once "view/view_diff.php";
 	
 	include "view/header.php";
-	//include "view/tune_note.php";
-	//include "view/more_about_vehicle.php";
-	
 	echo $html["ts"];
 	include "view/footer.php";
 } else {
