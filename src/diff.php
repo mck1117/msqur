@@ -76,9 +76,9 @@ if (isset($_GET['msq1']) && isset($_GET['msq2'])) {
         }
     }
 
-    // gather panel info
-    $dialogs = array_merge($msqs[0]->msqMap["dialog"], $msqs[1]->msqMap["dialog"]);
 	$fieldPanels = array();
+    // gather dialog panel info
+    $dialogs = array_merge($msqs[0]->msqMap["dialog"], $msqs[1]->msqMap["dialog"]);
 	foreach ($dialogs as $dlg) {
 		if (!isset($dlg["field"]))
 			continue;
@@ -86,6 +86,17 @@ if (isset($_GET['msq1']) && isset($_GET['msq2'])) {
 			if (is_array($f) && isset($f[1])) {
 				$dlgName = is_array($dlg["dialog"]) ? $dlg["dialog"][0] : $dlg["dialog"];
 				$fieldPanels[$f[1]][] = $dlgName;
+			}
+		}
+	}
+
+    // gather curve/table panel info
+    $curves = array_merge($msqs[0]->msqMap["CurveEditor"], $msqs[1]->msqMap["CurveEditor"], $msqs[0]->msqMap["TableEditor"], $msqs[1]->msqMap["TableEditor"]);
+	foreach ($curves as $cn=>$crv) {
+		$bins = [ "xBinConstant", "yBinConstant", "zBinConstant" ];
+		foreach ($bins as $bin) {
+			if (isset($crv[$bin])) {
+				$fieldPanels[$crv[$bin]][] = $cn;
 			}
 		}
 	}

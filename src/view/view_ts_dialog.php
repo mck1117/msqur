@@ -187,6 +187,7 @@ function printDialog($i, $msqMap, $msq, $dialogId, $isPanel, $isDialogDisabled =
 
 	$pVClass = "class='ts-controlgroup ts-controlgroup-vertical'";
 	$fVClass = "class='ts-panel ts-panel-vertical'";
+	$drawCurve = false;
 
 	if (isset($msqMap["dialog"][$dialogId])) {
 		$dlg = $msqMap["dialog"][$dialogId];
@@ -194,13 +195,13 @@ function printDialog($i, $msqMap, $msq, $dialogId, $isPanel, $isDialogDisabled =
 	} else if (isset($msqMap["CurveEditor"][$dialogId])) {
 		$curve = $msqMap["CurveEditor"][$dialogId];
 		$dlgTitle = $curve['desc'];
-		printCurve($i, $msqMap, $msq, $dialogId, $curve);
-		return $dlgTitle;
+		$drawCurve = true;
 	} else if (isset($msqMap["TableEditor"][$dialogId])) {
 		$curve = $msqMap["TableEditor"][$dialogId];
 		$dlgTitle = $curve['desc'];
-		printCurve($i, $msqMap, $msq, $dialogId, $curve);
-		return $dlgTitle;
+		$drawCurve = true;
+	} else {
+		return "";
 	}
 
 	$isHorizontal = (isset($dlg["dialog"][2]) && $dlg["dialog"][2] == "xAxis");
@@ -219,6 +220,10 @@ function printDialog($i, $msqMap, $msq, $dialogId, $isPanel, $isDialogDisabled =
 <div <?=$pClass;?>>
 <?php
 	}
+
+if ($drawCurve) {
+	printCurve($i, $msqMap, $msq, $dialogId, $curve);
+} else {
 ?>
 <table class='ts-field-table' cellspacing="2" cellpadding="2"><tbody>
 <?php
@@ -242,6 +247,7 @@ function printDialog($i, $msqMap, $msq, $dialogId, $isPanel, $isDialogDisabled =
 ?>
 </tbody></table>
 <?php
+}
 	if (!$isPanel) {
 ?>
 </div></fieldset>

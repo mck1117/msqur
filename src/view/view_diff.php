@@ -47,17 +47,13 @@ foreach ($panels as $mi) {
 <tr><td class='ts-label ts-diff-label'>
 <?php
 	$msqMap = $msqs[0]->msqMap;
-	if (isset($msqMap["dialog"][$mi])) {
-		printDialog(0, $msqMap, $msqs[0], $mi, FALSE, FALSE, FALSE);
-	}
+	printDialog(0, $msqMap, $msqs[0], $mi, FALSE, FALSE, FALSE);
 ?>
 </td><td class='ts-diff-separator'></td>
 <td class='ts-label ts-diff-label'>
 <?php
 	$msqMap = $msqs[1]->msqMap;
-	if (isset($msqMap["dialog"][$mi])) {
-		printDialog(1, $msqMap, $msqs[1], $mi, FALSE, FALSE, FALSE);
-	}
+	printDialog(1, $msqMap, $msqs[1], $mi, FALSE, FALSE, FALSE);
 ?>
 </td></tr>
 <?php
