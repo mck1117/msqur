@@ -451,6 +451,10 @@ footer a:hover {
 	font-size: 1.25em;
 }
 
+.ts-diff-label {
+	vertical-align: top !important;
+}
+
 .ts-diff-info {
 	min-width: 350px;
 	font-size: 0.75em;

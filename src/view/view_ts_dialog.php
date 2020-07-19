@@ -17,21 +17,37 @@ function printTsItem($mn, &$clr) {
 	return $field;
 }
 
+// returns array(name, title)
+function getDialogTitleSimple($msqMap, $dlg) {
+	if (isset($dlg["dialog"]) && is_array($dlg["dialog"])) {
+		return array($dlg["dialog"][0], printTsItem($dlg["dialog"][1], $clr));
+	}
+	return array($dlg["dialog"], "");
+}
+
 function getDialogTitle($msqMap, $dlg) {
 	$clr = "";
-	if (is_array($dlg["dialog"])) {
-		$dlgName = $dlg["dialog"][0];
-		$dlgTitle = printTsItem($dlg["dialog"][1], $clr);
-	} else {
-		$dlgName = $dlg["dialog"];
-		$dlgTitle = "";
-	}
+	list($dlgName, $dlgTitle) = getDialogTitleSimple($msqMap, $dlg);
+	
 	if (empty($dlgTitle)) {
 		// take the title from menu
 		foreach ($msqMap["menu"] as $menu) {
 			foreach ($menu["subMenu"] as $sub) {
 				if ($sub[0] == $dlgName) {
 					$dlgTitle = printTsItem($sub[1], $clr);
+				}
+			}
+		}
+	}
+	if (empty($dlgTitle)) {
+		// take the title from parent dialog (used by diff)
+		foreach ($msqMap["dialog"] as $d) {
+			if (isset($d["panel"]) && $d != $dlg) {
+				foreach ($d["panel"] as $p) {
+					$pName = is_array($p) ? $p[0] : $p;;
+					if ($pName == $dlgName) {
+						$dlgTitle = getDialogTitle($msqMap, $d);
+					}
 				}
 			}
 		}
@@ -166,7 +182,7 @@ function printField($i, $msqMap, $msq, $field, $isPanelDisabled) {
 	}
 }
 
-function printDialog($i, $msqMap, $msq, $dialogId, $isPanel, $isDialogDisabled = false) {
+function printDialog($i, $msqMap, $msq, $dialogId, $isPanel, $isDialogDisabled = false, $showSubPanels = true) {
 	global $rusefi;
 
 	$pVClass = "class='ts-controlgroup ts-controlgroup-vertical'";
@@ -233,7 +249,7 @@ function printDialog($i, $msqMap, $msq, $dialogId, $isPanel, $isDialogDisabled =
 	}
 
 	// draw panels (recursive)
-	if (isset($dlg["panel"])) {
+	if (isset($dlg["panel"]) && $showSubPanels) {
 		foreach ($dlg["panel"] as $panel) {
 			$isDisabled = false;
 			if (is_array($panel)) {
