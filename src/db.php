@@ -857,7 +857,7 @@ class DB
 
 	public function getEngineFromTune($tune_id)
 	{
-		if (!$this->connect()) return FALSE;
+		if (!$this->connect()) return array();
 		try
 		{
 			$st = $this->db->prepare("SELECT name, make, code, user_id, displacement, compression, induction FROM msqur_engines e INNER JOIN msqur_metadata m ON m.engine = e.id WHERE m.id = :tune_id");

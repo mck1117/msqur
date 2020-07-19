@@ -48,6 +48,15 @@ function error($message)
 	debuglog("ERROR", $message);
 }
 
+function pageError($err) {
+	global $rusefi, $viewMode;
+	http_response_code(404);
+	include "view/header.php";
+	echo '<div class="error">'.$err.'</div>';
+	include "view/footer.php";
+	die;
+}
+
 //Setup assert() callback
 function msqur_assert_handler($file, $line, $code)
 {

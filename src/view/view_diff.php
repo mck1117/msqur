@@ -12,10 +12,10 @@ ob_start();
 <div id="loading" class="loading-diff"><img src="view/img/loading.gif" /></div>
 
 <script src="view/lib/simplePagination/jquery.simplePagination.js"></script>
-<div id="pageSelector"></div>
+<div class="pageSelector"></div>
 <script>
 $(function() {
-	$("#pageSelector").pagination({
+	$(".pageSelector").pagination({
 		items: <?=$panelsTotalNum;?>,
 		itemsOnPage: <?=$panelsNum;?>,
 		currentPage: <?=$pageIdx;?>,
@@ -66,6 +66,8 @@ foreach ($panels as $mi) {
 </table>
 </div>
 </div>
+
+<div class="pageSelector"></div>
 
 <script src="view/ts.js"></script>
 

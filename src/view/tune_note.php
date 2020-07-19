@@ -61,7 +61,7 @@ if ($isOwner && !isset($isReadOnly)) {
 <?php
 } else {
 ?>
-<?=$tuneParams["tuneComment"];?>
+<?=isset($tuneParams["tuneComment"]) ? $tuneParams["tuneComment"] : "";?>
 <?php
 }
 ?>

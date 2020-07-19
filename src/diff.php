@@ -35,6 +35,8 @@ if (isset($_GET['msq1']) && isset($_GET['msq2'])) {
 		
 		// get engine info
 		$engines[$i] = $rusefi->getEngineFromTune($id);
+		if (count($engines[$i]) < 1)
+			pageError("Tune $id not found!");
 		$tune_id = $id;
 		$engine = $engines[$i];
 		

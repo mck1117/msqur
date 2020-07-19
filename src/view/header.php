@@ -139,7 +139,7 @@ if (isset($_GET['msq'])) {
 <div id="downloadLink"><a title="Download MSQ File" href="download.php?msq=<?php echo $_GET['msq']; ?>">💾 Download MSQ</a></div>
 <div id="tsSettings">
 <?php
-if ($viewMode == "ts") {
+if (isset($viewMode) && $viewMode == "ts") {
 	$options = $rusefi->getOptions();
 	foreach ($options as $opt) {
 ?>

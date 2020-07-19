@@ -454,7 +454,7 @@ class Rusefi
 		$xml = $this->msqur->db->getXML($id);
 		if ($xml === null) 
 		{
-			$this->msqur->error("Null xml");
+			error("Null xml");
 			return "";
 		}
 		

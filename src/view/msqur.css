@@ -759,6 +759,6 @@ footer a:hover {
 	display:block;
 }
 
-#pageSelector {
-	margin: 10px;
+.pageSelector {
+	margin: 10px !important;
 }
