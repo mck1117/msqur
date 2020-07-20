@@ -426,6 +426,8 @@ class Rusefi
 		$res = $this->msqur->db->browseLog(array("l.id"=>$id));
 		$this->unpackLogInfo($res);
 		$logValues = $res[0];
+
+		$this->msqur->db->updateLogViews($id);
 		
 		$engine = $this->getEngineFromTune($logValues["tune_id"]);
 		$moreInfo = "";

@@ -1303,6 +1303,26 @@ class DB
 		return false;
 	}
 
+	public function updateLogViews($id)
+	{
+		if (!$this->connect()) return false;
+		
+		try
+		{
+			$st = $this->db->prepare("UPDATE msqur_logs SET views = views + 1 WHERE id = :id");
+			DB::tryBind($st, ":id", $id);
+			$ret = $st->execute();
+			$st->closeCursor();
+			return $ret;
+		}
+		catch (PDOException $e)
+		{
+			$this->dbError($e);
+		}
+		
+		return false;
+	}
+	
 }
 
 ?>
