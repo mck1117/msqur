@@ -56,6 +56,19 @@ $(document).ready(function() {
             return this.getAttribute("title");
         }
     });
+
+	$('.diff-tune-check').on('change', function() {
+		var numChecked = $('.diff-tune-check:checked').length;
+		$('#diffTuneButton').attr("disabled", numChecked != 2);
+	});
+
+	$('#diffTuneButton').click(function(e) {
+		var checked = $('.diff-tune-check:checked');
+		if (checked.length != 2)
+			return;
+		window.location.href = "diff.php?msq1=" + checked[0].value + "&msq2=" + checked[1].value;
+	});
+
 });
 
 //2D charts

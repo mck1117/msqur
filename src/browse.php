@@ -185,7 +185,7 @@ function putResultsInTable($results, $type)
 	$numResults = count($results);
 
 	$headers = array(
-		"msq" => array("uploaded"=>"Uploaded", "Owner", "Vehicle Name", "Engine Make/Code", "Tune Note", "Cylinders", 
+		"msq" => array("", "uploaded"=>"Uploaded", "Owner", "Vehicle Name", "Engine Make/Code", "Tune Note", "Cylinders",
 					"Liters", "Compression", "Aspiration", /*"Firmware/Version", */"Views", "Options"),
 		"log" => array("uploaded"=>"Uploaded", "Owner", "Duration", "Views", "Options"),
 	);
@@ -193,7 +193,11 @@ function putResultsInTable($results, $type)
 	$ttype = ucfirst($type);
 
 	echo '<div id="content'.$ttype.'">'; //<div class="info">' . $numResults . ' results.</div>';
-	echo '<div id="container'.$ttype.'"><table id="browse'.$ttype.'Results" ng-controller="BrowseController">';
+	echo '<div id="container'.$ttype.'">';
+	if ($type == "msq") {
+		echo '<div class="diff-tune-container"><input type="button" id="diffTuneButton" value="Compare" title="Please select two tunes to compare using the checkboxes on the left"/></div>';
+	}
+	echo '<table id="browse'.$ttype.'Results" ng-controller="BrowseController">';
 	echo '<thead><tr class="theader">';
 	foreach ($headers[$type] as $hn=>$h) {
 		echo '<th' . (is_string($hn) ? ' id="uploaded'.$ttype.'"' : '') . ">$h</th>\r\n";
@@ -203,7 +207,12 @@ function putResultsInTable($results, $type)
 	for ($c = 0; $c < $numResults; $c++)
 	{
     	$res = $results[$c];
-		echo '<tr><td><a href="view.php?' . $type . '=' . $res['mid'] . '">' . $res['uploadDate'] . '</a></td>';
+		echo '<tr>';
+		if ($type == "msq") {
+			$checked = ($c < 2) ? "checked" : "";	// check first two
+			echo '<td><input class="diff-tune-check" type="checkbox" name="diffTune" value="' . $res['mid'] . '" '.$checked.'/></td>';
+		}
+		echo '<td><a href="view.php?' . $type . '=' . $res['mid'] . '">' . $res['uploadDate'] . '</a></td>';
 		echo '<td><a href="'.$rusefi->getUserProfileLinkFromId($res['user_id']) . '">' . $rusefi->getUserNameFromId($res['user_id']) . '</a></td>';
 		if ($type == "msq")
 		{

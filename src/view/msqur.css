@@ -740,6 +740,11 @@ footer a:hover {
 	text-align: center !important;
 }
 
+.diff-tune-container {
+	position: absolute;
+	margin-left: 120px;
+}
+
 #loading {
 	z-index: 9999;
 	position: absolute;
