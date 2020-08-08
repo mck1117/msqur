@@ -73,12 +73,6 @@ class MSQ
 			if (isset($engine['user_id'])) {
 				$msqHeader .= "<div>Owner: <a href=\"".$rusefi->getUserProfileLinkFromId($engine['user_id'])."\">".$rusefi->getUserNameFromId($engine['user_id'])."</a></div>\r\n";
 			}
-			$msqHeader .= "<div>Format Version: " . $msq->versionInfo['fileFormat'] . "</div>\r\n";
-			$msqHeader .= "<div>Signature: " . $msq->versionInfo['signature'] . "</div>\r\n";
-			$msqHeader .= "<div>Tuning SW: " . $msq->bibliography['author'] . "</div>\r\n";
-			$msqHeader .= "<div>Date: " . $msq->bibliography['writeDate'] . "</div>\r\n";
-			$msqHeader .= '</div>';
-			$html['msqHeader'] = $msqHeader;
 			
 			$sig = $msq->versionInfo['signature'];
 			$sigString = $sig;
@@ -94,6 +88,13 @@ class MSQ
 				throw new MSQ_ParseException("Could not load configuration file for MSQ: " . $e->getMessage(), $htmlMessage, 100, $e);
 			}
 			
+			//$msqHeader .= "<div>Format Version: " . $msq->versionInfo['fileFormat'] . "</div>\r\n";
+			$msqHeader .= "<div>Signature: <a href=\"".$iniFile."\" title='Download rusefi.ini'>" . $msq->versionInfo['signature'] . "</a></div>\r\n";
+			//$msqHeader .= "<div>Tuning SW: " . $msq->bibliography['author'] . "</div>\r\n";
+			$msqHeader .= "<div>Date: " . $msq->bibliography['writeDate'] . "</div>\r\n";
+			$msqHeader .= '</div>';
+			$html['msqHeader'] = $msqHeader;
+
 			//Calling function will update
 			$metadata['fileFormat'] = $msq->versionInfo['fileFormat'];
 			$metadata['signature'] = $sig[1];
