@@ -86,12 +86,14 @@ class INI
 				throw new MSQ_ConfigException("Unknown/Invalid MSQ signature: $msVersion/$fwVersion");
 		}
 		
-		//Setup firmware version for matching.
-		//(explode() already trimmed the string of spaces) -- this isn't true a couple inis
-		//If there's a decimal, remove any trailing zeros.
-		if (strrpos($fwVersion, '.') !== FALSE)
-			$fwVersion = rtrim($fwVersion, '0');
-		
+		if ($msVersion != "rusEFI") {
+			//Setup firmware version for matching.
+			//(explode() already trimmed the string of spaces) -- this isn't true a couple inis
+			//If there's a decimal, remove any trailing zeros.
+			if (strrpos($fwVersion, '.') !== FALSE)
+				$fwVersion = rtrim($fwVersion, '0');
+		}
+
 		//store all our hardwork for use in the calling function
 		$signature = array($msVersion, $fwVersion);
 
