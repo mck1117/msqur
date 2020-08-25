@@ -249,11 +249,11 @@ class Rusefi
 		$mlgParser = new MlgParser();
 		if ($type == -1)
 			$type = $mlgParser->detectFormat($data);
-		$mlgParser->initStats();
+		$mlgParser->initStats(false, $getDataPoints);
 		if ($type == "LogBinary")
-			$ret = $mlgParser->parseBinary($data, $this->reqLogFields);
+			$ret = $mlgParser->parseBinary($data);
 		else if ($type == "LogText")
-			$ret = $mlgParser->parseText($data, $this->reqLogFields);
+			$ret = $mlgParser->parseText($data);
 		else
 			$ret = array("text"=>"Unknown log type!", "status"=>"deny");
 
@@ -263,14 +263,18 @@ class Rusefi
 			$ret["logValues"] = $logValues;
 			if ($getDataPoints) {
 				$dataPoints = $mlgParser->getDataPoints();
+				$tunes = $mlgParser->getTunes();
 				$ret["dataPoints"] = $dataPoints;
+				$ret["tunes"] = $tunes;
 			} else {
 				$ret["dataPoints"] = array();
+				$ret["tunes"] = array();
 			}
 			$ret["logFields"] = "<small>".$this->fillLogFields()."</small>";
 		} else {
 			$ret["logValues"] = array();
 			$ret["dataPoints"] = array();
+			$ret["tunes"] = array();
 			$ret["logFields"] = "";
 		}
 
@@ -314,10 +318,11 @@ class Rusefi
 		return $ret;
 	}
 
-	public function getLogInfo($data, &$dataPoints) {
+	public function getLogInfo($data, &$dataPoints, &$tunes) {
 		$fullSize = strlen($data);
 		$ret = $this->parseLogData($data, -1, $fullSize, true);
 		$dataPoints = $ret["dataPoints"];
+		$tunes = $ret["tunes"];
 		// store the array as a JSON string
 		return json_encode($ret["logValues"]);
 	}
@@ -414,7 +419,7 @@ class Rusefi
 		if (preg_match("/([0-9]+)\s*min/", $dur, $ret)) {
 			$secs += $ret[1] * 60;
 		}
-		if (preg_match("/([0-9]+)\s*sec/", $dur, $ret)) {
+		if (preg_match("/([0-9\.]+)\s*sec/", $dur, $ret)) {
 			$secs += $ret[1];
 		}
 		return $secs;
@@ -459,7 +464,7 @@ class Rusefi
 			error("Null xml");
 			return "";
 		}
-		
+
 		$html = "";
 		try {
 			
@@ -592,7 +597,7 @@ class Rusefi
 		$settings = array();
 		$msq = new MSQ(); //ugh
 		try {
-			$groupedHtml = $msq->parseMSQ($xml, $engine, $metadata, "", $settings);
+			$groupedHtml = $msq->parseMSQ($xml, $engine, $metadata, "crc", $settings);
 		} catch (MSQ_ParseException $e) {
 			return 0;
 		}
@@ -688,8 +693,10 @@ class Rusefi
 
         $crc32 = crc32($data);
         $crc16 = $crc32 & 0xFFFF;
+        //!!!!!!!!!
         //echo "crc32=".dechex($crc32). " crc16=".dechex($crc16). "\r\n";
 		//file_put_contents("current_configuration.rusefi_binary", "OPEN_SR5_0.1" . $data);
+		//file_put_contents("current_configuration.xml.txt", print_r($msq, TRUE));
 
 		return $crc16;
 	}

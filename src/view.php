@@ -37,6 +37,7 @@ if (isset($_GET['msq'])) {
 
 	//!!!!!!!!!!!
 	//$rusefi->calcCrc($rusefi->msq);
+	//die;
 
 	if ($html !== null) {
 		if ($viewMode == "ts-dialog") {

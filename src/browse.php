@@ -87,7 +87,18 @@ if ($action == "delete")
 } else if ($action == "update_tune_crc")
 {
 	echo "Calculating CRC and updating DB (please wait!)...\r\n";
-	$msqur->db->updateCrc(-1);
+	$msqur->db->updateTuneCrc(-1);
+	die;
+} else if ($action == "update_log_crc")
+{
+	$log_id = isset($_GET['log']) ? intval($_GET['log']) : -1;
+	if ($log_id > 0) {
+		echo "Processing log $log_id and updating DB (please wait!)...<br>\r\n";
+		$msqur->db->updateLogDataPoints($log_id);
+		echo "Done!\r\n";
+	} else {
+		echo "Error! Please specify log ID!\r\n";
+	}
 	die;
 } else
 {

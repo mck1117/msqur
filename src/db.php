@@ -1045,6 +1045,10 @@ class DB
 				return -1;
 			}
 
+			// this may take a while to complete...
+			$info = $rusefi->getLogInfo($log, $dataPoints, $tunes);
+			$data = pack("C*", ...$dataPoints);
+
 			$st = $this->db->prepare("INSERT INTO msqur_files (type,data) VALUES (:type, ".$this->COMPRESS."(:log))");
 			DB::tryBind($st, ":type", 1);	// 1=log
 			DB::tryBind($st, ":log", "");
@@ -1065,11 +1069,7 @@ class DB
 				DB::tryBind($st, ":file_id", $id); //could do hash but for now, just the id
 				DB::tryBind($st, ":tune_id", $tune_id);
 
-				// this may take a while to complete...
-				$info = $rusefi->getLogInfo($log, $dataPoints);
 				DB::tryBind($st, ":info", $info);
-
-				$data = pack("C*", ...$dataPoints);
 				DB::tryBind($st, ":data", $data);
 
 				//TODO Make sure it's an int
@@ -1099,6 +1099,11 @@ class DB
 		{
 			$this->dbError($e);
 			$id = -1;
+		}
+
+		if ($id > 0) {
+			$this->deleteLogNotes($id);
+			$this->addLogNotes($id, $tunes);
 		}
 		
 		return $id;
@@ -1199,7 +1204,7 @@ class DB
 		$log = $this->getLog($id);
 
 		// this may take a while to complete...
-		$info = $rusefi->getLogInfo($log, $dataPoints);
+		$info = $rusefi->getLogInfo($log, $dataPoints, $tunes);
 		$data = pack("C*", ...$dataPoints);
 
 		if (!$this->connect()) return false;
@@ -1215,6 +1220,11 @@ class DB
 			{
 				if (DEBUG) debug('Log data updated!');
 				$st->closeCursor();
+
+				// update log-tune relationships
+				$this->deleteLogNotes($id);
+				$this->addLogNotes($id, $tunes);
+
 				return true;
 			}
 			else
@@ -1229,7 +1239,7 @@ class DB
 		return false;
 	}
 
-	public function updateCrc($fileid)
+	public function updateTuneCrc($fileid)
 	{
 		global $rusefi;
 
@@ -1321,6 +1331,59 @@ class DB
 		}
 		
 		return false;
+	}
+
+	public function deleteLogNotes($id)
+	{
+		if (!$this->connect()) return false;
+		
+		try
+		{
+			$st = $this->db->prepare("DELETE FROM msqur_log_notes WHERE log_id = :id");
+			DB::tryBind($st, ":id", $id);
+			$st->execute();
+			$ret = $st->rowCount();	// return the number of deleted engines
+			$st->closeCursor();
+
+			return $ret;
+		}
+		catch (PDOException $e)
+		{
+			$this->dbError($e);
+		}
+		
+		return false;
+	}
+
+	public function addLogNotes($id, $tunes)
+	{
+		if (!$this->connect()) return false;
+		
+		try
+		{
+			$ret = true;
+			foreach ($tunes as $tune) {
+				$st = $this->db->prepare("INSERT INTO msqur_log_notes (log_id,time_start,time_end,tune_crc,comment) VALUES (:log_id, :time_start, :time_end, :tune_crc, :comment)");
+				DB::tryBind($st, ":log_id", $id);
+				DB::tryBind($st, ":time_start", $tune[0]);
+				DB::tryBind($st, ":time_end", $tune[1]);
+				DB::tryBind($st, ":tune_crc", $tune[2]);
+				DB::tryBind($st, ":comment", isset($tune[3]) ? $tune[3] : null);
+
+				if (!$st->execute())
+				{
+					$ret = false;
+				}
+			}
+			return $ret;
+		}
+		catch (PDOException $e)
+		{
+			$this->dbError($e);
+		}
+		
+		return false;
+				
 	}
 	
 }

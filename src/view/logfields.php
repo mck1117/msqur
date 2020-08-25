@@ -53,6 +53,14 @@
 	}
 
 if (isset($logValues["data"])) {
+	// get partial data for graph display
+	$data = array();
+	$numGraphs = 4;
+	$fieldNames = array_keys($logValues["data"]);
+	for ($i = 0; $i < $numGraphs; $i++) {
+		// todo: impl. graph selection
+		$data[$fieldNames[$i]] = $logValues["data"][$fieldNames[$i]];
+	}
 ?>
 <table class=logContainer cellspacing="0" cellpadding="0"><tr>
 <td class=logTd width="50%"><div>
@@ -70,7 +78,7 @@ if (isset($logValues["data"])) {
 	$numSeconds = $rusefi->getDurationInSeconds($logValues["duration"]);
 
 	$labels = array();
-	$numDataPoints = count(reset($logValues["data"]));
+	$numDataPoints = count(reset($data));
 	for ($i = 0; $i < $numDataPoints; $i++) {
 		$labels[$i] = "'".round($i * $numSeconds / $numDataPoints, 2) . "s'";
 	}
@@ -81,7 +89,7 @@ if (isset($logValues["data"])) {
 	$ldColors = array("white", "red", "green", "yellow");
 	$ldYAxisDisplay = array("true", "false", "false", "false");
 	$j = 0;
-	foreach ($logValues["data"] as $ldName=>$ld) {
+	foreach ($data as $ldName=>$ld) {
 ?>
 				{ 
 					data: [<?=implode(",", $ld);?>],
@@ -123,7 +131,7 @@ if (isset($logValues["data"])) {
 					yAxes: [
 <?php
 	$j = 0;
-	foreach ($logValues["data"] as $ldName=>$ld) {
+	foreach ($data as $ldName=>$ld) {
 ?>
 					{
 						id: "<?=$j;?>",

@@ -28,6 +28,18 @@ define("IDX_VE", 7);
 define("IDX_SPEED", 8);
 define("IDX_TRIGGER_ERR", 9);
 define("IDX_ETB_DUTY", 10);	// needed to detect PPS vs TPS priority :(
+define("IDX_TUNE_CRC", 11);
+
+// additional fields
+define("IDX_IAT", 12);
+define("IDX_MAF", 13);
+define("IDX_MAP", 14);
+define("IDX_VBATT", 15);
+define("IDX_LOAD", 16);
+define("IDX_ADVANCE", 17);
+define("IDX_MASS_FLOW", 18);
+define("IDX_IDLE_POS", 19);
+define("IDX_LAST_INJECT", 20);
 
 define("STATE_UNKNOWN", 0);
 define("STATE_STOPPED", 1);
@@ -47,6 +59,9 @@ define("AFR_UNKNOWN", 999999);
 
 class LogStats {
 	public $duration;
+
+	public $isDebug;
+	public $storeDataPoints;
 
 	public $dataSize;
 	public $numRecords;
@@ -90,6 +105,9 @@ class LogStats {
 	public $dpIdx;
 	public $dpSubIdx;
 	public $dpStep;
+
+	public $tunes;
+	public $lastTuneCrc;
 };
 
 class MlgParser {
@@ -129,7 +147,7 @@ class MlgParser {
 	}
 	
 	// Parse binary data
-	function parseBinary($data, $isDebug = false) {
+	function parseBinary($data) {
 		$dataSize = strlen($data);
 
 		$warn = "";
@@ -194,16 +212,25 @@ class MlgParser {
 		// init fields filtering
 		if ($this->reqFields !== NULL) {
 			$reqNotFound = array();
-			foreach ($this->reqFields as $rf) {
-				$f = array_search($rf, array_column($fields, "ShortName"));
-				if ($f === FALSE)
-					$reqNotFound[] = "'".$rf."'";
+			foreach ($this->reqFields as $rfidx=>$rfs) {
+				$f = $this->findField($fields, $rfs);
+				if (is_string($f))
+					$reqNotFound[] = "'".$f."'";
 				else
-					$recList[] = array($fields[$f]["dName"], $fields[$f]["Scale"]);
+					$recList[$rfidx] = $f;
 				
 			}
+
 			if (count($reqNotFound) > 0) {
 				return array("text"=>"Some of the required fields are not found in the log (" . implode(",", $reqNotFound) . ")!", "status"=>"deny");
+			}
+		}
+
+		// additional fields
+		foreach ($this->additionalFields as $afidx=>$af) {
+			$f = $this->findField($fields, $af);
+			if (is_array($f)) {
+				$recList[$afidx] = $f;
 			}
 		}
 		
@@ -265,7 +292,7 @@ class MlgParser {
 			//break;
 		}
 
-		// we need to finish the current state somehow
+		// we need to finish the current state somehow if the log is interrupted
 		if ($rec[IDX_RPM] != 0) {
 			$rec[IDX_RPM] = 0;
 			$this->changeState($rec);
@@ -274,7 +301,7 @@ class MlgParser {
 		$this->postProcess();
 
 		$timeElapsed = microtime(true) - $timeStart;
-		if ($isDebug === TRUE)
+		if ($this->state->isDebug === TRUE)
 			echo "Time elapsed: " . $timeElapsed." secs\r\n";
 
 		if ($warn) {
@@ -293,17 +320,43 @@ class MlgParser {
 		return strtolower(preg_replace("/[^A-Za-z0-9]+/", "_", trim($n)));
 	}
 
+	// returns the field name if not found
+	function findField($fields, $rfs) {
+		$rfs = is_array($rfs) ? $rfs : array($rfs);
+		$f = FALSE;
+		foreach ($rfs as $rf) {
+			$f = array_search($rf, array_column($fields, "ShortName"));
+			if ($f !== FALSE) {
+				break;
+			}
+		}
+		if ($f !== FALSE)
+			return array($fields[$f]["dName"], $fields[$f]["Scale"]);
+		return $rfs[0];
+	}
+
 	///////////////////////////////////////////
 
 	private $reqFieldsForStats = array(IDX_TIME=>"time", IDX_RPM=>"rpm", IDX_CLT=>"clt", IDX_TPS=>"tps", IDX_PPS=>"throttle_pedal_position", 
 		IDX_AFR=>"air_fuel_ratio", IDX_TARGET_AFR=>"fuel_target_afr", IDX_VE=>"fuel_ve", IDX_SPEED=>"vehicle_speed", IDX_TRIGGER_ERR=>"trg_err",
-		IDX_ETB_DUTY=>"etb_duty");
+		IDX_ETB_DUTY=>"etb_duty", );
+	private $reqFieldsForDataPoints = array(
+		// additional fields
+		IDX_IAT => ["iat", "mat"], IDX_MAF => "maf", IDX_MAP => "map", IDX_VBATT => "vbatt", IDX_LOAD => "engine_load", IDX_ADVANCE => "timing", IDX_MASS_FLOW => ["maf_air_flow", "air_flow"],
+		IDX_IDLE_POS => "idle_air_valve", IDX_LAST_INJECT => "fuel_last_injection",
+	);
+	private $additionalFields = array(
+		// for log-tune relational table
+		IDX_TUNE_CRC=>"tune_crc16",
+	);
 
-	private $dataPointFields = array(IDX_RPM, IDX_CLT, IDX_TPS, IDX_AFR);
-	private $dataPointNames = array("RPM", "CLT", "TPS", "AFR");
-	private $dpScale = array(0.02, 1, 1, 10.0);
-	private $dpShift = array(0, 50, 0, 0);
-	private $numDataPoints = 512;
+	private $dataPointFields = array(IDX_RPM, IDX_CLT, IDX_TPS, IDX_PPS, IDX_AFR, IDX_IAT, IDX_MAF, IDX_MAP,
+		IDX_VBATT, IDX_LOAD, IDX_ADVANCE, IDX_MASS_FLOW, IDX_IDLE_POS, IDX_LAST_INJECT);
+	private $dataPointNames = array("RPM", "CLT", "TPS", "PPS", "AFR", "IAT", "MAF", "MAP",
+		"VBatt", "Load", "Advance", "Mass_Flow", "Idle_Pos", "Last_Inject");
+	private $dpScale = array(0.02, 1, 1, 1,  10.0,  1, 1, 1, 10.0, 1,  1, 1, 1, 10.0);
+	private $dpShift = array(0,   50, 0, 0,     0, 50, 0, 0,    0, 0, 50, 0, 0,    0);
+	private $numDataPoints = 2048;
 
 	function storeDataPoint($idx) {
 		for ($i = 0; $i < count($this->dataPointFields); $i++) {
@@ -332,6 +385,8 @@ class MlgParser {
 			$dpIdxI = intval($this->state->dpIdx);
 			$this->storeDataPoint($dpIdxI);
 		}
+
+		$this->onTuneRecordEnd();
 	}
 
     // $d: array of interesting fields for analysis & visual graph
@@ -357,6 +412,16 @@ class MlgParser {
 		}
 		else if ($this->state->engineState == STATE_RUNNING && !$this->state->isThrottlePressed) {
 			$this->changeState($d);
+		}
+
+		// check tune CRCs
+		if (isset($d[IDX_TUNE_CRC]) && $d[IDX_TUNE_CRC] != $this->state->lastTuneCrc) {
+			$this->onTuneRecordEnd();
+			$this->state->tunes[] = array($d[IDX_TIME], /*we don't know the endtime yet */0, $d[IDX_TUNE_CRC]);
+			$this->state->lastTuneCrc = $d[IDX_TUNE_CRC];
+			if ($this->state->isDebug) {
+				echo "* Tune_CRC=".$this->state->lastTuneCrc."\r\n";
+			}
 		}
 
 		// get time increment
@@ -408,14 +473,24 @@ class MlgParser {
 		}
 
 		// store the data points for visual chart
-		$dpIdxI = intval($this->state->dpIdx);
-		for ($i = 0; $i < count($this->dataPointFields); $i++) {
-			$this->state->dataPoints[$i][$dpIdxI] += $d[$this->dataPointFields[$i]];
+		if ($this->state->storeDataPoints) {
+			$dpIdxI = intval($this->state->dpIdx);
+			for ($i = 0; $i < count($this->dataPointFields); $i++) {
+				$this->state->dataPoints[$i][$dpIdxI] += $d[$this->dataPointFields[$i]];
+			}
+			$this->state->dpSubIdx++;
+			$this->state->dpIdx += $this->state->dpStep;
+			if (intval($this->state->dpIdx) != $dpIdxI) {
+				$this->storeDataPoint($dpIdxI);
+			}
 		}
-		$this->state->dpSubIdx++;
-		$this->state->dpIdx += $this->state->dpStep;
-		if (intval($this->state->dpIdx) != $dpIdxI) {
-			$this->storeDataPoint($dpIdxI);
+	}
+
+	function onTuneRecordEnd() {
+		$numTunes = count($this->state->tunes);
+		if ($numTunes > 0) {
+			// set the ending time for the previous ture record
+			$this->state->tunes[$numTunes - 1][1] = $this->state->prevTime;
 		}
 	}
 
@@ -471,13 +546,22 @@ class MlgParser {
 		$this->state->engineState = $newState;
 	}
 
-	function initStats() {
+	function initStats($isDebug, $getDataPoints) {
 		$this->state = new LogStats();
 		$class_vars = get_class_vars("LogStats");
+		// zero all fields (set defaults)
 		foreach ($class_vars as $cv=>$cvv) {
 			$this->state->$cv = 0;
 		}
+		$this->state->isDebug = $isDebug;
+		$this->state->storeDataPoints = $getDataPoints;
+
 		$this->reqFields = $this->reqFieldsForStats;
+		
+		if ($getDataPoints) {
+			$this->reqFields += $this->reqFieldsForDataPoints;
+		}
+
 		$this->state->startingFastestTime = INF;
 		$this->state->prevTime = INF;
 		$this->state->prevAfr = AFR_UNKNOWN;
@@ -486,6 +570,9 @@ class MlgParser {
 		for ($i = 0; $i < count($this->dataPointFields); $i++) {
 			$this->state->dataPoints[$i] = array_fill(0, $this->numDataPoints, 0);
 		}
+		$this->state->tunes = array();
+		$this->state->lastTuneCrc = -1;
+
 	}
 
 	function printTime($t) {
@@ -542,10 +629,10 @@ class MlgParser {
 		$avgTimePerRecord = $this->divide($this->state->duration, $this->state->timeDeltaAverageCnt);
 		$estimatedNumRecords = floatVal($fullSize - $this->state->dataStartOffset) / $this->state->dataRecordSize;
 		$estimatedTotalDuration = $this->printRound($estimatedNumRecords * $avgTimePerRecord);
-/*
+
 		//!!!!!!!!!!!
-		print_r($this->state);
-		echo "idlingAverageRpm=$idlingAverageRpm\r\n";
+		//file_put_contents("log_stats.txt", print_r($this->state, TRUE));
+/*		echo "idlingAverageRpm=$idlingAverageRpm\r\n";
 		echo "idlingAverageAfrDeltaSq=$idlingAverageAfrDeltaSq\r\n";
 		echo "runningAverageAfrDeltaSq=$runningAverageAfrDeltaSq\r\n";
 		echo "avgTimePerRecord=$avgTimePerRecord\r\n";
@@ -584,6 +671,10 @@ class MlgParser {
 			$dp = array_merge($dp, $this->state->dataPoints[$i]);
 		}
 		return $dp;
+	}
+
+	function getTunes() {
+		return $this->state->tunes;
 	}
 
 	function unpackDataPoints($data) {

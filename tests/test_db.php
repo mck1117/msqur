@@ -18,8 +18,8 @@ class TestDb extends PHPUnit\Framework\TestCase
 			return preg_match("/msqur_[a-z]+/", $val["name"]);
 		});
 	
-		// we have 4 tables so far
-        $this->assertCount(4, $tables);
+		// we have 5 tables so far
+        $this->assertCount(5, $tables);
     }
 }
 ?>

@@ -106,7 +106,7 @@ class MSQ
 				include_once "view/view_ts.php";
 				return $html;
 			}
-			if ($viewType == "diff")
+			if ($viewType == "diff" || $viewType == "crc")
 			{
 				// we'll compose html later, when both tunes are parsed
 				return $html;
