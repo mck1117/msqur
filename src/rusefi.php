@@ -704,6 +704,11 @@ class Rusefi
 		return $crc16;
 	}
 
+	public function getTuneLogs($tuneId)
+	{
+		return $this->msqur->db->getTuneLogs($tuneId);
+	}
+
 }
 
 $rusefi = new Rusefi($msqur);

@@ -1431,7 +1431,47 @@ class DB
 		
 		return array();
 	}
-	
+
+	public function getTuneLogs($tuneId) 
+	{
+		if (DEBUG) debug('Getting LOGs for TUNE id: ' . $tuneId);
+		
+		if (!$this->connect()) return array();
+		
+		try
+		{
+			// first, get the CRC of the tune
+			$st = $this->db->prepare("SELECT f.crc AS crc FROM msqur_files f INNER JOIN msqur_metadata m ON m.file = f.id WHERE m.id = :tune_id");
+			DB::tryBind($st, ":tune_id", $tuneId);
+			$st->execute();
+			$result = $st->fetch(PDO::FETCH_ASSOC);
+			$st->closeCursor();
+			
+			if ($result) {
+				$crc = $result["crc"];
+				// now search using this CRC and also a user-defined tune ID
+				$st = $this->db->prepare("SELECT l.id AS id, l.uploadDate AS uploadDate FROM msqur_log_notes n INNER JOIN msqur_logs l ON l.id = n.log_id WHERE n.tune_crc = :tune_crc OR l.tune_id = :tune_id GROUP BY l.id");
+				DB::tryBind($st, ":tune_crc", $crc);
+				DB::tryBind($st, ":tune_id", $tuneId);
+				$st->execute();
+				$result = $st->fetchAll(PDO::FETCH_ASSOC);
+				$st->closeCursor();
+
+				if ($result && count($result) > 0)
+				{
+					if (DEBUG) debug("Found " . count($result) . " records.");
+					return $result;
+				}
+			}
+		}
+		catch (PDOException $e)
+		{
+			$this->dbError($e);
+		}
+		if (DEBUG) debug('LOGs NOT Found.');
+		
+		return array();
+	}	
 }
 
 ?>

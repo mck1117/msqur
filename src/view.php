@@ -35,6 +35,8 @@ if (isset($_GET['msq'])) {
 		$tuneParams = $tuneParams[0];
 	$isOwner = isset($engine["user_id"]) && ($engine["user_id"] == $rusefi->userid);
 
+	$logs = $rusefi->getTuneLogs($id);
+
 	//!!!!!!!!!!!
 	//$rusefi->calcCrc($rusefi->msq);
 	//die;
@@ -45,6 +47,7 @@ if (isset($_GET['msq'])) {
 		} else {
 			include "view/header.php";
 			include "view/tune_note.php";
+			include "view/tune_logs.php";
 			include "view/more_about_vehicle.php";
 
 			echo $html;
