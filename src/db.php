@@ -1385,6 +1385,52 @@ class DB
 		return false;
 				
 	}
+
+	public function getLogNotes($log_id)
+	{
+		if (DEBUG) debug('Getting LOG notes for id: ' . $log_id);
+		
+		if (!$this->connect()) return array();
+		
+		try
+		{
+			$st = $this->db->prepare("SELECT time_start, time_end, tune_crc, comment FROM msqur_log_notes WHERE log_id = :log_id");
+			DB::tryBind($st, ":log_id", $log_id);
+			$st->execute();
+			$result = $st->fetchAll(PDO::FETCH_ASSOC);
+			$st->closeCursor();
+			if ($result && count($result) > 0)
+			{
+				if (DEBUG) debug("Found " . count($result) . " records.");
+				foreach ($result as &$r) {
+					$tune_crc = $r["tune_crc"];
+					$res = null;
+					// if tune_crc is set, that's the tune record, otherwise it's a user comment
+					if ($tune_crc >= 0) {
+						$st = $this->db->prepare("SELECT m.id as tune_id, tuneComment FROM msqur_files f INNER JOIN msqur_metadata m ON m.file = f.id WHERE crc = :crc LIMIT 1");
+						DB::tryBind($st, ":crc", $tune_crc);
+						$st->execute();
+						$res = $st->fetch(PDO::FETCH_ASSOC);
+					}
+					if (is_array($res)) {
+						$r += $res;
+					} else {
+						$r += array("tune_id"=>-1, "tuneComment"=>null);
+					}
+					$st->closeCursor();
+				}
+				return $result;
+			} else {
+				if (DEBUG) debug('LOG NOT Found.');
+			}
+		}
+		catch (PDOException $e)
+		{
+			$this->dbError($e);
+		}
+		
+		return array();
+	}
 	
 }
 

@@ -441,6 +441,9 @@ class Rusefi
 			include "view/more_about_vehicle.php";
 			$moreInfo = ob_get_clean();
 		}
+		
+		$notes = $this->msqur->db->getLogNotes($id);
+		$logValues["notes"] = $notes;
 
 		return "<div class=logViewPage>".$moreInfo.$this->fillGeneralLogInfo().$this->fillLogFields()."</div>";
 	}

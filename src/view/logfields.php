@@ -33,6 +33,11 @@
 		)),
 	);			
 
+	function formatLogNoteTime($secs) {
+		// a trick to get non-padded minutes
+		return ($secs >= 3600) ? date("G:i:s", $secs) : intval(date("i", $secs)) . date(":s", $secs);
+	}
+
 	function putField($lfn, $lf, $val, $oneLine = false) { ?>
 	<div>
 	<label for="<?=$lfn;?>" class=logLabel><?=$lf;?>
@@ -216,6 +221,43 @@ if (isset($logValues["data"])) {
 if (isset($logValues["data"])) {
 ?>
 </td></tr></table>
+<?php
+}
+
+if (isset($logValues["notes"])) {
+?>
+
+<table border=0>
+<tr><th>Timeframe</th><th>Tune</th><th>Diff with prev</th><th>Note</th></tr>
+<?php
+	$notes = $logValues["notes"];
+	// create a fake "unknown tune" if needed
+	if (count($notes) == 0) {
+		$notes[] = array("time_start"=>0, "time_end"=>isset($numSeconds) ? $numSeconds : 0, "tune_id"=>-1, "tuneComment"=>"");
+	}
+	$prevNote = null;
+	foreach ($notes as $i=>$note) {
+		$timeFrame = formatLogNoteTime($note["time_start"]) . " - " . formatLogNoteTime($note["time_end"]);
+		if ($note["tune_id"] > 0) {
+			$diffUrl = $prevNote ? "<td><a href=\"diff.php?msq1=".$note["tune_id"]."&msq2=".$prevNote["tune_id"]."\">diff</a></td>" : "<td>&nbsp;</td>";
+			$tuneUrl = "<td><a href=\"view.php?msq=".$note["tune_id"]."\">tune</a></td>";
+			$prevNote = $note;
+			$isGrayed = "";
+		} else {
+			$tuneUrl = "<td colspan=2>Unknown tune</td>";
+			$diffUrl = "";
+			$isGrayed = "class=log-note-grayed";
+		}
+?>
+<tr <?=$isGrayed;?>><td><?=$timeFrame;?></td>
+<?=$tuneUrl;?>
+<?=$diffUrl;?>
+<td><?=$note["tuneComment"];?></td>
+</tr>
+<?php
+	}
+?>
+</table>
 <?php
 }
 ?>

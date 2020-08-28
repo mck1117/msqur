@@ -86,8 +86,9 @@ if ($action == "delete")
 	
 } else if ($action == "update_tune_crc")
 {
-	echo "Calculating CRC and updating DB (please wait!)...\r\n";
-	$msqur->db->updateTuneCrc(-1);
+	$tune_id = isset($_GET['msq']) ? intval($_GET['msq']) : -1;
+	echo "Calculating CRC and updating DB for ".($tune_id < 0 ? "all tunes" : "ID=".$tune_id)." (please wait!)...\r\n";
+	$msqur->db->updateTuneCrc($tune_id);
 	die;
 } else if ($action == "update_log_crc")
 {
