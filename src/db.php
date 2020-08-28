@@ -1247,7 +1247,7 @@ class DB
 		
 		try
 		{
-			$st = $this->db->prepare("SELECT id,".$this->UNCOMPRESS."(data) AS xml FROM msqur_files WHERE type='0' AND " . ($fileid > 0 ? "id = :id" : "1"));
+			$st = $this->db->prepare("SELECT id,".$this->UNCOMPRESS."(data) AS xml FROM msqur_files WHERE type='0' AND " . ($fileid > 0 ? "id IN (SELECT file from msqur_metadata WHERE id=:id)" : "1"));
 			if ($fileid > 0)
 				DB::tryBind($st, ":id", $fileid);
 			$st->execute();
