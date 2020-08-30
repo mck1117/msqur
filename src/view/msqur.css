@@ -422,6 +422,10 @@ footer a:hover {
 	background-color: #eeeeee !important;
 }
 
+.ui-dialog.upload-dialog {
+	z-index: 1000;
+}
+
 .ts-dialogs {
 	display: none;
 	margin: 10px; 
