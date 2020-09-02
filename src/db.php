@@ -1405,6 +1405,7 @@ class DB
 				foreach ($result as &$r) {
 					$tune_crc = $r["tune_crc"];
 					$res = null;
+					if (DEBUG) debug('* tune_crc=' . $tune_crc);
 					// if tune_crc is set, that's the tune record, otherwise it's a user comment
 					if ($tune_crc >= 0) {
 						$st = $this->db->prepare("SELECT m.id as tune_id, tuneComment FROM msqur_files f INNER JOIN msqur_metadata m ON m.file = f.id WHERE crc = :crc LIMIT 1");
@@ -1449,6 +1450,8 @@ class DB
 			
 			if ($result) {
 				$crc = $result["crc"];
+				if (DEBUG) debug('TUNE CRC=' . $crc);
+
 				// now search using this CRC and also a user-defined tune ID
 				$st = $this->db->prepare("SELECT l.id AS id, l.uploadDate AS uploadDate FROM msqur_log_notes n INNER JOIN msqur_logs l ON l.id = n.log_id WHERE n.tune_crc = :tune_crc OR l.tune_id = :tune_id GROUP BY l.id");
 				DB::tryBind($st, ":tune_crc", $crc);
@@ -1459,7 +1462,10 @@ class DB
 
 				if ($result && count($result) > 0)
 				{
-					if (DEBUG) debug("Found " . count($result) . " records.");
+					if (DEBUG) {
+						debug("Found " . count($result) . " records:");
+						debug("* ". print_r($result, TRUE));
+					}
 					return $result;
 				}
 			}
