@@ -268,7 +268,7 @@ if (isset($logValues["notes"])) {
 		}
 
 ?>
-<tr <?=$isGrayed;?>><td>User-specified tune:</td>
+<tr class=log-note-grayed><td>User-specified tune:</td>
 <td colspan=2><a href="view.php?msq=<?=$logValues["tune_id"];?>"><?=$tuneParams["uploadDate"];?></a></td>
 <td><?=$tuneParams["tuneComment"];?></td></tr>
 <?php
