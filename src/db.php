@@ -346,19 +346,22 @@ class DB
 	 * @param $bq The BrowseQuery to filter results
 	 * @returns A list of metadata, or null if unsuccessful
 	 */
-	public function browseMsq($bq)
+	public function browseMsq($bq, $showAll)
 	{
 		if (!$this->connect()) return null;
 		
 		try
 		{
-			$statement = "SELECT m.id as mid, user_id, name, make, code, numCylinders, displacement, compression, induction, firmware, signature, uploadDate, views, tuneComment FROM msqur_metadata m INNER JOIN msqur_engines e ON m.engine = e.id WHERE ";
+			$statement = "SELECT m.id as mid, user_id, name, make, code, numCylinders, displacement, compression, induction, firmware, signature, uploadDate, views, tuneComment, hidden FROM msqur_metadata m INNER JOIN msqur_engines e ON m.engine = e.id WHERE ";
 			$where = array();
 			foreach ($bq as $col => $v)
 			{
 				//if ($v !== null) $statement .= "$col = :$col ";
 				if ($v !== null) $where[] = "$col = :".str_replace(".", "", $col)." ";
 			}
+
+			if (!$showAll)
+				$where[] = "hidden = 0";
 			
 			if (count($where) === 0) $statement .= "1";
 			else
@@ -1478,6 +1481,34 @@ class DB
 		
 		return array();
 	}	
+
+	public function hideTune($tune_id)
+	{
+		if (!$this->connect()) return false;
+		
+		try
+		{
+			if (DEBUG) debug('Hiding tune ID='.$tune_id);
+			$st = $this->db->prepare("UPDATE msqur_metadata m SET m.hidden=1 WHERE m.id = :id");
+			DB::tryBind($st, ":id", $tune_id);
+			if ($st->execute())
+			{
+				if (DEBUG) debug('HIDDEN flag set!');
+				$st->closeCursor();
+				return true;
+			}
+			else
+				if (DEBUG) debug('Unable to set HIDDEN flag!');
+				
+			$st->closeCursor();
+		}
+		catch (PDOException $e)
+		{
+			$this->dbError($e);
+		}
+		
+		return false;
+	}
 }
 
 ?>

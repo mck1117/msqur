@@ -782,3 +782,9 @@ footer a:hover {
 	color: #777777;
 	font-style: italic;
 }
+
+.hiddenUrl, .hiddenUrl:visited {
+	text-decoration: line-through;
+	color: #7f0000;
+	font-style: italic;
+}

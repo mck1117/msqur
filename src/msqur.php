@@ -85,10 +85,10 @@ class Msqur
 		$this->footer();
 	}
 	
-	public function browse($bq, $page, $type)
+	public function browse($bq, $page, $type, $showAll = false)
 	{
 		if ($type == "msq")
-			return $this->db->browseMsq($bq);
+			return $this->db->browseMsq($bq, $showAll);
 		else if ($type == "log")
 			return $this->db->browseLog($bq);
 		return null;

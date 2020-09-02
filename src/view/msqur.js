@@ -48,7 +48,7 @@ $(document).ready(function() {
   		});
 
 	$('.deleteLink').unbind('click').bind('click', function () {
-        return confirm('You are about to delete the tune: "' + $(this).attr('info') + '".\r\n\r\nAre you sure?');
+        return confirm('You are about to ' + $(this).attr('action') + ' the tune: "' + $(this).attr('info') + '".\r\n\r\nAre you sure?');
     });
 
     $('.tuneComment').tooltip({

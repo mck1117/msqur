@@ -75,6 +75,7 @@ CREATE TABLE IF NOT EXISTS `msqur_metadata` (
   `uploadDate` datetime DEFAULT NULL,
   `tuneComment` text DEFAULT NULL,
   `reingest` tinyint(1) NOT NULL DEFAULT 0,
+  `hidden` tinyint(1) NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
