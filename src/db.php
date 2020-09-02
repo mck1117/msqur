@@ -1411,7 +1411,7 @@ class DB
 					if (DEBUG) debug('* tune_crc=' . $tune_crc);
 					// if tune_crc is set, that's the tune record, otherwise it's a user comment
 					if ($tune_crc >= 0) {
-						$st = $this->db->prepare("SELECT m.id as tune_id, tuneComment FROM msqur_files f INNER JOIN msqur_metadata m ON m.file = f.id WHERE crc = :crc LIMIT 1");
+						$st = $this->db->prepare("SELECT m.id as tune_id, tuneComment, uploadDate FROM msqur_files f INNER JOIN msqur_metadata m ON m.file = f.id WHERE crc = :crc LIMIT 1");
 						DB::tryBind($st, ":crc", $tune_crc);
 						$st->execute();
 						$res = $st->fetch(PDO::FETCH_ASSOC);
@@ -1419,7 +1419,7 @@ class DB
 					if (is_array($res)) {
 						$r += $res;
 					} else {
-						$r += array("tune_id"=>-1, "tuneComment"=>null);
+						$r += array("tune_id"=>-1, "tuneComment"=>null, "uploadDate"=>"?");
 					}
 					$st->closeCursor();
 				}

@@ -236,13 +236,15 @@ if (isset($logValues["notes"])) {
 		$notes[] = array("time_start"=>0, "time_end"=>isset($numSeconds) ? $numSeconds : 0, "tune_id"=>-1, "tuneComment"=>"");
 	}
 	$prevNote = null;
+	$tuneIds = array();
 	foreach ($notes as $i=>$note) {
 		$timeFrame = formatLogNoteTime($note["time_start"]) . " - " . formatLogNoteTime($note["time_end"]);
 		if ($note["tune_id"] > 0) {
 			$diffUrl = $prevNote ? "<td><a href=\"diff.php?msq1=".$note["tune_id"]."&msq2=".$prevNote["tune_id"]."\">diff</a></td>" : "<td>&nbsp;</td>";
-			$tuneUrl = "<td><a href=\"view.php?msq=".$note["tune_id"]."\">tune</a></td>";
+			$tuneUrl = "<td><a href=\"view.php?msq=".$note["tune_id"]."\">".$note["uploadDate"]."</a></td>";
 			$prevNote = $note;
 			$isGrayed = "";
+			$tuneIds[] = $note["tune_id"];
 		} else {
 			$tuneUrl = "<td colspan=2>Unknown tune</td>";
 			$diffUrl = "";
@@ -254,6 +256,21 @@ if (isset($logValues["notes"])) {
 <?=$diffUrl;?>
 <td><?=$note["tuneComment"];?></td>
 </tr>
+<?php
+	}
+	if ($logValues["tune_id"] > 0 && !in_array($logValues["tune_id"], $tuneIds)) {
+		global $msqur;
+		$tuneParams = $msqur->browse(array("m.id"=>$logValues["tune_id"]), 0, "msq");
+		if (count($tuneParams) >= 1) {
+			$tuneParams = $tuneParams[0];
+		} else {
+			$tuneParams = array("uploadDate"=>"tune", "tuneComment"=>"");
+		}
+
+?>
+<tr <?=$isGrayed;?>><td>User-specified tune:</td>
+<td colspan=2><a href="view.php?msq=<?=$logValues["tune_id"];?>"><?=$tuneParams["uploadDate"];?></a></td>
+<td><?=$tuneParams["tuneComment"];?></td></tr>
 <?php
 	}
 ?>
