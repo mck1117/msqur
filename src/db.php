@@ -1031,7 +1031,7 @@ class DB
 		return false;
 	}
 
-	public function addLog($file, $user_id, $tune_id)
+	public function addLog($file, $user_id, $tune_id, &$error)
 	{
 		global $rusefi;
 
@@ -1051,6 +1051,24 @@ class DB
 			// this may take a while to complete...
 			$info = $rusefi->getLogInfo($log, $dataPoints, $tunes);
 			$data = pack("C*", ...$dataPoints);
+
+			if ($tune_id < 0) {
+				// try to find the corresponding tune from the log records
+				// sort descending, from the longest tune to the shortest one
+				usort($tunes, function ($a, $b) { return -(($a[1] - $a[0]) <=> ($b[1] - $b[0])); });
+				foreach ($tunes as $t) {
+					$res = $this->getTuneByCrc($t[2]);
+					if ($res != null) {
+						$tune_id = $res["tune_id"];
+						break;
+					}
+				}
+
+				if ($tune_id < 0) {
+					$error = 'Please specify the tune corresponding to the log!';
+					return -1;
+				}
+			}
 
 			$st = $this->db->prepare("INSERT INTO msqur_files (type,data) VALUES (:type, ".$this->COMPRESS."(:log))");
 			DB::tryBind($st, ":type", 1);	// 1=log
@@ -1411,10 +1429,7 @@ class DB
 					if (DEBUG) debug('* tune_crc=' . $tune_crc);
 					// if tune_crc is set, that's the tune record, otherwise it's a user comment
 					if ($tune_crc >= 0) {
-						$st = $this->db->prepare("SELECT m.id as tune_id, tuneComment, uploadDate FROM msqur_files f INNER JOIN msqur_metadata m ON m.file = f.id WHERE crc = :crc LIMIT 1");
-						DB::tryBind($st, ":crc", $tune_crc);
-						$st->execute();
-						$res = $st->fetch(PDO::FETCH_ASSOC);
+						$res = $this->getTuneByCrc($tune_crc);
 					}
 					if (is_array($res)) {
 						$r += $res;
@@ -1508,6 +1523,15 @@ class DB
 		}
 		
 		return false;
+	}
+
+	public function getTuneByCrc($tune_crc)
+	{
+		$st = $this->db->prepare("SELECT m.id as tune_id, tuneComment, uploadDate FROM msqur_files f INNER JOIN msqur_metadata m ON m.file = f.id WHERE crc = :crc LIMIT 1");
+		DB::tryBind($st, ":crc", $tune_crc);
+		$st->execute();
+		$res = $st->fetch(PDO::FETCH_ASSOC);
+		return $res;
 	}
 }
 

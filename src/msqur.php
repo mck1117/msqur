@@ -63,10 +63,10 @@ class Msqur
 		return $fileList;
 	}
 
-	public function addLog($file, $user_id, $tune_id)
+	public function addLog($file, $user_id, $tune_id, &$error)
 	{
 		//echo 'Adding ' . $file['tmp_name'];
-		$id = $this->db->addLog($file, $user_id, $tune_id);
+		$id = $this->db->addLog($file, $user_id, $tune_id, $error);
 		if ($id > 0)
 			$fileList[$id] = htmlspecialchars($file['name']);
 		else
