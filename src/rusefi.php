@@ -683,6 +683,7 @@ class Rusefi
 
         $crc32 = crc32($data);
         $crc16 = $crc32 & 0xFFFF;
+		echo '<script>console.log("got here 693 rusefi.php");</script>';
         //echo "crc32=".dechex($crc32). " crc16=".dechex($crc16). "\r\n";
 		//file_put_contents("current_configuration.rusefi_binary", "OPEN_SR5_0.1" . $data);
 
