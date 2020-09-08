@@ -80,10 +80,9 @@ div#navigation {
 }
 
 div#loginstatus {
-	/* float: right; */
 	color: #e4e4e4;
 	background: #90a4ae;
-	/* margin-top: 10px; */
+	margin-left: 2vh;
 }
 
 .loginstatus {
@@ -116,6 +115,10 @@ div#navigation.topnav.responsive span a:not(:first-child) {
 	margin-top: 1vh;
 }
 
+div#navigation.topnav.responsive .icon {
+	color: #222222;
+}
+
 @media screen and (max-width: 1023px) {
 	.topnav a:not(:first-child) {display: none;}
 	.loginstatus {display: none;}
@@ -136,8 +139,8 @@ div#navigation.topnav.responsive span a:not(:first-child) {
 	.loginstatus.responsive {position: relative;}
 	.topnav.responsive a.icon {
 	  position: absolute;
-	  right: 0;
-	  top: 0;
+	  right: 5px;
+	  top: 5px;
 	}
 	.topnav.responsive a {
 	  float: none;

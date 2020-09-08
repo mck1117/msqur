@@ -46,7 +46,7 @@
 
 <body>
 	<div class="topnav" id="navigation">
-		<span>
+		<span class="menu">
 			<span>
 				<a href="/online" rel="preload">
 					<logo><img src='/style/rusefi_online_color.png' width='140' /></logo>
@@ -65,7 +65,7 @@
 			</div>
 		</span>
 
-		<span>
+		<!-- <span>
 			<div class="logged" id="logged">
 			<?php if ($rusefi->username == "") { ?>
 				You are not logged into rusEFI forum! Please login <a href="<?= $rusefi->forum_login_url; ?>">here</a>.
@@ -74,7 +74,7 @@
 			<?php } ?>
 			<button id="btnUpload"><img src="view/img/upload.svg" alt="Upload" width="16" height="16"><span>Upload</span></button>
 			</div>
-		</span>
+		</span> -->
 		<a href="javascript:void(0);" class="icon" onclick="ham_burger()">
 			<i class="fa fa-bars fa-3x"></i>
 		</a>
