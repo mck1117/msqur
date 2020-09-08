@@ -29,7 +29,7 @@ $bq['signature'] = parseQueryString('fwVersion'); //TODO might make dependant on
 
 //TODO Use http_build_query and/or parse_url and/or parse_str
 
-function actionStartHeader()
+function actionStartHeader($requireAdmin = true)
 {
 	global $msqur, $rusefi;
 
@@ -37,7 +37,7 @@ function actionStartHeader()
 
 	echo "<script>var newURL = location.href.split('?')[0]; window.history.replaceState(null, null, newURL);</script>";
 	echo '<div class="uploadOutput">';
-	if (!$rusefi->isAdminUser)
+	if ($requireAdmin && !$rusefi->isAdminUser)
 	{
 		echo '<div class="error">Only administrators can do this, sorry!</div>';
 		return false;
@@ -86,9 +86,43 @@ if ($action == "delete")
 	
 } else if ($action == "update_tune_crc")
 {
-	echo "Calculating CRC and updating DB (please wait!)...\r\n";
-	$msqur->db->updateCrc(-1);
+	$tune_id = isset($_GET['msq']) ? intval($_GET['msq']) : -1;
+	echo "Calculating CRC and updating DB for ".($tune_id < 0 ? "all tunes" : "ID=".$tune_id)." (please wait!)...\r\n";
+	$msqur->db->updateTuneCrc($tune_id);
 	die;
+} else if ($action == "update_log_crc")
+{
+	$log_id = isset($_GET['log']) ? intval($_GET['log']) : -1;
+	if ($log_id > 0) {
+		echo "Processing log $log_id and updating DB (please wait!)...<br>\r\n";
+		$msqur->db->updateLogDataPoints($log_id);
+		echo "Done!\r\n";
+	} else {
+		echo "Error! Please specify log ID!\r\n";
+	}
+	die;
+} else if ($action == "hide")
+{
+	$tune_id = isset($_GET['msq']) ? intval($_GET['msq']) : -1;
+	$log_id = isset($_GET['log']) ? intval($_GET['log']) : -1;
+	unset($_GET['msq']);
+	unset($_GET['log']);
+
+	actionStartHeader(false);
+	
+	if ($tune_id <= 0 /*&& $log_id <= 0*/)
+	{
+		echo '<div class="error">Cannot hide the unknown tune!</div>';
+	}
+	else
+	{
+		if (!$msqur->db->hideTune($tune_id))
+			echo '<div class="error">Error while hiding the item!</div>';
+		else
+			echo '<div class="info">The item has been hidden!</div>';
+	}
+	echo '</div>';
+	
 } else
 {
 	$msqur->header();
@@ -185,7 +219,7 @@ function putResultsInTable($results, $type)
 	$numResults = count($results);
 
 	$headers = array(
-		"msq" => array("uploaded"=>"Uploaded", "Owner", "Vehicle Name", "Engine Make/Code", "Tune Note", "Cylinders", 
+		"msq" => array("", "uploaded"=>"Uploaded", "Owner", "Vehicle Name", "Engine Make/Code", "Tune Note", "Cylinders",
 					"Liters", "Compression", "Aspiration", /*"Firmware/Version", */"Views", "Options"),
 		"log" => array("uploaded"=>"Uploaded", "Owner", "Duration", "Views", "Options"),
 	);
@@ -193,7 +227,11 @@ function putResultsInTable($results, $type)
 	$ttype = ucfirst($type);
 
 	echo '<div id="content'.$ttype.'">'; //<div class="info">' . $numResults . ' results.</div>';
-	echo '<div id="container'.$ttype.'"><table id="browse'.$ttype.'Results" ng-controller="BrowseController">';
+	echo '<div id="container'.$ttype.'">';
+	if ($type == "msq") {
+		echo '<div class="diff-tune-container"><input type="button" id="diffTuneButton" value="Compare" title="Please select two tunes to compare using the checkboxes on the left"/></div>';
+	}
+	echo '<table id="browse'.$ttype.'Results" ng-controller="BrowseController">';
 	echo '<thead><tr class="theader">';
 	foreach ($headers[$type] as $hn=>$h) {
 		echo '<th' . (is_string($hn) ? ' id="uploaded'.$ttype.'"' : '') . ">$h</th>\r\n";
@@ -203,7 +241,14 @@ function putResultsInTable($results, $type)
 	for ($c = 0; $c < $numResults; $c++)
 	{
     	$res = $results[$c];
-		echo '<tr><td><a href="view.php?' . $type . '=' . $res['mid'] . '">' . $res['uploadDate'] . '</a></td>';
+		$viewUrlClass = "";
+		echo '<tr>';
+		if ($type == "msq") {
+			$checked = ($c < 2) ? "checked" : "";	// check first two
+			echo '<td><input class="diff-tune-check" type="checkbox" name="diffTune" value="' . $res['mid'] . '" '.$checked.'/></td>';
+			$viewUrlClass = $res['hidden'] == 1 ? "class=hiddenUrl" : "";
+		}
+		echo '<td><a '.($viewUrlClass).' href="view.php?' . $type . '=' . $res['mid'] . '">' . $res['uploadDate'] . '</a></td>';
 		echo '<td><a href="'.$rusefi->getUserProfileLinkFromId($res['user_id']) . '">' . $rusefi->getUserNameFromId($res['user_id']) . '</a></td>';
 		if ($type == "msq")
 		{
@@ -223,8 +268,11 @@ function putResultsInTable($results, $type)
 		}
 		echo '<td>' . $res['views'] . '</td>';
 		echo '<td><a class="downloadLink" title="Download ' . strtoupper($type). '" download href="download.php?' . $type . '=' . $res['mid'] . '">💾</a>';
-		if ($rusefi->isAdminUser) {
-			echo ' <a class="deleteLink" title="Delete ' . strtoupper($type). '" info="'.$res['uploadDate'].' '.$res['name'].'" href="?action=delete&' . $type . '=' . $res['mid'] . '">❌</a>';
+		$isOwner = ($res["user_id"] == $rusefi->userid);
+		if ($rusefi->isAdminUser || ($isOwner && $type == "msq")) {
+			$delAction = $rusefi->isAdminUser ? "delete" : "hide";
+			$delName = $rusefi->isAdminUser ? "Delete" : "Hide";
+			echo ' <a class="deleteLink" title="'.$delName.' ' . strtoupper($type). '" info="'.$res['uploadDate'].' '.$res['name'].'" action="'.$delAction.'" href="?action='.$delAction.'&' . $type . '=' . $res['mid'] . '">❌</a>';
 		}
 		echo "</td></tr>\r\n";
 	}
@@ -236,7 +284,8 @@ if ($topic_id > 0) {
 	echo "<div><a href=\"/forum/viewtopic.php?t=".$topic_id."\">More about ".$bq['name']." on the forum</a></div>\r\n";
 }
 
-$resultsMsq = $msqur->browse($bq, $page, "msq");
+$showAll = $rusefi->isAdminUser ? true : false;
+$resultsMsq = $msqur->browse($bq, $page, "msq", $showAll);
 echo '<div>Tunes:';
 putResultsInTable($resultsMsq, "msq");
 echo '</div>';

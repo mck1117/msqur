@@ -64,7 +64,7 @@ $(document).ready(function() {
   		});
 
 	$('.deleteLink').unbind('click').bind('click', function () {
-        return confirm('You are about to delete the tune: "' + $(this).attr('info') + '".\r\n\r\nAre you sure?');
+        return confirm('You are about to ' + $(this).attr('action') + ' the tune: "' + $(this).attr('info') + '".\r\n\r\nAre you sure?');
     });
 
     $('.tuneComment').tooltip({
@@ -72,6 +72,19 @@ $(document).ready(function() {
             return this.getAttribute("title");
         }
     });
+
+	$('.diff-tune-check').on('change', function() {
+		var numChecked = $('.diff-tune-check:checked').length;
+		$('#diffTuneButton').attr("disabled", numChecked != 2);
+	});
+
+	$('#diffTuneButton').click(function(e) {
+		var checked = $('.diff-tune-check:checked');
+		if (checked.length != 2)
+			return;
+		window.location.href = "diff.php?msq1=" + checked[0].value + "&msq2=" + checked[1].value;
+	});
+
 });
 
 //2D charts
@@ -278,7 +291,8 @@ $(function() {
 		[
 			{ id: "dialogUpload", text: "Upload", click: uploadClick, },
 			{ text: "Cancel", click: function() { $(this).dialog('close'); } }
-		]
+		],
+		dialogClass: 'upload-dialog'
 	});
 	
 	enableUploadButton(false);

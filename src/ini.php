@@ -86,12 +86,14 @@ class INI
 				throw new MSQ_ConfigException("Unknown/Invalid MSQ signature: $msVersion/$fwVersion");
 		}
 		
-		//Setup firmware version for matching.
-		//(explode() already trimmed the string of spaces) -- this isn't true a couple inis
-		//If there's a decimal, remove any trailing zeros.
-		if (strrpos($fwVersion, '.') !== FALSE)
-			$fwVersion = rtrim($fwVersion, '0');
-		
+		if ($msVersion != "rusEFI") {
+			//Setup firmware version for matching.
+			//(explode() already trimmed the string of spaces) -- this isn't true a couple inis
+			//If there's a decimal, remove any trailing zeros.
+			if (strrpos($fwVersion, '.') !== FALSE)
+				$fwVersion = rtrim($fwVersion, '0');
+		}
+
 		//store all our hardwork for use in the calling function
 		$signature = array($msVersion, $fwVersion);
 
@@ -202,7 +204,7 @@ class INI
 			switch ($currentSection)
 			{
 				case "Constants": //The start of our journey. Fill in details about variables.
-					$values[$currentSection][$key] = INI::defaultSectionHandler($value);
+					$values[$currentSection][$key] = INI::defaultSectionHandler($value, false, $msq, $outputs);
 					break;
 				
 				case "SettingContextHelp": //Any help text for our variable
@@ -210,7 +212,7 @@ class INI
 					break;
 				
 				case "Menu":
-					$menu = INI::defaultSectionHandler($value, true);
+					$menu = INI::defaultSectionHandler($value, true, $msq, $outputs);
 					if (is_array($menu)) {
 						if ($condition !== NULL) {
 							$menu[count($menu) - 1] = $condition;
@@ -228,13 +230,13 @@ class INI
 				case "UserDefined":
 					if ($key == "dialog")
 					{
-						$curDialog = INI::defaultSectionHandler($value);
+						$curDialog = INI::defaultSectionHandler($value, false, $msq, $outputs);
 						if (!is_array($curDialog))
 							$curDialog = array($curDialog);
 					}
 					if (is_array($curDialog))
 					{
-						$dlg = INI::defaultSectionHandler($value);
+						$dlg = INI::defaultSectionHandler($value, false, $msq, $outputs);
 						if (is_array($dlg)) {
 							if ($condition !== NULL) {
 								foreach ($dlg as &$d) {
@@ -389,14 +391,14 @@ class INI
 					break;
 				
 				case "OutputChannels": //These are for gauges and datalogging
-					$v = INI::defaultSectionHandler($value);
+					$v = INI::defaultSectionHandler($value, false, $msq, $outputs);
 					// here we store only computable outputs with expressions
 					if (isset($v[0]) && strpos($v[0], '{') !== FALSE && $condition !== NULL) {
 						$outputs["outputs"][$key] = $condition;
 					}
 					break;
 				case "SettingGroups": //misc settings
-					$values = INI::defaultSectionHandler($value);
+					$values = INI::defaultSectionHandler($value, false, $msq, $outputs);
 					if ($key == "settingGroup") {
 						$curSettingGroup = isset($settings[$key]) ? count($settings[$key]) : 0;
 						// this will be the options list
@@ -411,7 +413,7 @@ class INI
 
 					break;
 				case "PcVariables":
-					$values[$currentSection][$key] = INI::defaultSectionHandler($value);
+					$values[$currentSection][$key] = INI::defaultSectionHandler($value, false, $msq, $outputs);
 					break;
 				//Don't care about these
 				case "Datalog": //Not relevant
@@ -431,7 +433,7 @@ class INI
 				case NULL:
 					//Should be global values (don't think any ini's have them)
 					assert($currentSection === NULL);
-					$globals[$key] = INI::defaultSectionHandler($value);
+					$globals[$key] = INI::defaultSectionHandler($value, false, $msq, $outputs);
 				break;
 			}
 		}
@@ -445,7 +447,7 @@ class INI
 	 * @param $value
 	 * @returns An array if there's a comma, or just the value.
 	 */
-	private static function defaultSectionHandler($value, $isLessStrict = false)
+	private static function defaultSectionHandler($value, $isLessStrict = false, $msq, $outputs)
 	{
 		//For things like "nCylinders      = bits,    U08,      0,"
 		//split CSV into an array
@@ -459,10 +461,34 @@ class INI
 		}
 		else //otherwise just return the value
 			$v = trim($value);
+		// pre-parse const. expressions
+		$exprList = is_array($v) ? $v : array($v);
+		foreach ($exprList as &$e) {
+			if (strpos($e, '{') === 0) {
+				$outFlags = array();
+				$newE = INI::parseExpression($e, $msq, $outputs, $outFlags);
+				// if not constant expr (requires external vars), then skip
+				if (count($outFlags) != 0)
+					continue;
+				// eval it now!
+				try
+				{
+					$e = eval($newE);
+				} catch (Throwable $t) {
+					// todo: should we react somehow?
+				}
+			}
+		}
+		// save and return as a new value
+		if (is_array($v))
+			$v = $exprList;
+		else
+			$v = $exprList[0];
+
 		return preg_replace("/\"([^\"]+)\"/", "$1", $v);
 	}
 	
-	public static function parseExpression($line, $msq, $outputs)
+	public static function parseExpression($line, $msq, $outputs, &$outFlags = NULL)
 	{
 		// we'll use eval() for these expressions, so we need to be extremely careful & paranoic here
 		$separators = "\-\+\!\/\?\:=><&|(),";
@@ -482,10 +508,14 @@ class INI
 				// first, search the variables
 				$search = $msq->xpath('//constant[@name="' . $l . '"]');
 				if ($search !== FALSE && count($search) > 0) {
+					if ($outFlags !== NULL)
+						$outFlags[] = $l;
 					$l = "\$rusefi->getMsqConstant('".$l."')";
 				}
 				// try outputChannels?
 				else if (isset($outputs["outputs"]) && array_key_exists($l, $outputs["outputs"])) {
+					if ($outFlags !== NULL)
+						$outFlags[] = $l;
 					$l = "\$rusefi->getMsqOutput('".$l."')";
 				}
 				else {

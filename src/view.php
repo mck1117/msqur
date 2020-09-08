@@ -26,15 +26,20 @@ if (isset($_GET['msq'])) {
 	$settings = explode("|", parseQueryString('settings'));
 	$html = $msqur->view($id, $viewMode, $settings);
 	$engine = $rusefi->getEngineFromTune($id);
+	if (count($engine) < 1)
+		pageError("Tune not found!");
 	// get extra tune params
 	$tune_id = $id;
 	$tuneParams = $msqur->browse(array("m.id"=>$tune_id), 0, "msq");
 	if (count($tuneParams) == 1)
 		$tuneParams = $tuneParams[0];
-	$isOwner = $engine["user_id"] == $rusefi->userid;
+	$isOwner = isset($engine["user_id"]) && ($engine["user_id"] == $rusefi->userid);
+
+	$logs = $rusefi->getTuneLogs($id);
 
 	//!!!!!!!!!!!
 	//$rusefi->calcCrc($rusefi->msq);
+	//die;
 
 	if ($html !== null) {
 		if ($viewMode == "ts-dialog") {
@@ -42,17 +47,15 @@ if (isset($_GET['msq'])) {
 		} else {
 			include "view/header.php";
 			include "view/tune_note.php";
+			include "view/tune_logs.php";
 			include "view/more_about_vehicle.php";
 
 			echo $html;
 			include "view/footer.php";
 		}
 	} else {
-		http_response_code(404);
 		unset($_GET['msq']);
-		include "view/header.php";
-		echo '<div class="error">404 MSQ file not found.</div>';
-		include "view/footer.php";
+		pageError("404 MSQ file not found.");
 	}
 }
 else if (isset($_GET['log'])) {
@@ -63,11 +66,8 @@ else if (isset($_GET['log'])) {
 		echo $html;
 		include "view/footer.php";
 	} else {
-		http_response_code(404);
 		unset($_GET['log']);
-		include "view/header.php";
-		echo '<div class="error">404 LOG file not found.</div>';
-		include "view/footer.php";
+		pageError("404 LOG file not found.");
 	}
 } else {
 	include "index.php";

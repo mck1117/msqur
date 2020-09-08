@@ -346,19 +346,22 @@ class DB
 	 * @param $bq The BrowseQuery to filter results
 	 * @returns A list of metadata, or null if unsuccessful
 	 */
-	public function browseMsq($bq)
+	public function browseMsq($bq, $showAll)
 	{
 		if (!$this->connect()) return null;
 		
 		try
 		{
-			$statement = "SELECT m.id as mid, user_id, name, make, code, numCylinders, displacement, compression, induction, firmware, signature, uploadDate, views, tuneComment FROM msqur_metadata m INNER JOIN msqur_engines e ON m.engine = e.id WHERE ";
+			$statement = "SELECT m.id as mid, user_id, name, make, code, numCylinders, displacement, compression, induction, firmware, signature, uploadDate, views, tuneComment, hidden FROM msqur_metadata m INNER JOIN msqur_engines e ON m.engine = e.id WHERE ";
 			$where = array();
 			foreach ($bq as $col => $v)
 			{
 				//if ($v !== null) $statement .= "$col = :$col ";
 				if ($v !== null) $where[] = "$col = :".str_replace(".", "", $col)." ";
 			}
+
+			if (!$showAll)
+				$where[] = "hidden = 0";
 			
 			if (count($where) === 0) $statement .= "1";
 			else
@@ -857,7 +860,7 @@ class DB
 
 	public function getEngineFromTune($tune_id)
 	{
-		if (!$this->connect()) return FALSE;
+		if (!$this->connect()) return array();
 		try
 		{
 			$st = $this->db->prepare("SELECT name, make, code, user_id, displacement, compression, induction FROM msqur_engines e INNER JOIN msqur_metadata m ON m.engine = e.id WHERE m.id = :tune_id");
@@ -1028,7 +1031,7 @@ class DB
 		return false;
 	}
 
-	public function addLog($file, $user_id, $tune_id)
+	public function addLog($file, $user_id, $tune_id, &$error)
 	{
 		global $rusefi;
 
@@ -1043,6 +1046,28 @@ class DB
 			if ($log === FALSE) {
 				debug('DB::addLog(): Cannot get the log data!');
 				return -1;
+			}
+
+			// this may take a while to complete...
+			$info = $rusefi->getLogInfo($log, $dataPoints, $tunes);
+			$data = pack("C*", ...$dataPoints);
+
+			if ($tune_id < 0) {
+				// try to find the corresponding tune from the log records
+				// sort descending, from the longest tune to the shortest one
+				usort($tunes, function ($a, $b) { return -(($a[1] - $a[0]) <=> ($b[1] - $b[0])); });
+				foreach ($tunes as $t) {
+					$res = $this->getTuneByCrc($t[2]);
+					if ($res != null) {
+						$tune_id = $res["tune_id"];
+						break;
+					}
+				}
+
+				if ($tune_id < 0) {
+					$error = 'Please specify the tune corresponding to the log!';
+					return -1;
+				}
 			}
 
 			$st = $this->db->prepare("INSERT INTO msqur_files (type,data) VALUES (:type, ".$this->COMPRESS."(:log))");
@@ -1065,11 +1090,7 @@ class DB
 				DB::tryBind($st, ":file_id", $id); //could do hash but for now, just the id
 				DB::tryBind($st, ":tune_id", $tune_id);
 
-				// this may take a while to complete...
-				$info = $rusefi->getLogInfo($log, $dataPoints);
 				DB::tryBind($st, ":info", $info);
-
-				$data = pack("C*", ...$dataPoints);
 				DB::tryBind($st, ":data", $data);
 
 				//TODO Make sure it's an int
@@ -1099,6 +1120,11 @@ class DB
 		{
 			$this->dbError($e);
 			$id = -1;
+		}
+
+		if ($id > 0) {
+			$this->deleteLogNotes($id);
+			$this->addLogNotes($id, $tunes);
 		}
 		
 		return $id;
@@ -1199,7 +1225,7 @@ class DB
 		$log = $this->getLog($id);
 
 		// this may take a while to complete...
-		$info = $rusefi->getLogInfo($log, $dataPoints);
+		$info = $rusefi->getLogInfo($log, $dataPoints, $tunes);
 		$data = pack("C*", ...$dataPoints);
 
 		if (!$this->connect()) return false;
@@ -1215,6 +1241,11 @@ class DB
 			{
 				if (DEBUG) debug('Log data updated!');
 				$st->closeCursor();
+
+				// update log-tune relationships
+				$this->deleteLogNotes($id);
+				$this->addLogNotes($id, $tunes);
+
 				return true;
 			}
 			else
@@ -1229,7 +1260,7 @@ class DB
 		return false;
 	}
 
-	public function updateCrc($fileid)
+	public function updateTuneCrc($fileid)
 	{
 		global $rusefi;
 
@@ -1237,7 +1268,7 @@ class DB
 		
 		try
 		{
-			$st = $this->db->prepare("SELECT id,".$this->UNCOMPRESS."(data) AS xml FROM msqur_files WHERE type='0' AND " . ($fileid > 0 ? "id = :id" : "1"));
+			$st = $this->db->prepare("SELECT id,".$this->UNCOMPRESS."(data) AS xml FROM msqur_files WHERE type='0' AND " . ($fileid > 0 ? "id IN (SELECT file from msqur_metadata WHERE id=:id)" : "1"));
 			if ($fileid > 0)
 				DB::tryBind($st, ":id", $fileid);
 			$st->execute();
@@ -1303,6 +1334,205 @@ class DB
 		return false;
 	}
 
+	public function updateLogViews($id)
+	{
+		if (!$this->connect()) return false;
+		
+		try
+		{
+			$st = $this->db->prepare("UPDATE msqur_logs SET views = views + 1 WHERE id = :id");
+			DB::tryBind($st, ":id", $id);
+			$ret = $st->execute();
+			$st->closeCursor();
+			return $ret;
+		}
+		catch (PDOException $e)
+		{
+			$this->dbError($e);
+		}
+		
+		return false;
+	}
+
+	public function deleteLogNotes($id)
+	{
+		if (!$this->connect()) return false;
+		
+		try
+		{
+			$st = $this->db->prepare("DELETE FROM msqur_log_notes WHERE log_id = :id");
+			DB::tryBind($st, ":id", $id);
+			$st->execute();
+			$ret = $st->rowCount();	// return the number of deleted engines
+			$st->closeCursor();
+
+			return $ret;
+		}
+		catch (PDOException $e)
+		{
+			$this->dbError($e);
+		}
+		
+		return false;
+	}
+
+	public function addLogNotes($id, $tunes)
+	{
+		if (!$this->connect()) return false;
+		
+		try
+		{
+			$ret = true;
+			foreach ($tunes as $tune) {
+				$st = $this->db->prepare("INSERT INTO msqur_log_notes (log_id,time_start,time_end,tune_crc,comment) VALUES (:log_id, :time_start, :time_end, :tune_crc, :comment)");
+				DB::tryBind($st, ":log_id", $id);
+				DB::tryBind($st, ":time_start", $tune[0]);
+				DB::tryBind($st, ":time_end", $tune[1]);
+				DB::tryBind($st, ":tune_crc", $tune[2]);
+				DB::tryBind($st, ":comment", isset($tune[3]) ? $tune[3] : null);
+
+				if (!$st->execute())
+				{
+					$ret = false;
+				}
+			}
+			return $ret;
+		}
+		catch (PDOException $e)
+		{
+			$this->dbError($e);
+		}
+		
+		return false;
+				
+	}
+
+	public function getLogNotes($log_id)
+	{
+		if (DEBUG) debug('Getting LOG notes for id: ' . $log_id);
+		
+		if (!$this->connect()) return array();
+		
+		try
+		{
+			$st = $this->db->prepare("SELECT time_start, time_end, tune_crc, comment FROM msqur_log_notes WHERE log_id = :log_id");
+			DB::tryBind($st, ":log_id", $log_id);
+			$st->execute();
+			$result = $st->fetchAll(PDO::FETCH_ASSOC);
+			$st->closeCursor();
+			if ($result && count($result) > 0)
+			{
+				if (DEBUG) debug("Found " . count($result) . " records.");
+				foreach ($result as &$r) {
+					$tune_crc = $r["tune_crc"];
+					$res = null;
+					if (DEBUG) debug('* tune_crc=' . $tune_crc);
+					// if tune_crc is set, that's the tune record, otherwise it's a user comment
+					if ($tune_crc >= 0) {
+						$res = $this->getTuneByCrc($tune_crc);
+					}
+					if (is_array($res)) {
+						$r += $res;
+					} else {
+						$r += array("tune_id"=>-1, "tuneComment"=>null, "uploadDate"=>"?");
+					}
+					$st->closeCursor();
+				}
+				return $result;
+			} else {
+				if (DEBUG) debug('LOG NOT Found.');
+			}
+		}
+		catch (PDOException $e)
+		{
+			$this->dbError($e);
+		}
+		
+		return array();
+	}
+
+	public function getTuneLogs($tuneId) 
+	{
+		if (DEBUG) debug('Getting LOGs for TUNE id: ' . $tuneId);
+		
+		if (!$this->connect()) return array();
+		
+		try
+		{
+			// first, get the CRC of the tune
+			$st = $this->db->prepare("SELECT f.crc AS crc FROM msqur_files f INNER JOIN msqur_metadata m ON m.file = f.id WHERE m.id = :tune_id");
+			DB::tryBind($st, ":tune_id", $tuneId);
+			$st->execute();
+			$result = $st->fetch(PDO::FETCH_ASSOC);
+			$st->closeCursor();
+			
+			if ($result) {
+				$crc = $result["crc"];
+				if (DEBUG) debug('TUNE CRC=' . $crc);
+
+				// now search using this CRC and also a user-defined tune ID
+				$st = $this->db->prepare("SELECT l.id AS id, l.uploadDate AS uploadDate FROM msqur_log_notes n INNER JOIN msqur_logs l ON l.id = n.log_id WHERE n.tune_crc = :tune_crc OR l.tune_id = :tune_id GROUP BY l.id");
+				DB::tryBind($st, ":tune_crc", $crc);
+				DB::tryBind($st, ":tune_id", $tuneId);
+				$st->execute();
+				$result = $st->fetchAll(PDO::FETCH_ASSOC);
+				$st->closeCursor();
+
+				if ($result && count($result) > 0)
+				{
+					if (DEBUG) {
+						debug("Found " . count($result) . " records:");
+						debug("* ". print_r($result, TRUE));
+					}
+					return $result;
+				}
+			}
+		}
+		catch (PDOException $e)
+		{
+			$this->dbError($e);
+		}
+		if (DEBUG) debug('LOGs NOT Found.');
+		
+		return array();
+	}	
+
+	public function hideTune($tune_id)
+	{
+		if (!$this->connect()) return false;
+		
+		try
+		{
+			if (DEBUG) debug('Hiding tune ID='.$tune_id);
+			$st = $this->db->prepare("UPDATE msqur_metadata m SET m.hidden=1 WHERE m.id = :id");
+			DB::tryBind($st, ":id", $tune_id);
+			if ($st->execute())
+			{
+				if (DEBUG) debug('HIDDEN flag set!');
+				$st->closeCursor();
+				return true;
+			}
+			else
+				if (DEBUG) debug('Unable to set HIDDEN flag!');
+				
+			$st->closeCursor();
+		}
+		catch (PDOException $e)
+		{
+			$this->dbError($e);
+		}
+		
+		return false;
+	}
+
+	public function getTuneByCrc($tune_crc)
+	{
+		$st = $this->db->prepare("SELECT m.id as tune_id, tuneComment, uploadDate FROM msqur_files f INNER JOIN msqur_metadata m ON m.file = f.id WHERE crc = :crc LIMIT 1");
+		DB::tryBind($st, ":crc", $tune_crc);
+		$st->execute();
+		$res = $st->fetch(PDO::FETCH_ASSOC);
+		return $res;
+	}
 }
 
 ?>

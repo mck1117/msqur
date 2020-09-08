@@ -249,11 +249,11 @@ class Rusefi
 		$mlgParser = new MlgParser();
 		if ($type == -1)
 			$type = $mlgParser->detectFormat($data);
-		$mlgParser->initStats();
+		$mlgParser->initStats(false, $getDataPoints);
 		if ($type == "LogBinary")
-			$ret = $mlgParser->parseBinary($data, $this->reqLogFields);
+			$ret = $mlgParser->parseBinary($data);
 		else if ($type == "LogText")
-			$ret = $mlgParser->parseText($data, $this->reqLogFields);
+			$ret = $mlgParser->parseText($data);
 		else
 			$ret = array("text"=>"Unknown log type!", "status"=>"deny");
 
@@ -263,14 +263,18 @@ class Rusefi
 			$ret["logValues"] = $logValues;
 			if ($getDataPoints) {
 				$dataPoints = $mlgParser->getDataPoints();
+				$tunes = $mlgParser->getTunes();
 				$ret["dataPoints"] = $dataPoints;
+				$ret["tunes"] = $tunes;
 			} else {
 				$ret["dataPoints"] = array();
+				$ret["tunes"] = array();
 			}
 			$ret["logFields"] = "<small>".$this->fillLogFields()."</small>";
 		} else {
 			$ret["logValues"] = array();
 			$ret["dataPoints"] = array();
+			$ret["tunes"] = array();
 			$ret["logFields"] = "";
 		}
 
@@ -314,10 +318,11 @@ class Rusefi
 		return $ret;
 	}
 
-	public function getLogInfo($data, &$dataPoints) {
+	public function getLogInfo($data, &$dataPoints, &$tunes) {
 		$fullSize = strlen($data);
 		$ret = $this->parseLogData($data, -1, $fullSize, true);
 		$dataPoints = $ret["dataPoints"];
+		$tunes = $ret["tunes"];
 		// store the array as a JSON string
 		return json_encode($ret["logValues"]);
 	}
@@ -414,7 +419,7 @@ class Rusefi
 		if (preg_match("/([0-9]+)\s*min/", $dur, $ret)) {
 			$secs += $ret[1] * 60;
 		}
-		if (preg_match("/([0-9]+)\s*sec/", $dur, $ret)) {
+		if (preg_match("/([0-9\.]+)\s*sec/", $dur, $ret)) {
 			$secs += $ret[1];
 		}
 		return $secs;
@@ -426,6 +431,8 @@ class Rusefi
 		$res = $this->msqur->db->browseLog(array("l.id"=>$id));
 		$this->unpackLogInfo($res);
 		$logValues = $res[0];
+
+		$this->msqur->db->updateLogViews($id);
 		
 		$engine = $this->getEngineFromTune($logValues["tune_id"]);
 		$moreInfo = "";
@@ -434,6 +441,9 @@ class Rusefi
 			include "view/more_about_vehicle.php";
 			$moreInfo = ob_get_clean();
 		}
+		
+		$notes = $this->msqur->db->getLogNotes($id);
+		$logValues["notes"] = $notes;
 
 		return "<div class=logViewPage>".$moreInfo.$this->fillGeneralLogInfo().$this->fillLogFields()."</div>";
 	}
@@ -445,29 +455,32 @@ class Rusefi
 
 	public function viewTs($id, $options)
 	{
+		$this->msq = new MSQ();
+		return $this->getTs($this->msq, $id, $options, "ts");
+	}
+
+	public function getTs(&$msq, $id, $options, $viewType = "ts")
+	{
 		$xml = $this->msqur->db->getXML($id);
 		if ($xml === null) 
 		{
-			$this->msqur->error("Null xml");
+			error("Null xml");
 			return "";
 		}
-		
+
 		$html = "";
 		try {
-			$this->msq = new MSQ();
-			$engine = array();
+			
+			$engine = $this->getEngineFromTune($id);
 			$metadata = array();
-			$groupedHtml = $this->msq->parseMSQ($xml, $engine, $metadata, "ts", $options);
+			$groupedHtml = $msq->parseMSQ($xml, $engine, $metadata, $viewType, $options);
 						
 			//$this->db->updateMetadata($id, $metadata);
 			//$this->db->updateEngine($id, $engine, $metadata);
 
 			foreach($groupedHtml as $group => $v)
 			{
-				//TODO Group name as fieldset legend or sth
-				//$html .= "<div class=\"group-$group\">";
 				$html .= $v;
-				//$html .= '</div>';
 			}
 
 		} catch (MSQ_ParseException $e) {
@@ -587,7 +600,7 @@ class Rusefi
 		$settings = array();
 		$msq = new MSQ(); //ugh
 		try {
-			$groupedHtml = $msq->parseMSQ($xml, $engine, $metadata, "", $settings);
+			$groupedHtml = $msq->parseMSQ($xml, $engine, $metadata, "crc", $settings);
 		} catch (MSQ_ParseException $e) {
 			return 0;
 		}
@@ -683,11 +696,17 @@ class Rusefi
 
         $crc32 = crc32($data);
         $crc16 = $crc32 & 0xFFFF;
-		echo '<script>console.log("got here 693 rusefi.php");</script>';
+        //!!!!!!!!!
         //echo "crc32=".dechex($crc32). " crc16=".dechex($crc16). "\r\n";
 		//file_put_contents("current_configuration.rusefi_binary", "OPEN_SR5_0.1" . $data);
+		//file_put_contents("current_configuration.xml.txt", print_r($msq, TRUE));
 
 		return $crc16;
+	}
+
+	public function getTuneLogs($tuneId)
+	{
+		return $this->msqur->db->getTuneLogs($tuneId);
 	}
 
 }

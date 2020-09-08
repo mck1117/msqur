@@ -50,6 +50,8 @@ class MSQ
 	 */
 	public function parseMSQ($xml, &$engine, &$metadata, $viewType, $settings)
 	{
+		global $rusefi;
+
 		$html = array();
 		if (DEBUG) debug('Parsing XML...');
 		$errorCount = 0; //Keep track of how many things go wrong.
@@ -68,12 +70,9 @@ class MSQ
 			$this->msq = $msq;
 
 			$msqHeader = '<div class="info">';
-			$msqHeader .= "<div>Format Version: " . $msq->versionInfo['fileFormat'] . "</div>";
-			$msqHeader .= "<div>MS Signature: " . $msq->versionInfo['signature'] . "</div>";
-			$msqHeader .= "<div>Tuning SW: " . $msq->bibliography['author'] . "</div>";
-			$msqHeader .= "<div>Date: " . $msq->bibliography['writeDate'] . "</div>";
-			$msqHeader .= '</div>';
-			$html['msqHeader'] = $msqHeader;
+			if (isset($engine['user_id'])) {
+				$msqHeader .= "<div>Owner: <a href=\"".$rusefi->getUserProfileLinkFromId($engine['user_id'])."\">".$rusefi->getUserNameFromId($engine['user_id'])."</a></div>\r\n";
+			}
 			
 			$sig = $msq->versionInfo['signature'];
 			$sigString = $sig;
@@ -89,6 +88,13 @@ class MSQ
 				throw new MSQ_ParseException("Could not load configuration file for MSQ: " . $e->getMessage(), $htmlMessage, 100, $e);
 			}
 			
+			//$msqHeader .= "<div>Format Version: " . $msq->versionInfo['fileFormat'] . "</div>\r\n";
+			$msqHeader .= "<div>Signature: <a href=\"".$iniFile."\" title='Download rusefi.ini'>" . $msq->versionInfo['signature'] . "</a></div>\r\n";
+			//$msqHeader .= "<div>Tuning SW: " . $msq->bibliography['author'] . "</div>\r\n";
+			$msqHeader .= "<div>Date: " . $msq->bibliography['writeDate'] . "</div>\r\n";
+			$msqHeader .= '</div>';
+			$html['msqHeader'] = $msqHeader;
+
 			//Calling function will update
 			$metadata['fileFormat'] = $msq->versionInfo['fileFormat'];
 			$metadata['signature'] = $sig[1];
@@ -98,6 +104,11 @@ class MSQ
 			if ($viewType == "ts" || $viewType == "ts-dialog")
 			{
 				include_once "view/view_ts.php";
+				return $html;
+			}
+			if ($viewType == "diff" || $viewType == "crc")
+			{
+				// we'll compose html later, when both tunes are parsed
 				return $html;
 			}
 			

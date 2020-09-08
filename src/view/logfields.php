@@ -33,6 +33,11 @@
 		)),
 	);			
 
+	function formatLogNoteTime($secs) {
+		// a trick to get non-padded minutes
+		return ($secs >= 3600) ? date("G:i:s", $secs) : intval(date("i", $secs)) . date(":s", $secs);
+	}
+
 	function putField($lfn, $lf, $val, $oneLine = false) { ?>
 	<div>
 	<label for="<?=$lfn;?>" class=logLabel><?=$lf;?>
@@ -53,6 +58,14 @@
 	}
 
 if (isset($logValues["data"])) {
+	// get partial data for graph display
+	$data = array();
+	$numGraphs = 4;
+	$fieldNames = array_keys($logValues["data"]);
+	for ($i = 0; $i < $numGraphs; $i++) {
+		// todo: impl. graph selection
+		$data[$fieldNames[$i]] = $logValues["data"][$fieldNames[$i]];
+	}
 ?>
 <table class=logContainer cellspacing="0" cellpadding="0"><tr>
 <td class=logTd width="50%"><div>
@@ -70,7 +83,7 @@ if (isset($logValues["data"])) {
 	$numSeconds = $rusefi->getDurationInSeconds($logValues["duration"]);
 
 	$labels = array();
-	$numDataPoints = count(reset($logValues["data"]));
+	$numDataPoints = count(reset($data));
 	for ($i = 0; $i < $numDataPoints; $i++) {
 		$labels[$i] = "'".round($i * $numSeconds / $numDataPoints, 2) . "s'";
 	}
@@ -81,7 +94,7 @@ if (isset($logValues["data"])) {
 	$ldColors = array("white", "red", "green", "yellow");
 	$ldYAxisDisplay = array("true", "false", "false", "false");
 	$j = 0;
-	foreach ($logValues["data"] as $ldName=>$ld) {
+	foreach ($data as $ldName=>$ld) {
 ?>
 				{ 
 					data: [<?=implode(",", $ld);?>],
@@ -123,7 +136,7 @@ if (isset($logValues["data"])) {
 					yAxes: [
 <?php
 	$j = 0;
-	foreach ($logValues["data"] as $ldName=>$ld) {
+	foreach ($data as $ldName=>$ld) {
 ?>
 					{
 						id: "<?=$j;?>",
@@ -208,6 +221,60 @@ if (isset($logValues["data"])) {
 if (isset($logValues["data"])) {
 ?>
 </td></tr></table>
+<?php
+}
+
+if (isset($logValues["notes"])) {
+?>
+
+<table border=0>
+<tr><th>Timeframe</th><th>Tune</th><th>Diff with prev</th><th>Note</th></tr>
+<?php
+	$notes = $logValues["notes"];
+	// create a fake "unknown tune" if needed
+	if (count($notes) == 0) {
+		$notes[] = array("time_start"=>0, "time_end"=>isset($numSeconds) ? $numSeconds : 0, "tune_id"=>-1, "tuneComment"=>"");
+	}
+	$prevNote = null;
+	$tuneIds = array();
+	foreach ($notes as $i=>$note) {
+		$timeFrame = formatLogNoteTime($note["time_start"]) . " - " . formatLogNoteTime($note["time_end"]);
+		if ($note["tune_id"] > 0) {
+			$diffUrl = $prevNote ? "<td><a href=\"diff.php?msq1=".$note["tune_id"]."&msq2=".$prevNote["tune_id"]."\">diff</a></td>" : "<td>&nbsp;</td>";
+			$tuneUrl = "<td><a href=\"view.php?msq=".$note["tune_id"]."\">".$note["uploadDate"]."</a></td>";
+			$prevNote = $note;
+			$isGrayed = "";
+			$tuneIds[] = $note["tune_id"];
+		} else {
+			$tuneUrl = "<td colspan=2>Unknown tune</td>";
+			$diffUrl = "";
+			$isGrayed = "class=log-note-grayed";
+		}
+?>
+<tr <?=$isGrayed;?>><td><?=$timeFrame;?></td>
+<?=$tuneUrl;?>
+<?=$diffUrl;?>
+<td><?=$note["tuneComment"];?></td>
+</tr>
+<?php
+	}
+	if ($logValues["tune_id"] > 0 && !in_array($logValues["tune_id"], $tuneIds)) {
+		global $msqur;
+		$tuneParams = $msqur->browse(array("m.id"=>$logValues["tune_id"]), 0, "msq");
+		if (count($tuneParams) >= 1) {
+			$tuneParams = $tuneParams[0];
+		} else {
+			$tuneParams = array("uploadDate"=>"tune", "tuneComment"=>"");
+		}
+
+?>
+<tr class=log-note-grayed><td>User-specified tune:</td>
+<td colspan=2><a href="view.php?msq=<?=$logValues["tune_id"];?>"><?=$tuneParams["uploadDate"];?></a></td>
+<td><?=$tuneParams["tuneComment"];?></td></tr>
+<?php
+	}
+?>
+</table>
 <?php
 }
 ?>

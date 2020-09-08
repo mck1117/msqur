@@ -65,7 +65,7 @@ If you'd like to run a copy to develop yourself, read the [Installation](#Instal
   * `view` - PHP/JS frontend source
     * `lib` - JS 3rd party libraries
     * `img` - Static images
-  * `tests` - PHP Unit Tests (TODO)
+  * `tests` - PHP Unit Tests - These are run by a Github Action
 
 
 ### Update & Deployment Instructions

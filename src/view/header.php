@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html xmlns:og="https://ogp.me/ns#" xmlns:fb="https://www.facebook.com/2008/fbml" lang="en" ng-app="msqur">
+
 <head>
 	<title>rusEFI Online</title>
 	<meta charset="UTF-8">
@@ -8,8 +9,9 @@
 	<link rel="icon" type="image/x-icon" href="view/img/favicon.ico">
 	<link rel="stylesheet" href="view/msqur.css" />
 	<link rel="stylesheet" href="view/lib/dynatable/jquery.dynatable.css" />
+	<link rel="stylesheet" href="view/lib/simplePagination/simplePagination.css" />
 	<!-- Open Graph data -->
-	<meta property="fb:admins" content="xxxtodo"/>
+	<meta property="fb:admins" content="xxxtodo" />
 	<meta property="og:title" content="rusEFI online" />
 	<meta property="og:type" content="website" />
 	<meta property="og:url" content="https://rusefi.com/online/" />
@@ -81,7 +83,7 @@
 	</div>
 
 	<div id="upload" style="display:none;">
-		<?php if($rusefi->username == "") { ?>You are not logged into rusEFI forum! Please login <a href="<?=$rusefi->forum_login_url;?>">here</a>. <?php } else { ?>
+		<?php if ($rusefi->username == "") { ?>You are not logged into rusEFI forum! Please login <a href="<?= $rusefi->forum_login_url; ?>">here</a>. <?php } else { ?>
 		<form id="engineForm" action="upload.php" method="post" enctype="multipart/form-data">
 			<div id="fileDropZone"><label for="fileSelect">Drop files here</label>
 				<input required type="file" id="fileSelect" accept=".msq,.msl,.mlg" name="files[]" />
@@ -152,7 +154,7 @@
 		<div id="downloadLink"><a title="Download MSQ File" href="download.php?msq=<?php echo $_GET['msq']; ?>">💾 Download MSQ</a></div>
 		<div id="tsSettings">
 			<?php
-			if ($viewMode == "ts") {
+			if (isset($viewMode) && $viewMode == "ts") {
 				$options = $rusefi->getOptions();
 				foreach ($options as $opt) {
 			?>

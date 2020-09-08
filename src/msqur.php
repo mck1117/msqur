@@ -63,10 +63,10 @@ class Msqur
 		return $fileList;
 	}
 
-	public function addLog($file, $user_id, $tune_id)
+	public function addLog($file, $user_id, $tune_id, &$error)
 	{
 		//echo 'Adding ' . $file['tmp_name'];
-		$id = $this->db->addLog($file, $user_id, $tune_id);
+		$id = $this->db->addLog($file, $user_id, $tune_id, $error);
 		if ($id > 0)
 			$fileList[$id] = htmlspecialchars($file['name']);
 		else
@@ -85,10 +85,10 @@ class Msqur
 		$this->footer();
 	}
 	
-	public function browse($bq, $page, $type)
+	public function browse($bq, $page, $type, $showAll = false)
 	{
 		if ($type == "msq")
-			return $this->db->browseMsq($bq);
+			return $this->db->browseMsq($bq, $showAll);
 		else if ($type == "log")
 			return $this->db->browseLog($bq);
 		return null;
@@ -161,9 +161,9 @@ class Msqur
 
 		if (DEBUG) debug('Load MSQ: ' . $id);
 
-		if ($viewMode == "ts" || $viewMode == "ts-dialog")
+		if ($viewMode == "ts" || $viewMode == "ts-dialog" || $viewMode == "diff")
 		{
-			return $rusefi->viewTs($id, $settings);
+			return $rusefi->viewTs($id, $settings, $viewMode);
 		}
 
 		//Get cached HTML and display it, or reparse and display (in order)

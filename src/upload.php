@@ -170,37 +170,32 @@ if ($isEmbedded || (isset($_POST['upload']) && isset($_FILES)))
 	// upload log file
 	else if (isLog($files)) 
 	{
-		// todo: get tune id from the log
-		if (!isset($_POST['tune_id'])) {
-			addOutput('error', 'Please specify the tune corresponding to the log!');
-		} else 
+		$tune_id = isset($_POST['tune_id']) ? intval($_POST['tune_id']) : -1;
+
+		// check if tune_id belongs to current user
+		if (!$rusefi->checkIfTuneIsValidForUser($rusefi->userid, $tune_id))
 		{
-			$tune_id = intval($_POST['tune_id']);
+			addOutput('error', 'Cannot find the specified tune!');
+		} else
+		{
+			$error = "";
+			$fileList = $msqur->addLog($files[0], $rusefi->userid, $tune_id, $error);
+			if ($fileList != null)
+			{
+				addOutput('info', 'The log file has been uploaded!');
 
-			// check if tune_id belongs to current user
-			if (!$rusefi->checkIfTuneIsValidForUser($rusefi->userid, $tune_id))
-			{
-				addOutput('error', 'Cannot find the specified tune!');
-			} else
-			{
-				$fileList = $msqur->addLog($files[0], $rusefi->userid, $tune_id);
-				if ($fileList != null)
+				$fList = '<ul id="fileList">';
+				foreach ($fileList as $id => $name)
 				{
-					addOutput('info', 'The log file has been uploaded!');
-
-					$fList = '<ul id="fileList">';
-					foreach ($fileList as $id => $name)
-					{
-						$fList .= '<li><a href="view.php?log=' . $id . '">' . "$name" . '</a></li>';
-					}
-					$fList .= '</ul>';
-					addOutput('info', $fList);
+					$fList .= '<li><a href="view.php?log=' . $id . '">' . "$name" . '</a></li>';
+				}
+				$fList .= '</ul>';
+				addOutput('info', $fList);
 					addOutput('info', 'Thank you!');
-				}
-				else
-				{
-					addOutput('error', 'Unable to upload the log file!');
-				}
+			}
+			else
+			{
+				addOutput('error', 'Unable to upload the log file: ' . $error);
 			}
 		}
 	}
