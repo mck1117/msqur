@@ -66,17 +66,6 @@
 				<button id="btnUpload"><img src="view/img/upload.svg" alt="Upload" width="16" height="16"><span>Upload</span></button>
 			</div>
 		</span>
-
-		<!-- <span>
-			<div class="logged" id="logged">
-			<?php if ($rusefi->username == "") { ?>
-				You are not logged into rusEFI forum! Please login <a href="<?= $rusefi->forum_login_url; ?>">here</a>.
-			<?php } else { ?>
-				You are logged in as <a href="<?= $rusefi->forum_user_profile_url; ?>"><?= $rusefi->username; ?></a>
-			<?php } ?>
-			<button id="btnUpload"><img src="view/img/upload.svg" alt="Upload" width="16" height="16"><span>Upload</span></button>
-			</div>
-		</span> -->
 		<a href="javascript:void(0);" class="icon" onclick="ham_burger()">
 			<i class="fa fa-bars fa-3x"></i>
 		</a>
