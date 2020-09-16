@@ -26,6 +26,22 @@ msqur.controller('SearchController', function ($scope) {
 	
 });
 
+function ham_burger() {
+	var x = document.getElementById("navigation");
+	var y = document.getElementById("loginstatus");
+	if (x.className === "topnav") {
+	    x.className += " responsive";
+	} else {
+	    x.className = "topnav";
+	}
+	if (y.className === "loginstatus") {
+		y.className += " responsive";
+	} else {
+		y.className = "loginstatus";
+	}
+
+  } 
+
 $(document).ready(function() {
     $('#browseMsqResults')
 		.bind('dynatable:init', function(e, dynatable) {
