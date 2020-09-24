@@ -81,10 +81,10 @@ $menuItems = !empty($dialogId) ? array($dialogId) : array();
 foreach ($menuItems as $mi) {
 	if (isset($msqMap["dialog"][$mi])) {
 		$dlg = $msqMap["dialog"][$mi];
-		$dlgName = $dlg["dialog"][0][0];
+		$dlgName = $dlg["dialog"][0];
 		$dlgTitle = getDialogTitle($msqMap, $dlg);
 ?>
-<div class="tsDialog" id="dlg<?=$dlgName;?>" title="<?=$dlgTitle;?>">
+<div class="tsDialog" id="dlg<?=$dlgName;?>" tuneId="<?=$id;?>" dialogId="<?=$dlgName;?>" title="<?=$dlgTitle;?>">
 <?php
 		printDialog("", $msqMap, $rusefi->msq, $mi, FALSE);
 ?>

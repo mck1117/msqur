@@ -24,7 +24,7 @@
 				id: "dlg" + dlgId,
 				title: ""
 			});
-			dlg = addDialog(dlgDiv, "left top", $(".ts-dialogs"), false);
+			dlg = addDialog(tuneId, dlgId, dlgDiv, "left top", $(".ts-dialogs"), false);
 			$(".ts-dialogs").prepend(dlg.parent());
 			dlg.load('view.php?msq=' + tuneId + '&view=ts-dialog&dialog=' + dlgId, function() {
 				dlg.dialog({
@@ -66,7 +66,7 @@
 		}, 2000);
 	}
 
-	function addDialog(div, at, prevDlg, isAutoOpen) {
+	function addDialog(tuneId, dlgId, div, at, prevDlg, isAutoOpen) {
 		var dialog = div.dialog({
 			modal: false,
 			draggable: false,
@@ -86,6 +86,11 @@
 				$(this).empty().dialog('destroy');
 				fixDialogPositions();
 			},
+		});
+		var btnId = div.attr("id") + "ToolbarBtn";
+		dialog.parent().find(".ui-dialog-titlebar-close").before("<button class=\"tsDialogToolbarButton\" id=" + btnId + " tuneId=" + tuneId  + " dialogId=" + dlgId + ">&hellip;</button>");
+		$("#" + btnId).button().bind('click', function () {
+			$(document).contextmenu("open", $(this));
 		});
 		return dialog;
 	}
@@ -164,10 +169,63 @@
 	var at = "left top";
 	$(".ts-dialogs>div, .tsDialog").each(function () {
 		var isAutoOpen = $(".ts-dialogs").attr("isAutoOpen");
+		var tuneId = $(this).attr("tuneId");
+		var dlgId = $(this).attr("dialogId");
 		$(this).remove();
-		var dialog = addDialog($(this), at, prevDlg, isAutoOpen);
+		var dialog = addDialog(tuneId, dlgId, $(this), at, prevDlg, isAutoOpen);
 		prevDlg = dialog.parent();
 		at = "left bottom+10";
+	});
+
+	////////////////////////////////////////////////////////////////////////////
+	// context menu
+
+	function copyToClipboard(text) {
+		var $temp = $("<input>");
+		$("body").append($temp);
+		$temp.val(text).select();
+		document.execCommand("copy");
+		$temp.remove();
+	}
+
+	$(document).contextmenu({
+    	delegate: ".tsDialogToolbarButton",
+		autoFocus: true,
+		preventContextMenuForPopup: true,
+		preventSelect: true,
+		taphold: true,
+		menu: [{
+			title: "Copy dialog URL <kbd>Ctrl+C</kbd>",
+			cmd: "copy",
+			uiIcon: "ui-icon-copy",
+		}, {
+			title: "Export as .msqpart <kbd>Ctrl+S</kbd>",
+			cmd: "export",
+			uiIcon: "ui-icon-disk",
+			disabled: true
+		}],
+		select: function (event, ui) {
+			var $target = ui.target;
+			var tuneId = $target.attr("tuneId");
+			var dlgId = $target.attr("dialogId");
+			switch (ui.cmd) {
+				case "copy":
+					// copy full dialog URL to the clipboard
+					var dlgUrl = location.origin + "/online/view.php?msq=" + tuneId + "&dialog=" + dlgId;
+					copyToClipboard(dlgUrl);
+					//window.status = "Dialog URL copied to the clipboard!";
+					break;
+				case "export":
+					// export dialog as a .msqpart file
+					window.location.href = "browse.php?action=export_dialog&msq=" + tuneId + "&dialog=" + dlgId;
+					break;
+			}
+			return true;
+		},
+		beforeOpen: function (event, ui) {
+			// display context menu in front of the dialogs
+			ui.menu.css("zIndex", 5555);
+		}
 	});
 
 	//alert(totalHeight);

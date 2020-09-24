@@ -612,7 +612,7 @@ footer a:hover {
 	font-weight: bold !important;
 }
 
-.ui-menu-item-wrapper {
+#ts-menu .ui-menu-item-wrapper {
 	display: block !important;
 	padding: 3px 5px 3px .4em !important;
 }
@@ -627,6 +627,14 @@ footer a:hover {
 
 .tsDialogClass .ui-dialog-titlebar {
 	background: linear-gradient(0deg, rgba(238,238,238,1) 0%, rgba(255,255,255,1) 100%);
+}
+
+.tsDialogToolbarButton {
+	display: inline-block !important;
+	padding: 5px !important;
+	height: 20px;
+	font-size: 10px !important;
+	line-height: 10px !important;
 }
 
 .ts-controlgroup {
@@ -849,3 +857,9 @@ footer a:hover {
 	color: #7f0000;
 	font-style: italic;
 }
+
+.ui-contextmenu kbd {
+	padding-left: 1em;
+	float: right;
+}
+
