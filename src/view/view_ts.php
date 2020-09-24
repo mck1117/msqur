@@ -3,16 +3,19 @@
 global $rusefi;
 global $id;
 global $dialogId;
+global $viewMode;
 
 include_once("view/view_ts_dialog.php");
 
-if (!empty($dialogId)) {
-	// security check
-	if (preg_match("/[A-Za-z0-9]+/", $dialogId)) {
-		$dlgTitle = printDialog("", $msqMap, $rusefi->msq, $dialogId, FALSE);
-		// pass the title back to JS
-		echo "<script>dlgTitle = '".$dlgTitle."';</script>\r\n";
-	}
+// security check
+if (!empty($dialogId) && !preg_match("/[A-Za-z0-9]+/", $dialogId)) {
+	die;
+}
+
+if ($viewMode == "ts-dialog") {
+	$dlgTitle = printDialog("", $msqMap, $rusefi->msq, $dialogId, FALSE);
+	// pass the title back to JS
+	echo "<script>dlgTitle = '".$dlgTitle."';</script>\r\n";
 	die;
 }
 
@@ -69,11 +72,11 @@ ob_start();
 </div>
 </div>
 
-<div class="ts-dialogs" isAutoOpen="false">
+<div class="ts-dialogs" isAutoOpen="true">
 
 <?php
-//!!!!!!!!
-$menuItems = array(/*"engineChars", "injectionSettings"*/);
+
+$menuItems = !empty($dialogId) ? array($dialogId) : array();
 
 foreach ($menuItems as $mi) {
 	if (isset($msqMap["dialog"][$mi])) {

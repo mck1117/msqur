@@ -26,7 +26,7 @@
 			});
 			dlg = addDialog(dlgDiv, "left top", $(".ts-dialogs"), false);
 			$(".ts-dialogs").prepend(dlg.parent());
-			dlg.load('view.php?msq=' + tuneId + '&view=ts&dialog=' + dlgId, function() { 
+			dlg.load('view.php?msq=' + tuneId + '&view=ts-dialog&dialog=' + dlgId, function() {
 				dlg.dialog({
 					title: dlgTitle
 				}).dialog('open');
@@ -164,6 +164,7 @@
 	var at = "left top";
 	$(".ts-dialogs>div, .tsDialog").each(function () {
 		var isAutoOpen = $(".ts-dialogs").attr("isAutoOpen");
+		$(this).remove();
 		var dialog = addDialog($(this), at, prevDlg, isAutoOpen);
 		prevDlg = dialog.parent();
 		at = "left bottom+10";
