@@ -239,7 +239,9 @@ class MlgParser {
 		// construct data field
 		$dataFmt = implode("/", $dataFmts);
 		
-		if ($header["DataOffset"] > $dataSize) {
+		$dataAfterFieldsOffset = $this->mlgHeaderSize + $header["NumFields"] * $this->mlgFieldSize;
+
+		if ($header["DataOffset"] > $dataSize || $header["DataOffset"] < $dataAfterFieldsOffset) {
 			return array("text"=>"Corrupted file data!", "status"=>"deny");
 		}
 
@@ -279,7 +281,7 @@ class MlgParser {
 					// todo: the ECU was reset? do something?
 					continue;
 				}
-				return array("text"=>"Unsupported file format version!", "status"=>"deny");
+				return array("text"=>"Unsupported file format version or corrupted file!", "status"=>"deny");
 			}
 
 			// apply scale
