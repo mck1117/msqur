@@ -5,7 +5,7 @@
 //$html["debug"] = print_r($msqMap["menu"]["&Base &Engine"], TRUE);
 
 function printTsItem($mn, &$clr) {
-	$field = preg_replace(array("/&([A-Za-z])/", "/\"/"), array("<u>$1</u>", ""), $mn);
+	$field = preg_replace(array("/&([A-Za-z])/", "/\"/", "/\\\\n/"), array("<u>$1</u>", "", "\n"), $mn);
 	// colorize some labels
 	if (!empty($field) && ($field[0] == '#' || $field[0] == '!')) {
 		$clr = ($field[0] == '#') ? "ts-label-blue" : "ts-label-red";
