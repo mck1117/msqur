@@ -346,13 +346,13 @@ class DB
 	 * @param $bq The BrowseQuery to filter results
 	 * @returns A list of metadata, or null if unsuccessful
 	 */
-	public function browseMsq($bq, $showAll)
+	public function browseMsq($bq, $showAll, $showHidden)
 	{
 		if (!$this->connect()) return null;
 		
 		try
 		{
-			$statement = "SELECT m.id as mid, user_id, name, make, code, numCylinders, displacement, compression, induction, firmware, signature, uploadDate, views, tuneComment, hidden FROM msqur_metadata m INNER JOIN msqur_engines e ON m.engine = e.id WHERE ";
+			$statement = "SELECT CONCAT (user_id, '_', name) AS vehicleName, m.id as mid, user_id, name, make, code, numCylinders, displacement, compression, induction, firmware, signature, uploadDate, views, tuneComment, hidden FROM msqur_metadata m INNER JOIN msqur_engines e ON m.engine = e.id WHERE ";
 			$where = array();
 			foreach ($bq as $col => $v)
 			{
@@ -360,7 +360,7 @@ class DB
 				if ($v !== null) $where[] = "$col = :".str_replace(".", "", $col)." ";
 			}
 
-			if (!$showAll)
+			if (!$showHidden)
 				$where[] = "hidden = 0";
 			
 			if (count($where) === 0) $statement .= "1";
@@ -368,6 +368,9 @@ class DB
 			{
 				$statement .= "(" . implode(" AND ", $where) . ")";
 			}
+
+			if (!$showAll)
+				$statement .= " GROUP BY vehicleName";
 
 			$statement .= " ORDER BY mid DESC";
 			

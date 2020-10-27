@@ -25,6 +25,7 @@ $bq['make'] = parseQueryString('engineMake'); //TODO Define these API method/str
 $bq['code'] = parseQueryString('engineCode');
 $bq['firmware'] = parseQueryString('firmware');
 $bq['signature'] = parseQueryString('fwVersion'); //TODO might make dependant on firmware
+$showAllTunes = parseQueryString('showAll');
 //TODO Move column magic strings to some define/static class somewhere
 
 //TODO Use http_build_query and/or parse_url and/or parse_str
@@ -284,9 +285,16 @@ if ($topic_id > 0) {
 	echo "<div><a href=\"/forum/viewtopic.php?t=".$topic_id."\">More about ".$bq['name']." on the forum</a></div>\r\n";
 }
 
-$showAll = $rusefi->isAdminUser ? true : false;
-$resultsMsq = $msqur->browse($bq, $page, "msq", $showAll);
-echo '<div>Tunes:';
+$showAll = array_filter($bq) ? true : false;	// if no additional args
+if ($rusefi->isAdminUser && $showAllTunes)
+	$showAll = true;
+$showHidden = $rusefi->isAdminUser ? true : false;
+$resultsMsq = $msqur->browse($bq, $page, "msq", $showAll, $showHidden);
+if ($showAll) {
+	echo '<div>Tunes:';
+} else {
+	echo '<div>Latest tunes: (<a href="?showAll=true">Show All</a>)';
+}
 putResultsInTable($resultsMsq, "msq");
 echo '</div>';
 
