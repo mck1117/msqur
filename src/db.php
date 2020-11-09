@@ -54,7 +54,7 @@ class DB
 			}
 		}
 
-		$this->isSqlite = ($this->db->getAttribute(PDO::ATTR_DRIVER_NAME) == "sqlite");
+		$this->isSqlite = ($this->db != null) && ($this->db instanceof PDO) && ($this->db->getAttribute(PDO::ATTR_DRIVER_NAME) == "sqlite");
 
 		//if (DEBUG) debug('Connecting to DB: ' . (($this->db != null) ? 'Connected.' : 'Connection FAILED'));
 		return ($this->db != null);
