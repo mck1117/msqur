@@ -494,7 +494,7 @@ class Rusefi
 	{
 		if (isset($this->msq->msqMap["settingGroup"]))
 			return $this->msq->msqMap["settingGroup"];
-		return array();
+		return INI::getDefaultSettingGroups();
 	}
 
 	public function getTuneList($vehicleName)

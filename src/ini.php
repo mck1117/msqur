@@ -148,7 +148,7 @@ class INI
 
 		$directives = array();
 		$skipByDirective = false;
-		$settings = array();
+		$settings = INI::getDefaultSettings($optionValues);
 		$curSettingGroup = NULL;
 
 		foreach ($ini as $line)
@@ -554,6 +554,44 @@ class INI
 				return $so[2];
 		}
 		return false;
+	}
+
+	public static function getDefaultSettingGroups()
+	{
+		$groups = array();
+		// lambda settings are built-in in TunerStudio and not included in the .ini file, so we need to add our own
+		$groups["lambda"] = array("lambda", "Lambda Settings", array(array("LAMBDA", "Lambda", 0), array("AFR", "AFR", 0)));
+		return $groups;
+	}
+
+	public static function getDefaultSettings($optionValues)
+	{
+		$settings = array();
+		$groups = INI::getDefaultSettingGroups();
+		// use "lambda" settings as the default
+		$settings["settingOption"] = array();
+		foreach ($groups as $g) {
+			$settings["settingOption"] = array_merge($settings["settingOption"], $g[2]);
+		}
+		$defOption = null;
+		$wasAnySet = false;
+		// fill the values
+		foreach ($settings["settingOption"] as &$s) {
+			// set from the user-given values
+			$s[2] = in_array($s[0], $optionValues) ? 1 : 0;
+			// check if any option was set by the user
+			if ($s[2] == 1 && !$wasAnySet)
+				$wasAnySet = true;
+			// store the first option as default
+			if ($defOption === null) {
+				$defOption = &$s;
+			}
+		}
+		// if none of the options was set to 1
+		if (!$wasAnySet && $defOption !== null) {
+			$defOption[2] = 1;
+		}
+		return $settings;
 	}
 }
 ?>
