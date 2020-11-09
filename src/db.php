@@ -28,6 +28,8 @@ class DB
 	public $COMPRESS = "COMPRESS";
 	public $UNCOMPRESS = "UNCOMPRESS";
 	
+	private $isSqlite = false;
+	
 	public function connect()
 	{
 		if (isset($this->db) && $this->db instanceof PDO)
@@ -51,7 +53,9 @@ class DB
 				$this->db = null; //Redundant.
 			}
 		}
-		
+
+		$this->isSqlite = ($this->db->getAttribute(PDO::ATTR_DRIVER_NAME) == "sqlite");
+
 		//if (DEBUG) debug('Connecting to DB: ' . (($this->db != null) ? 'Connected.' : 'Connection FAILED'));
 		return ($this->db != null);
 	}
@@ -349,10 +353,13 @@ class DB
 	public function browseMsq($bq, $showAll, $showHidden)
 	{
 		if (!$this->connect()) return null;
-		
+
 		try
 		{
-			$statement = "SELECT CONCAT (user_id, '_', name) AS vehicleName, m.id as mid, user_id, name, make, code, numCylinders, displacement, compression, induction, firmware, signature, uploadDate, views, tuneComment, hidden FROM msqur_metadata m INNER JOIN msqur_engines e ON m.engine = e.id WHERE ";
+			// MySql and SQLite have different CONCAT syntax
+			$concat = $this->isSqlite ? "(user_id || '_' || name)" : "CONCAT (user_id, '_', name)";
+
+			$statement = "SELECT ".$concat." AS vehicleName, m.id as mid, user_id, name, make, code, numCylinders, displacement, compression, induction, firmware, signature, uploadDate, views, tuneComment, hidden FROM msqur_metadata m INNER JOIN msqur_engines e ON m.engine = e.id WHERE ";
 			$where = array();
 			foreach ($bq as $col => $v)
 			{
