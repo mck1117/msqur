@@ -49,7 +49,7 @@ define("STATE_RUNNING", 4);
 
 define("CRANKING_MIN_TIME", 0.1);	// 100 ms
 define("IDLE_RPM", 700);
-define("IDLE_HIGH_RPM", 1500):
+define("IDLE_HIGH_RPM", 1500);
 define("IDLE_MIN_TIME", 2);	// 2 seconds
 define("COLD_START_TEMP", 40);	// 40 deg. celsius
 define("THROTTLE_IDLE_THRESHOLD", 2);	// 2%
