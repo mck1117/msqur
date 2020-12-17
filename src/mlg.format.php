@@ -49,6 +49,7 @@ define("STATE_RUNNING", 4);
 
 define("CRANKING_MIN_TIME", 0.1);	// 100 ms
 define("IDLE_RPM", 700);
+define("IDLE_HIGH_RPM", 1500):
 define("IDLE_MIN_TIME", 2);	// 2 seconds
 define("COLD_START_TEMP", 40);	// 40 deg. celsius
 define("THROTTLE_IDLE_THRESHOLD", 2);	// 2%
@@ -499,7 +500,7 @@ class MlgParser {
 	function changeState($d) {
 		// detect the new state
 		if ($d[IDX_RPM] >= IDLE_RPM || ($d[IDX_RPM] > 0 && ($this->state->engineState == STATE_RUNNING ||  $this->state->engineState == STATE_IDLE)))
-			$newState = ($this->state->isThrottlePressed) ? STATE_RUNNING : STATE_IDLE;
+			$newState = ($this->state->isThrottlePressed || $d[IDX_RPM] > IDLE_HIGH_RPM) ? STATE_RUNNING : STATE_IDLE;
 		else
 			$newState = ($d[IDX_RPM] > 0) ? STATE_CRANKING : STATE_STOPPED;
 
