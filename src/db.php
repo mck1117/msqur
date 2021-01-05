@@ -1242,14 +1242,15 @@ class DB
 		
 		try
 		{
-			if (DEBUG) debug('Updating log data points for ' . $id);
-			$st = $this->db->prepare("UPDATE msqur_logs l SET l.data=:data WHERE l.id = :id");
+			if (DEBUG) debug('Updating log info and data points for ' . $id);
+			$st = $this->db->prepare("UPDATE msqur_logs l SET l.data=:data, l.info=:info WHERE l.id = :id");
 			DB::tryBind($st, ":id", $id);
 			DB::tryBind($st, ":data", $data);
+			DB::tryBind($st, ":info", $info);
 
 			if ($st->execute())
 			{
-				if (DEBUG) debug('Log data updated!');
+				if (DEBUG) debug('Log info & data updated!');
 				$st->closeCursor();
 
 				// update log-tune relationships

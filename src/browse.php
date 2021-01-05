@@ -265,7 +265,7 @@ function putResultsInTable($results, $type)
 		}
 		else if ($type == "log")
 		{
-			echo '<td>' . $res['duration'] . '</td>';
+			echo '<td>' . (isset($res['duration']) ? $res['duration'] : '?') . '</td>';
 		}
 		echo '<td>' . $res['views'] . '</td>';
 		echo '<td><a class="downloadLink" title="Download ' . strtoupper($type). '" download href="download.php?' . $type . '=' . $res['mid'] . '">💾</a>';

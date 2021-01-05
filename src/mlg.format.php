@@ -212,18 +212,25 @@ class MlgParser {
 
 		// init fields filtering
 		if ($this->reqFields !== NULL) {
-			$reqNotFound = array();
-			foreach ($this->reqFields as $rfidx=>$rfs) {
-				$f = $this->findField($fields, $rfs);
-				if (is_string($f))
-					$reqNotFound[] = "'".$f."'";
-				else
-					$recList[$rfidx] = $f;
-				
-			}
+			foreach ($this->reqFields as $rfType=>$rf) {
+				$reqNotFound = array();
+				foreach ($rf as $rfidx=>$rfs) {
+					$f = $this->findField($fields, $rfs);
+					if (is_string($f))
+						$reqNotFound[] = "'".$f."'";
+					else
+						$recList[$rfidx] = $f;
+				}			
 
-			if (count($reqNotFound) > 0) {
-				return array("text"=>"Some of the required fields are not found in the log (" . implode(",", $reqNotFound) . ")!", "status"=>"deny");
+				if (count($reqNotFound) > 0) {
+					$text = "Some of the required fields are not found in the log (" . implode(",", $reqNotFound) . ")!";
+					if ($rfType == "datapoints") {	// the datapoint fields are optional
+						$warn = $text . "<br>No datapoints will be available!";
+						$this->state->storeDataPoints = false;
+					} else {
+						return array("text"=> $text, "status"=>"deny");
+					}
+				}
 			}
 		}
 
@@ -559,11 +566,9 @@ class MlgParser {
 		$this->state->isDebug = $isDebug;
 		$this->state->storeDataPoints = $getDataPoints;
 
-		$this->reqFields = $this->reqFieldsForStats;
-		
-		if ($getDataPoints) {
-			$this->reqFields += $this->reqFieldsForDataPoints;
-		}
+		$this->reqFields = array();
+		$this->reqFields["stats"] = $this->reqFieldsForStats;
+		$this->reqFields["datapoints"] = $this->reqFieldsForDataPoints;
 
 		$this->state->startingFastestTime = INF;
 		$this->state->prevTime = INF;
