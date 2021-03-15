@@ -58,7 +58,7 @@ function parseQueryString($s)
 function rusefi_file($f)
 {
 	global $test;
-	return isset($test) ? $test->file($f) : file($f);
+	return isset($test) ? $test->file($f) : @file($f);
 }
 
 function rusefi_file_get_contents($f)

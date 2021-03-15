@@ -363,15 +363,21 @@ class Rusefi
 		return strcmp($v1, $v2) == 0;
 	}
 
-	public function isTuneAlreadyExists($files, $engineid)
+	public function checkIfTuneCanBeUploaded($files, $engineid, &$err_msg)
 	{
 		foreach ($files as $file)
 		{
 			$id = $this->msqur->db->findMSQ($file, $engineid);
-			if ($id > 0)
-				return TRUE;
+			if ($id === FALSE) {
+				$err_msg = "Cannot upload this tune! The reasons are:<br>" . get_all_error_messages();
+				return FALSE;
+			}
+			if ($id > 0) {
+				$err_msg = "This file already exists in our Database!";
+				return FALSE;
+			}
 		}
-		return FALSE;
+		return TRUE;
 	}
 
 	public function getUserTunes($user_id) {
@@ -602,7 +608,7 @@ class Rusefi
 		try {
 			$groupedHtml = $msq->parseMSQ($xml, $engine, $metadata, "crc", $settings);
 		} catch (MSQ_ParseException $e) {
-			return 0;
+			return FALSE;
 		}
 		return $this->calcCrc($msq);
 	}

@@ -22,6 +22,8 @@ assert_options(ASSERT_ACTIVE, DEBUG ? 1 : 0);
 assert_options(ASSERT_WARNING, 0);
 assert_options(ASSERT_QUIET_EVAL, 1);
 
+$error_messages = array();
+
 //Could move these to msqur class, but php
 function debuglog($type, $message)
 {
@@ -45,7 +47,21 @@ function warn($message)
 
 function error($message)
 {
+	global $error_messages;
 	debuglog("ERROR", $message);
+	$error_messages[] = $message;
+}
+
+function get_all_error_messages()
+{
+	global $error_messages;
+	$msg = "<ul>\n";
+	$list = array_reverse($error_messages);
+	foreach ($list as $err) {
+		$msg .= "<li>" . $err. "</li>\n";
+	}
+	$msg .= "</ul>\n";
+	return $msg;
 }
 
 function pageError($err) {

@@ -199,9 +199,9 @@ if ($isEmbedded || (isset($_POST['upload']) && isset($_FILES)))
 			}
 		}
 	}
-	else if ($rusefi->isTuneAlreadyExists($files, -1))
+	else if (!$rusefi->checkIfTuneCanBeUploaded($files, -1, $err_msg))
 	{
-		addOutput('error', 'This file already exists in our Database!');
+		addOutput('error', $err_msg);
 	}
 	else
 	{

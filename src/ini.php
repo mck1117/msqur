@@ -134,7 +134,7 @@ class INI
 		if ($ini == FALSE || count($ini) == 0)
 		{
 			error("Error or empty file: $file");
-			throw new MSQ_ConfigException("Could not open MSQ config file: $file");
+			throw new MSQ_ConfigException("Could not open MSQ config file. Possibly wrong or unknown tune signature!");
 		}
 		else if (DEBUG) debug("Opened: $file");
 		

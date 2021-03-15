@@ -103,6 +103,10 @@ class DB
 
 			// get CRC
 			$crc16 = $rusefi->calcCrcForTune($xml);
+			if ($crc16 === FALSE) {
+				error("Cannot calculate CRC for this tune!");
+				return -1;
+			}
 			
 			DB::tryBind($st, ":type", 0);
 			DB::tryBind($st, ":xml", $xml);
@@ -930,7 +934,7 @@ class DB
 	public function findMSQ($file, $engineid)
 	{
 		global $rusefi;
-		if (!$this->connect()) return -1;
+		if (!$this->connect()) return FALSE;
 		
 		try
 		{
@@ -945,6 +949,11 @@ class DB
 			$xml = trim($xml);
 			// get CRC
 			$crc16 = $rusefi->calcCrcForTune($xml);
+			if ($crc16 === FALSE) {
+				error("Cannot calculate CRC for this tune!");
+				return FALSE;
+			}
+
 			DB::tryBind($st, ":crc", $crc16);
 			$st->execute();
 			$result = $st->fetch(PDO::FETCH_ASSOC);
@@ -959,7 +968,7 @@ class DB
 		catch (PDOException $e)
 		{
 			$this->dbError($e);
-			$id = -1;
+			return FALSE;
 		}
 		
 		return $id;
@@ -1290,6 +1299,12 @@ class DB
 				foreach ($result as $r)
 				{
 					$crc16 = $rusefi->calcCrcForTune($r["xml"]);
+					if ($crc16 === FALSE) {
+						error("Cannot calculate CRC for this tune!");
+						echo "ERROR!\r\n";
+						return -1;
+					}
+
 					echo "Tune id=".$r["id"]." crc16=".$crc16." ";
 					$st = $this->db->prepare("UPDATE msqur_files SET crc=:crc WHERE id = :id");
 					DB::tryBind($st, ":id", $r["id"]);
